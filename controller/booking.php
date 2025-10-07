@@ -4,22 +4,61 @@
  * Handles all booking-related operations
  */
 
-require_once '../config/Database.php';
+	require_once __DIR__ . '/../config/database.php';
 
 class BookingController {
     private $db;
+    private $serviceNameCol = 'service_name';
+    private $servicePriceCol = 'price';
+    private $serviceIdCol = 'service_id';
     
     public function __construct() {
         $this->db = Database::getInstance();
+        $this->resolveServiceColumns();
     }
+
+		/**
+		 * Detect actual column names in services table.
+		 */
+		private function resolveServiceColumns() {
+			try {
+				$structure = $this->db->getTableStructure('services');
+				$columns = array_map(function($row){ return $row['Field']; }, $structure);
+				if (!in_array($this->serviceNameCol, $columns)) {
+					foreach (['name','title','service'] as $candidate) {
+						if (in_array($candidate, $columns)) { $this->serviceNameCol = $candidate; break; }
+					}
+				}
+				if (!in_array($this->servicePriceCol, $columns)) {
+					foreach (['amount','cost'] as $candidate) {
+						if (in_array($candidate, $columns)) { $this->servicePriceCol = $candidate; break; }
+					}
+				}
+				if (!in_array($this->serviceIdCol, $columns)) {
+					foreach (['id'] as $candidate) {
+						if (in_array($candidate, $columns)) { $this->serviceIdCol = $candidate; break; }
+					}
+				}
+			} catch (Exception $e) {
+				// Keep defaults if describe fails
+			}
+		}
+
+		/**
+		 * Get all services (for booking form options)
+		 */
+		public function getAllServices() {
+			$sql = "SELECT {$this->serviceIdCol} AS service_id, {$this->serviceNameCol} AS service_name, {$this->servicePriceCol} AS price FROM services ORDER BY {$this->serviceNameCol}";
+			return $this->db->fetchAll($sql);
+		}
     
     /**
      * Get all bookings for a customer
      */
     public function getCustomerBookings($customerId) {
-        $sql = "SELECT b.*, s.service_name, s.price as service_price, c.first_name, c.last_name 
+        $sql = "SELECT b.*, s.{$this->serviceNameCol} AS service_name, s.{$this->servicePriceCol} AS service_price, c.first_name, c.last_name 
                 FROM bookings b 
-                JOIN services s ON b.service_id = s.service_id 
+                JOIN services s ON b.service_id = s.{$this->serviceIdCol} 
                 JOIN customers c ON b.customer_id = c.customer_id 
                 WHERE b.customer_id = :customer_id 
                 ORDER BY b.booking_date DESC, b.booking_time DESC";
@@ -30,10 +69,10 @@ class BookingController {
      * Get booking by ID
      */
     public function getBookingById($id) {
-        $sql = "SELECT b.*, s.service_name, s.description as service_description, 
-                       s.price as service_price, c.first_name, c.last_name, c.email, c.phone
+        $sql = "SELECT b.*, s.{$this->serviceNameCol} AS service_name, s.description as service_description, 
+                       s.{$this->servicePriceCol} as service_price, c.first_name, c.last_name, c.email, c.phone
                 FROM bookings b 
-                JOIN services s ON b.service_id = s.service_id 
+                JOIN services s ON b.service_id = s.{$this->serviceIdCol} 
                 JOIN customers c ON b.customer_id = c.customer_id 
                 WHERE b.booking_id = :id";
         return $this->db->fetchOne($sql, ['id' => $id]);
@@ -78,9 +117,9 @@ class BookingController {
      * Get bookings by date range
      */
     public function getBookingsByDateRange($startDate, $endDate) {
-        $sql = "SELECT b.*, s.service_name, c.first_name, c.last_name 
+        $sql = "SELECT b.*, s.{$this->serviceNameCol} AS service_name, c.first_name, c.last_name 
                 FROM bookings b 
-                JOIN services s ON b.service_id = s.service_id 
+                JOIN services s ON b.service_id = s.{$this->serviceIdCol} 
                 JOIN customers c ON b.customer_id = c.customer_id 
                 WHERE b.booking_date BETWEEN :start_date AND :end_date 
                 ORDER BY b.booking_date, b.booking_time";
@@ -180,8 +219,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Get bookings data for display
-$bookings = $bookingController->getCustomerBookings(1); // Default to customer ID 1 for demo
+	$bookings = $bookingController->getCustomerBookings(1); // Default to customer ID 1 for demo
 $pendingCount = $bookingController->getPendingBookingsCount(1);
+	$services = $bookingController->getAllServices();
 
 // Include the view
 require_once "../views/cus_booking.php";
