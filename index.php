@@ -79,4 +79,3 @@ if (file_exists($controllerFile)) {
     header("Location: " . BASE_URL . "error/notfound");
     exit();
 }
-
