@@ -1,0 +1,248 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    db_upholcare - COMPLETE DATABASE STRUCTURE                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Database: db_upholcare
+Total Tables: 19
+Date: November 6, 2025
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 MAIN APPLICATION TABLES (14 tables)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1.  users                      - Customer and admin accounts
+2.  bookings                   - Service bookings and reservations
+3.  booking_numbers            - Available booking numbers
+4.  customer_booking_numbers   - Customer-specific booking numbers
+5.  services                   - Available services
+6.  service_categories         - Service category definitions
+7.  store_locations            - Physical store locations
+8.  repair_items               - Items being repaired
+9.  repair_quotations          - Repair quotes and pricing
+10. payments                   - Payment transactions
+11. quotations                 - General quotations
+12. notifications              - User notifications
+13. admin_repair_stats         - Admin repair statistics
+14. repair_workflow_view       - Repair workflow view
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎛️  CONTROL PANEL TABLES (5 tables) ✨ NEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+15. control_panel_admins       - Control panel administrator accounts
+16. login_logs                 - All login attempts tracking
+17. system_activities          - System activity audit trail
+18. control_panel_sessions     - Active session tracking
+19. system_statistics          - Daily statistics summaries
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 TABLE RELATIONSHIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Main Application:
+   bookings → users (customer_id)
+   bookings → services (service_id)
+   bookings → booking_numbers (booking_number_id)
+   bookings → store_locations (store_location_id)
+   services → service_categories (category_id)
+   repair_items → bookings
+   repair_quotations → repair_items
+   notifications → users (user_id)
+
+Control Panel:
+   control_panel_sessions → control_panel_admins (admin_id) [FK]
+   login_logs → users (user_id) [soft reference]
+   system_activities → users (admin_id) [soft reference]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📈 CONTROL PANEL FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Login Tracking:
+   ✓ Customer logins (success/failed)
+   ✓ Admin logins (success/failed)
+   ✓ Control panel logins (success/failed)
+   ✓ IP address tracking
+   ✓ Browser/device information
+   ✓ Failure reason logging
+
+Activity Monitoring:
+   ✓ User created/modified/deleted
+   ✓ Booking modifications
+   ✓ Settings changes
+   ✓ Before/after values tracking
+   ✓ Admin action audit trail
+
+Statistics Tracking:
+   ✓ Daily login summaries
+   ✓ Weekly trends
+   ✓ User type breakdown
+   ✓ New user registrations
+   ✓ Booking metrics
+
+Session Management:
+   ✓ Active session tracking
+   ✓ Last activity monitoring
+   ✓ Session expiration
+   ✓ Multi-device login support
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 KEY BENEFITS OF INTEGRATED STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Single Database
+   - All data in one place
+   - Easier backup and maintenance
+   - Simplified configuration
+   - Better data consistency
+
+✅ Shared Connection
+   - Same database credentials
+   - No separate connection needed
+   - Better performance
+   - Reduced connection overhead
+
+✅ Easy Queries
+   - Can JOIN between main and control panel tables
+   - Cross-reference user data easily
+   - Unified reporting
+   - Better analytics
+
+✅ Simplified Management
+   - One database to backup
+   - One database to maintain
+   - Consistent charset/collation
+   - Easier migrations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💾 DATABASE STATISTICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Database: db_upholcare
+Engine: InnoDB
+Charset: utf8mb4
+Collation: utf8mb4_unicode_ci
+
+Tables:
+   Main Application: 14 tables
+   Control Panel: 5 tables
+   Total: 19 tables
+
+Current Size: ~2 MB (estimated)
+Growth Rate: ~10 MB/month (estimated with moderate usage)
+
+Indexes:
+   Primary Keys: 19
+   Unique Keys: 7
+   Foreign Keys: 10+
+   Performance Indexes: 30+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 SECURITY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Separate admin authentication (control_panel_admins)
+✓ Bcrypt password hashing for all admin accounts
+✓ Session tracking with expiration
+✓ IP address logging for all activities
+✓ Failed login monitoring
+✓ Activity audit trail
+✓ Soft references (no cascade delete of logs)
+✓ User agent tracking for device identification
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛠️ MAINTENANCE COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Access Database:
+   mysql -u root db_upholcare
+
+Backup Database:
+   mysqldump -u root db_upholcare > backup.sql
+
+View All Tables:
+   USE db_upholcare;
+   SHOW TABLES;
+
+Check Table Sizes:
+   SELECT 
+       table_name AS 'Table',
+       ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
+   FROM information_schema.TABLES
+   WHERE table_schema = 'db_upholcare'
+   ORDER BY (data_length + index_length) DESC;
+
+Clean Old Login Logs (6 months):
+   DELETE FROM login_logs 
+   WHERE login_time < DATE_SUB(NOW(), INTERVAL 6 MONTH);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 QUICK STATISTICS QUERIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Total Users:
+   SELECT COUNT(*) FROM users;
+
+Total Bookings:
+   SELECT COUNT(*) FROM bookings;
+
+Today's Logins:
+   SELECT COUNT(*) FROM login_logs WHERE DATE(login_time) = CURDATE();
+
+Failed Logins (24h):
+   SELECT COUNT(*) FROM login_logs 
+   WHERE login_status = 'failed' 
+   AND login_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR);
+
+Active Control Panel Admins:
+   SELECT COUNT(*) FROM control_panel_admins WHERE status = 'active';
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ STATUS SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Database Structure: ✅ COMPLETE
+   └─ 19 tables in db_upholcare
+
+Main Application: ✅ OPERATIONAL
+   └─ 14 core tables functioning
+
+Control Panel: ✅ READY
+   └─ 5 tables created and configured
+   └─ Default admin account active
+   └─ Login tracking enabled
+   └─ Statistics tracking enabled
+
+Access URLs:
+   Main Site: http://localhost/UphoCare
+   Control Panel: http://localhost/UphoCare/control-panel
+
+Default Control Panel Login:
+   Email: control@uphocare.com
+   Password: Control@2025
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 SYSTEM STATUS: FULLY OPERATIONAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your UphoCare system with integrated Control Panel is ready for use!
+
+All control panel tables are successfully created in the main db_upholcare 
+database, providing seamless integration and centralized data management.
+
+You can now monitor all system activities, track login attempts, and view
+comprehensive statistics from your secure control panel dashboard.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

@@ -1,0 +1,286 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║            CONTROL PANEL ADMIN ACCOUNT TYPE - CONFIGURATION                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Database: db_upholcare
+Date: November 6, 2025
+Status: ✅ FULLY CONFIGURED
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👥 USER ACCOUNT TYPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your system now supports THREE account types:
+
+1. 🛒 CUSTOMER (role: 'customer')
+   - Regular customers
+   - Can create bookings
+   - View own bookings
+   - Manage profile
+   Login: http://localhost/UphoCare/auth/login
+
+2. 👨‍💼 ADMIN (role: 'admin')
+   - System administrators
+   - Accept/reject bookings
+   - Manage customers
+   - View all bookings
+   Login: http://localhost/UphoCare/auth/login
+
+3. 🎛️ CONTROL PANEL ADMIN (role: 'control_panel_admin') ✨ NEW
+   - Super administrators
+   - View all system statistics
+   - Monitor login activities
+   - Track admin performance
+   - Access control panel dashboard
+   Login: http://localhost/UphoCare/auth/login (auto-redirects to control panel)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 CONTROL PANEL ADMIN ACCOUNT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Account Details:
+   User ID: 6
+   Username: controladmin
+   Email: control@uphocare.com
+   Password: Control@2025
+   Full Name: Control Panel Administrator
+   Role: control_panel_admin
+   Status: active
+
+Login Methods:
+   
+   Method 1: Via Main Login (/auth/login)
+   ✓ Enter username: controladmin (or email: control@uphocare.com)
+   ✓ Enter password: Control@2025
+   ✓ System automatically redirects to Control Panel
+   
+   Method 2: Direct Control Panel Login (/control-panel/login)
+   ✓ This method still works with control_panel_admins table
+   ✓ Use email: control@uphocare.com
+   ✓ Use password: Control@2025
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ WHAT CHANGED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Database Changes:
+   ✅ users.role - Added 'control_panel_admin' enum value
+   ✅ login_logs.user_type - Added 'control_panel_admin' enum value
+   ✅ role_permissions table - Created for role-based access control
+   ✅ Control panel admin account created in users table
+
+Code Changes:
+   ✅ config/config.php - Added ROLE_CONTROL_PANEL_ADMIN constant
+   ✅ controllers/AuthController.php - Updated to handle control panel admin role
+   ✅ Auto-redirect control panel admins to control panel dashboard
+
+New Features:
+   ✅ Unified login system for all user types
+   ✅ Role-based permissions system
+   ✅ Automatic dashboard routing by role
+   ✅ Control panel admins tracked in login logs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 PERMISSIONS SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Table: role_permissions
+
+Customer Permissions:
+   ✓ view_own_bookings
+   ✓ create_booking
+   ✓ cancel_booking
+
+Admin Permissions:
+   ✓ view_all_bookings
+   ✓ accept_booking
+   ✓ manage_users
+
+Control Panel Admin Permissions:
+   ✓ view_statistics
+   ✓ view_login_logs
+   ✓ view_admin_activity
+   ✓ manage_system
+   ✓ view_all_data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔄 LOGIN FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. User visits: http://localhost/UphoCare/auth/login
+
+2. User enters credentials:
+   - Username: controladmin
+   - Password: Control@2025
+
+3. System authenticates:
+   ✓ Checks credentials against users table
+   ✓ Verifies status is 'active'
+   ✓ Checks role is valid
+
+4. System detects role: control_panel_admin
+
+5. System sets session variables:
+   - $_SESSION['user_id']
+   - $_SESSION['username']
+   - $_SESSION['role'] = 'control_panel_admin'
+   - $_SESSION['control_panel_admin'] (for control panel access)
+
+6. Auto-redirect to: http://localhost/UphoCare/control-panel/dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 DATABASE STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+users table:
+   role ENUM('customer', 'admin', 'control_panel_admin')
+
+login_logs table:
+   user_type ENUM('customer', 'admin', 'control_panel', 'control_panel_admin')
+
+role_permissions table:
+   id INT PRIMARY KEY
+   role_name ENUM('customer', 'admin', 'control_panel_admin')
+   permission_name VARCHAR(100)
+   can_access BOOLEAN
+   created_at TIMESTAMP
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 TESTING THE NEW ACCOUNT TYPE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: Open browser
+   → http://localhost/UphoCare/auth/login
+
+Step 2: Enter credentials
+   Username: controladmin
+   Password: Control@2025
+
+Step 3: Click Login
+
+Step 4: Verify redirect
+   ✓ Should automatically go to control panel dashboard
+   ✓ URL: http://localhost/UphoCare/control-panel/dashboard
+
+Step 5: Check dashboard
+   ✓ View customer statistics
+   ✓ View admin booking activity
+   ✓ View login logs
+   ✓ View all system data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 SQL QUERIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+View Control Panel Admin:
+   SELECT * FROM users WHERE role = 'control_panel_admin';
+
+View All User Types:
+   SELECT role, COUNT(*) as count 
+   FROM users 
+   GROUP BY role;
+
+View Control Panel Admin Permissions:
+   SELECT * FROM role_permissions 
+   WHERE role_name = 'control_panel_admin';
+
+View Control Panel Admin Login Activity:
+   SELECT * FROM login_logs 
+   WHERE user_type = 'control_panel_admin' 
+   ORDER BY login_time DESC;
+
+Create Additional Control Panel Admin:
+   INSERT INTO users (username, email, password, fullname, role, status) 
+   VALUES (
+       'newcontroladmin',
+       'newcontrol@uphocare.com',
+       PASSWORD_HASH,
+       'New Control Admin',
+       'control_panel_admin',
+       'active'
+   );
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 SECURITY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Role Validation
+   - System validates role on every login
+   - Invalid roles are rejected
+   - Security alerts logged
+
+✅ Status Check
+   - Only 'active' accounts can login
+   - Inactive accounts are blocked
+
+✅ Session Management
+   - Separate session for control panel
+   - Auto-logout on inactivity
+   - Secure session handling
+
+✅ Login Tracking
+   - All login attempts logged
+   - IP addresses recorded
+   - Failed attempts tracked
+
+✅ Permissions System
+   - Role-based access control
+   - Granular permissions
+   - Easy to extend
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 FILES MODIFIED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Configuration:
+   ✓ config/config.php - Added ROLE_CONTROL_PANEL_ADMIN constant
+
+Controllers:
+   ✓ controllers/AuthController.php - Updated login handling
+
+Database Scripts:
+   ✓ database/add_control_panel_admin_type.sql - Setup script
+
+Documentation:
+   ✓ database/CONTROL_PANEL_ADMIN_ACCOUNT_TYPE.txt - This file
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You now have a unified login system with THREE account types:
+
+1. Customers    → /customer/dashboard
+2. Admins       → /admin/dashboard
+3. Control Panel Admins → /control-panel/dashboard ✨ NEW
+
+All three types can login via the same login page (/auth/login)
+The system automatically routes them to the correct dashboard based on role.
+
+Control Panel Admin Account:
+   Username: controladmin
+   Email: control@uphocare.com
+   Password: Control@2025
+
+Test it now:
+→ http://localhost/UphoCare/auth/login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Status: ✅ OPERATIONAL
+Version: 3.0 - Unified Login with Control Panel Admin Type
+Last Updated: November 6, 2025
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

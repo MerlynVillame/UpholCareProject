@@ -1,0 +1,22 @@
+{"timestamp":"2025-10-28 23:43:35","to":"test@example.com","subject":"Test Email - UphoCare System","success":"NO","status":"FAILED"}
+{"timestamp":"2025-10-31 11:58:07","to":"merlyn.villame@gmail.com","subject":"Reservation Approved - BKG-20250125-0002","success":"NO","status":"FAILED"}
+{"timestamp":"2025-11-08 17:42:21","to":"merlyn.batonghinog@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"NO","status":"FAILED"}
+{"timestamp":"2025-11-08 17:52:45","to":"khayelinfantado@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"NO","status":"FAILED"}
+{"timestamp":"2025-11-08 17:55:10","to":"paulinequindo@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"NO","status":"FAILED"}
+{"timestamp":"2025-11-10 12:06:40","to":"merlyn.batonghinog@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"NO","status":"FAILED (mail())"}
+{"timestamp":"2025-11-10 12:24:22","to":"merlyn.lagrimas122021@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"NO","status":"FAILED (mail())"}
+{"timestamp":"2025-11-10 15:53:08","to":"merlyn.lagrimas122021@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"NO","status":"INVALID PASSWORD: Invalid Gmail App Password: Password must be 16 characters (Gmail App Password). Current password is only 7 characters."}
+{"timestamp":"2025-11-10 16:52:58","to":"merlyn.lagrimas122021@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 17:07:40","to":"merlyn.lagrimas122021@gmail.com","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 17:42:26","to":"merlyn.villame@bisu.edu.ph","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 17:46:56","to":"merlyn.villame@bisu.edu.ph","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 17:49:51","to":"merlyn.villame@bisu.edu.ph","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 17:50:29","to":"merlyn.villame@bisu.edu.ph","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 17:51:12","to":"merlyn.villame@bisu.edu.ph","subject":"Admin Account Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-10 18:08:41","to":"merlyn.lagrimas122021@gmail.com","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-11 13:17:00","to":"khayelmagallen@gmail.com","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-11 17:09:32","to":"jimskyle.infantado@bisu.edu.ph","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-11 18:04:50","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - BKG-20250125-0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-13 10:02:09","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - BKG-20250125-0004","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-17 09:22:44","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - BKG-20250125-0005","success":"NO","status":"PHPMailer Error: SMTP Error: Could not connect to SMTP host. Failed to connect to server"}
+{"timestamp":"2025-11-20 10:28:33","to":null,"subject":"Reservation Update - BKG-20251025-0001","success":"NO","status":"PHPMailer Error: Invalid address:  (to): "}

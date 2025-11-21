@@ -1,0 +1,14 @@
+{
+    "name": "uphocare/system",
+    "description": "UphoCare System",
+    "type": "project",
+    "require": {
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
+

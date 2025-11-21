@@ -1,0 +1,725 @@
+/* UphoCare Custom Styles for Admin Panel */
+
+/* Font Loading Optimization - Ensure smooth font rendering */
+/* Fallback fonts are already defined in sb-admin-2.css */
+/* The display=swap parameter in the Google Fonts link ensures immediate text visibility */
+
+/* Custom badge styles */
+.badge {
+  font-size: 0.75em;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+/* Status badge colors */
+.badge-warning {
+  background-color: #f6c23e;
+  color: #212529;
+}
+
+.badge-info {
+  background-color: #36b9cc;
+  color: #fff;
+}
+
+.badge-success {
+  background-color: #1cc88a;
+  color: #fff;
+}
+
+.badge-danger {
+  background-color: #e74a3b;
+  color: #fff;
+}
+
+.badge-secondary {
+  background-color: #858796;
+  color: #fff;
+}
+
+.badge-primary {
+  background-color: #4e73df;
+  color: #fff;
+}
+
+/* Action buttons styling */
+.btn-group .btn {
+  margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Table enhancements */
+.table th {
+  font-weight: 600;
+  color: #5a5c69;
+  border-top: none;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Card enhancements */
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+/* Page heading styling */
+.h3 {
+  font-weight: 600;
+  color: #5a5c69;
+}
+
+/* Custom button styles */
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.35rem;
+}
+
+/* Modal enhancements */
+.modal-header {
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.modal-footer {
+  border-top: 1px solid #e3e6f0;
+}
+
+/* Alert enhancements */
+.alert {
+  border: none;
+  border-radius: 0.35rem;
+}
+
+.alert-success {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* DataTable customizations */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing,
+.dataTables_wrapper .dataTables_paginate {
+  color: #5a5c69;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  padding: 0.375rem 0.75rem;
+  margin-left: 2px;
+  border-radius: 0.35rem;
+  border: 1px solid #e3e6f0;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: #4e73df;
+  color: white !important;
+  border-color: #4e73df;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #2e59d9;
+  color: white !important;
+  border-color: #2e59d9;
+}
+
+/* Customer info styling */
+.customer-info {
+  line-height: 1.4;
+}
+
+.customer-info strong {
+  color: #5a5c69;
+  font-weight: 600;
+}
+
+.customer-info small {
+  color: #858796;
+  font-size: 0.875rem;
+}
+
+/* Service info styling */
+.service-info {
+  line-height: 1.4;
+}
+
+.service-info strong {
+  color: #5a5c69;
+  font-weight: 600;
+}
+
+.service-info small {
+  color: #858796;
+  font-size: 0.875rem;
+}
+
+/* Amount styling */
+.amount {
+  font-weight: 600;
+  color: #1cc88a;
+  font-size: 1.1rem;
+}
+
+/* Date styling */
+.date-info {
+  color: #5a5c69;
+  font-size: 0.875rem;
+}
+
+/* Loading spinner */
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES FOR ANDROID
+   ============================================ */
+
+/* Base mobile styles (applies to all mobile devices) */
+@media (max-width: 991.98px) {
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Container adjustments */
+  .container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  /* Page headings */
+  .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-size: calc(1rem + 0.5vw);
+    word-wrap: break-word;
+  }
+
+  /* Cards */
+  .card {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .card-header {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    min-height: 44px; /* Touch-friendly size */
+  }
+
+  .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 38px;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .btn-group .btn {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+
+  .btn-group .btn:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Forms */
+  .form-control,
+  .form-select {
+    font-size: 16px; /* Prevents zoom on iOS/Android */
+    padding: 0.75rem;
+    min-height: 44px; /* Touch-friendly */
+    border-radius: 0.375rem;
+  }
+
+  .form-label {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Tables */
+  .table-responsive {
+    border: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem;
+    white-space: nowrap;
+  }
+
+  /* DataTables mobile adjustments */
+  .dataTables_wrapper {
+    overflow-x: auto;
+  }
+
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter {
+    margin-bottom: 1rem;
+  }
+
+  .dataTables_wrapper .dataTables_length select,
+  .dataTables_wrapper .dataTables_filter input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    margin-top: 1rem;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.5rem 0.75rem;
+    margin: 0.25rem;
+    min-height: 38px;
+  }
+
+  /* Alerts */
+  .alert {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Modals */
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .modal-content {
+    border-radius: 0.5rem;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem;
+  }
+
+  /* Badges */
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  /* Dropdowns */
+  .dropdown-menu {
+    font-size: 0.875rem;
+    max-width: 100%;
+  }
+
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Navigation */
+  .navbar-nav {
+    flex-direction: column;
+  }
+
+  .nav-link {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Breadcrumbs */
+  .breadcrumb {
+    font-size: 0.8rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0;
+  }
+
+  .breadcrumb-item {
+    white-space: nowrap;
+  }
+
+  /* Page heading with actions */
+  .d-sm-flex.align-items-center.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .d-sm-flex.align-items-center.justify-content-between > div:last-child {
+    margin-top: 1rem;
+    width: 100%;
+  }
+
+  .d-sm-flex.align-items-center.justify-content-between .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Grid adjustments */
+  .row {
+    margin-left: -10px;
+    margin-right: -10px;
+  }
+
+  .row > [class*="col-"] {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-bottom: 1rem;
+  }
+
+  /* Text utilities */
+  .text-center-mobile {
+    text-align: center !important;
+  }
+
+  .text-left-mobile {
+    text-align: left !important;
+  }
+
+  /* Spacing adjustments */
+  .mb-4 {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .mt-4 {
+    margin-top: 1.5rem !important;
+  }
+
+  .p-4 {
+    padding: 1rem !important;
+  }
+
+  .px-4 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .py-4 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+}
+
+/* Small mobile devices (phones in portrait) */
+@media (max-width: 575.98px) {
+  /* Even smaller text */
+  .h1 { font-size: 1.5rem; }
+  .h2 { font-size: 1.35rem; }
+  .h3 { font-size: 1.2rem; }
+  .h4 { font-size: 1.1rem; }
+  .h5 { font-size: 1rem; }
+  .h6 { font-size: 0.95rem; }
+
+  /* Cards */
+  .card-body {
+    padding: 0.75rem;
+  }
+
+  /* Forms */
+  .form-control,
+  .form-select {
+    font-size: 16px;
+    padding: 0.65rem;
+  }
+
+  /* Buttons */
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Tables */
+  .table {
+    font-size: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  /* Hide less important elements */
+  .d-none-mobile {
+    display: none !important;
+  }
+
+  /* Full width elements */
+  .w-100-mobile {
+    width: 100% !important;
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 991.98px) and (orientation: landscape) {
+  .container-fluid {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .card-body {
+    padding: 1rem 1.25rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  a, button, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .btn:hover {
+    transform: none;
+  }
+
+  /* Better focus states for touch */
+  .btn:focus,
+  .form-control:focus,
+  .form-select:focus {
+    outline: 3px solid rgba(78, 115, 223, 0.5);
+    outline-offset: 2px;
+  }
+}
+
+/* Android specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific, but helps with Android too */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Responsive table (legacy support) */
+@media (max-width: 768px) {
+  .table-responsive {
+    border: none;
+  }
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #858796;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Custom focus states */
+.btn:focus,
+.form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* ============================================
+   ADDITIONAL MOBILE OPTIMIZATIONS
+   ============================================ */
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth scrolling for mobile */
+@media (max-width: 991.98px) {
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+  
+  /* Better touch targets */
+  a, button, input[type="button"], input[type="submit"], 
+  input[type="reset"], select, label {
+    -webkit-tap-highlight-color: rgba(78, 115, 223, 0.3);
+    touch-action: manipulation;
+  }
+  
+  /* Prevent pull-to-refresh on Android Chrome */
+  body {
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Better scrolling for containers */
+  .table-responsive,
+  .card-body,
+  .sidebar {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix for Android keyboard */
+  input, textarea, select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0.375rem;
+  }
+  
+  /* Better focus states for touch */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid rgba(78, 115, 223, 0.5);
+    outline-offset: 2px;
+  }
+  
+  /* Prevent zoom on input focus (Android) */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Better dropdown visibility */
+  select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 991.98px) and (orientation: landscape) {
+  .topbar {
+    height: auto;
+    min-height: 48px;
+  }
+  
+  .container-fluid {
+    margin-top: 48px !important;
+  }
+  
+  .sidebar-brand {
+    height: 48px !important;
+  }
+}
+
+/* High DPI mobile screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .btn,
+  .form-control,
+  .card {
+    border-width: 0.5px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .btn-group,
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_paginate {
+    display: none !important;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .badge {
+    border: 1px solid #000;
+    background: transparent !important;
+    color: #000 !important;
+  }
+}
