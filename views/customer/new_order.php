@@ -36,13 +36,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="item_type">Item Type</label>
-                        <input type="text" class="form-control" id="item_type" name="item_type" placeholder="e.g., Car Seat, Sofa, Mattress">
-                    </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="form-group">
                         <label for="pickup_date">Preferred Pickup Date</label>
                         <input type="date" class="form-control" id="pickup_date" name="pickup_date">

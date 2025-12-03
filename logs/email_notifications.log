@@ -20,3 +20,48 @@
 {"timestamp":"2025-11-13 10:02:09","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - BKG-20250125-0004","success":"YES","status":"SUCCESS (PHPMailer)"}
 {"timestamp":"2025-11-17 09:22:44","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - BKG-20250125-0005","success":"NO","status":"PHPMailer Error: SMTP Error: Could not connect to SMTP host. Failed to connect to server"}
 {"timestamp":"2025-11-20 10:28:33","to":null,"subject":"Reservation Update - BKG-20251025-0001","success":"NO","status":"PHPMailer Error: Invalid address:  (to): "}
+{"timestamp":"2025-11-23 22:18:04","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-23 22:18:10","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 14:13:16","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 14:13:20","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 14:15:01","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 14:15:05","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 15:59:40","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - ","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 16:00:24","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #7","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 16:00:30","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #7","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 16:36:42","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 16:36:47","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 16:37:55","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 16:38:00","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:25:19","to":"merlyn.villame@bisu.edu.ph","subject":"Your Queue Number: Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:25:25","to":"merlyn.villame@bisu.edu.ph","subject":"Booking Confirmed - Queue #6","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:33:46","to":"merlyn.batonghinog@gmail.com","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:35:46","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:35:52","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:36:52","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-24 17:36:58","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 09:20:24","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 09:20:29","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 09:21:35","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:29:28","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:31:27","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:36:43","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:45:53","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:47:44","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:48:05","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 10:54:24","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-11-25 16:16:42","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 11:12:11","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 11:12:16","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 11:52:26","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Update - Queue #0001","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 11:53:24","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 11:53:29","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 11:56:05","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0002","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 12:13:22","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 12:13:28","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 12:14:58","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0003","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 22:13:53","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - Queue #0004","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-02 22:13:59","to":"merlyn.batonghinog@gmail.com","subject":"Your Queue Number: Queue #0004","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-03 10:31:01","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Queue #0004","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-03 23:06:21","to":"merlyn.batonghinog@gmail.com","subject":"Booking Confirmed - ","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2025-12-03 23:59:55","to":"merlyn.batonghinog@gmail.com","subject":"Reservation Approved - Ready for Repair - Booking #21","success":"YES","status":"SUCCESS (PHPMailer)"}

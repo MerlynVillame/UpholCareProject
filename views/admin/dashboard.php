@@ -537,25 +537,25 @@ var myAreaChart = new Chart(ctxArea, {
             }
         },
         plugins: {
-            legend: {
-                display: false
-            },
+        legend: {
+            display: false
+        },
             tooltip: {
-                backgroundColor: "rgb(255,255,255)",
+            backgroundColor: "rgb(255,255,255)",
                 bodyColor: "#858796",
-                titleMarginBottom: 10,
+            titleMarginBottom: 10,
                 titleColor: '#6e707e',
                 titleFont: {
                     size: 14
                 },
-                borderColor: '#dddfeb',
-                borderWidth: 1,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
                 padding: 15,
-                displayColors: false,
-                intersect: false,
-                mode: 'index',
-                caretPadding: 10,
-                callbacks: {
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            callbacks: {
                     label: function(context) {
                         var datasetLabel = context.dataset.label || '';
                         return datasetLabel + ': ₱' + context.parsed.y.toLocaleString();
@@ -583,23 +583,23 @@ var myPieChart = new Chart(ctxPie, {
         maintainAspectRatio: false,
         plugins: {
             tooltip: {
-                backgroundColor: "rgb(255,255,255)",
+            backgroundColor: "rgb(255,255,255)",
                 bodyColor: "#858796",
-                borderColor: '#dddfeb',
-                borderWidth: 1,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
                 padding: 15,
-                displayColors: false,
-                caretPadding: 10,
-                callbacks: {
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
                     label: function(context) {
                         var datasetLabel = context.label || '';
                         var value = context.parsed || context.raw;
-                        return datasetLabel + ': ' + value + '%';
-                    }
+                    return datasetLabel + ': ' + value + '%';
                 }
-            },
-            legend: {
-                display: false
+            }
+        },
+        legend: {
+            display: false
             }
         },
         cutout: '80%'
@@ -612,21 +612,21 @@ var myPieChart = new Chart(ctxPie, {
         if (typeof jQuery !== 'undefined' && jQuery.fn.DataTable) {
             jQuery(document).ready(function($) {
                 if ($('#dataTable').length) {
-                    $('#dataTable').DataTable();
+    $('#dataTable').DataTable();
                 }
                 if ($('#pendingTable').length) {
-                    $('#pendingTable').DataTable({
-                        "paging": false,
-                        "searching": false,
-                        "info": false
-                    });
+    $('#pendingTable').DataTable({
+        "paging": false,
+        "searching": false,
+        "info": false
+    });
                 }
-                
-                // Set default date range to current month
-                const today = new Date();
-                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                
+    
+    // Set default date range to current month
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
                 const fromDateEl = document.getElementById('fromDate');
                 const toDateEl = document.getElementById('toDate');
                 if (fromDateEl) fromDateEl.valueAsDate = firstDay;

@@ -33,13 +33,6 @@
             <i class="fas fa-fw fa-calendar-check"></i>
             <span>All Bookings</span></a>
     </li>
-    
-    <!-- Nav Item - Booking Numbers -->
-    <li class="nav-item">
-        <a class="nav-link" href="<?php echo BASE_URL; ?>admin/bookingNumbers">
-            <i class="fas fa-fw fa-ticket-alt"></i>
-            <span>Booking Numbers</span></a>
-    </li>
 
     <!-- Nav Item - Inventory -->
     <li class="nav-item">
@@ -148,6 +141,14 @@ body.sidebar-toggled #content-wrapper {
     z-index: 998 !important;
     transition: left 0.3s ease;
     margin-bottom: 0 !important;
+    height: auto !important;
+    min-height: 56px !important;
+}
+
+/* Ensure topbar doesn't cover content */
+.topbar + .container-fluid {
+    margin-top: 80px !important;
+    padding-top: 1rem !important;
 }
 
 /* When sidebar is toggled, adjust topbar position */
@@ -158,6 +159,82 @@ body.sidebar-toggled .topbar {
 /* Container fluid should account for topbar */
 .container-fluid {
     margin-top: 80px; /* Space for fixed topbar */
+    padding-top: 1rem !important; /* Add padding to ensure titles are visible */
+    overflow: visible !important;
+}
+
+/* Ensure first child of container-fluid is fully visible */
+.container-fluid > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+/* Ensure page heading divs are fully visible */
+.container-fluid > .d-sm-flex,
+.container-fluid > .d-flex {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+/* Ensure h1, h2, h3 in page headings are fully visible */
+.container-fluid .d-sm-flex h1,
+.container-fluid .d-sm-flex .h1,
+.container-fluid .d-sm-flex h2,
+.container-fluid .d-sm-flex .h2,
+.container-fluid .d-sm-flex h3,
+.container-fluid .d-sm-flex .h3,
+.container-fluid .d-flex h1,
+.container-fluid .d-flex .h1,
+.container-fluid .d-flex h2,
+.container-fluid .d-flex .h2,
+.container-fluid .d-flex h3,
+.container-fluid .d-flex .h3 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+}
+
+/* Ensure page headings are fully visible and not cut off */
+.container-fluid > .d-sm-flex,
+.container-fluid > h1,
+.container-fluid > .h1,
+.container-fluid > h2,
+.container-fluid > .h2,
+.container-fluid > h3,
+.container-fluid > .h3,
+.container-fluid > .page-title,
+.container-fluid > .dashboard-title,
+.container-fluid h1,
+.container-fluid .h1,
+.container-fluid h2,
+.container-fluid .h2,
+.container-fluid h3,
+.container-fluid .h3,
+.container-fluid .page-title,
+.container-fluid .dashboard-title {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+/* Ensure breadcrumbs are visible */
+.container-fluid .breadcrumb {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 /* Footer - Fixed positioning */
@@ -177,13 +254,42 @@ body.sidebar-toggled .sticky-footer {
     left: 6.5rem; /* Collapsed sidebar width */
 }
 
-/* Ensure iframes are properly positioned beside sidebar */
+/* Ensure iframes are properly positioned beside sidebar and fully visible */
 iframe {
     position: relative !important;
     z-index: 1 !important;
     background: white;
     width: 100%;
     display: block;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    vertical-align: top !important;
+}
+
+/* Ensure iframe containers don't cut off the top */
+iframe[src*="maps"],
+iframe[src*="map"],
+iframe[src*="google"],
+iframe[src*="embed"] {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    vertical-align: top !important;
+}
+
+/* Ensure iframe wrapper divs don't hide the top */
+div[style*="border-radius"] iframe,
+.card-body iframe,
+.card iframe {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
 }
 
 /* Responsive: On mobile, sidebar should be overlay */
@@ -238,8 +344,29 @@ iframe {
     /* Container fluid */
     .container-fluid {
         margin-top: 56px !important; /* Topbar height on mobile */
+        padding-top: 0.5rem !important; /* Smaller padding on mobile */
         padding-left: 15px;
         padding-right: 15px;
+    }
+    
+    /* Ensure page titles are fully visible on mobile */
+    .container-fluid h1,
+    .container-fluid .h1,
+    .container-fluid h2,
+    .container-fluid .h2,
+    .container-fluid h3,
+    .container-fluid .h3,
+    .container-fluid .page-title {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* Ensure iframes are fully visible on mobile */
+    iframe {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        top: 0 !important;
     }
     
     /* Footer */

@@ -12,9 +12,9 @@ class Booking extends Model {
      * Get all bookings for a customer
      */
     public function getCustomerBookings($customerId, $status = null) {
-        $sql = "SELECT b.*, bn.booking_number, s.service_name, s.service_type, sc.category_name
+        $sql = "SELECT b.*, s.service_name, s.service_type, sc.category_name,
+                COALESCE(b.status, 'pending') as status
                 FROM {$this->table} b
-                LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
                 LEFT JOIN services s ON b.service_id = s.id
                 LEFT JOIN service_categories sc ON s.category_id = sc.id
                 WHERE b.user_id = ?";
@@ -22,7 +22,7 @@ class Booking extends Model {
         $params = [$customerId];
         
         if ($status && $status !== 'all') {
-            $sql .= " AND b.status = ?";
+            $sql .= " AND COALESCE(b.status, 'pending') = ?";
             $params[] = $status;
         }
         
@@ -30,18 +30,27 @@ class Booking extends Model {
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll();
+        $bookings = $stmt->fetchAll();
+        
+        // Ensure all bookings have a valid status (fix NULL/empty statuses)
+        foreach ($bookings as &$booking) {
+            if (empty($booking['status']) || $booking['status'] === null) {
+                $booking['status'] = 'pending';
+            }
+        }
+        
+        return $bookings;
     }
     
     /**
      * Get booking details
      */
     public function getBookingDetails($bookingId, $customerId) {
-        $sql = "SELECT b.*, bn.booking_number, s.service_name, s.service_type, s.description as service_description,
+        $sql = "SELECT b.*, s.service_name, s.service_type, s.description as service_description,
                 s.price as base_price, sc.category_name,
-                u.fullname as customer_name, u.email, u.phone
+                u.fullname as customer_name, u.email, u.phone,
+                COALESCE(b.status, 'pending') as status
                 FROM {$this->table} b
-                LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
                 LEFT JOIN services s ON b.service_id = s.id
                 LEFT JOIN service_categories sc ON s.category_id = sc.id
                 LEFT JOIN users u ON b.user_id = u.id
@@ -49,16 +58,29 @@ class Booking extends Model {
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$bookingId, $customerId]);
-        return $stmt->fetch();
+        $booking = $stmt->fetch();
+        
+        // Preserve the actual status from database - only default to 'pending' if truly NULL or empty
+        // Don't override valid statuses like 'approved', 'in_queue', etc.
+        if ($booking) {
+            $status = trim($booking['status'] ?? '');
+            if ($status === '' || $status === null || strtolower($status) === 'null') {
+                $booking['status'] = 'pending';
+            } else {
+                // Preserve the actual status from database (COALESCE already handled NULL)
+                $booking['status'] = $status;
+            }
+        }
+        
+        return $booking;
     }
     
     /**
      * Create new booking
-     * Note: Booking number is NOT assigned here - it will be assigned by admin when accepting the reservation
+     * Note: Booking numbers removed - system now uses availability based on stock and capacity
      */
     public function createBooking($data) {
-        // Do NOT assign booking number here - admin will assign it when accepting the reservation
-        // booking_number_id will remain NULL until admin assigns it
+        // Booking numbers removed - system now uses availability based on stock and capacity
         $data['created_at'] = date('Y-m-d H:i:s');
         // Status is set in the controller based on booking type
         
@@ -66,50 +88,39 @@ class Booking extends Model {
     }
     
     /**
-     * Assign booking number to a booking (called by admin when accepting)
+     * Assign booking number to a booking (DEPRECATED - Booking numbers removed)
+     * This method is kept for backward compatibility but does nothing
      */
     public function assignBookingNumber($bookingId, $bookingNumberId) {
-        return $this->update($bookingId, ['booking_number_id' => $bookingNumberId]);
+        // Booking numbers removed - system now uses availability based on stock and capacity
+        return true;
     }
     
     /**
-     * Get next available booking number (assigned by admin)
+     * Get next available booking number (DEPRECATED - Booking numbers removed)
+     * Returns null as booking numbers are no longer used
      */
     private function getNextAvailableBookingNumber() {
-        // Find a booking number that hasn't been used yet
-        $stmt = $this->db->prepare("SELECT bn.id FROM booking_numbers bn 
-                                    LEFT JOIN bookings b ON bn.id = b.booking_number_id 
-                                    WHERE b.booking_number_id IS NULL 
-                                    ORDER BY bn.id ASC 
-                                    LIMIT 1");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        
-        return $result ? $result['id'] : null;
+        // Booking numbers removed - system now uses availability based on stock and capacity
+        return null;
     }
     
     /**
-     * Get all available booking numbers (for admin)
+     * Get all available booking numbers (DEPRECATED - Booking numbers removed)
+     * Returns empty array as booking numbers are no longer used
      */
     public function getAvailableBookingNumbers() {
-        $stmt = $this->db->prepare("SELECT bn.* FROM booking_numbers bn 
-                                    LEFT JOIN bookings b ON bn.id = b.booking_number_id 
-                                    WHERE b.booking_number_id IS NULL 
-                                    ORDER BY bn.id ASC");
-        $stmt->execute();
-        return $stmt->fetchAll();
+        // Booking numbers removed - system now uses availability based on stock and capacity
+        return [];
     }
     
     /**
-     * Get all used booking numbers (for admin)
+     * Get all used booking numbers (DEPRECATED - Booking numbers removed)
+     * Returns empty array as booking numbers are no longer used
      */
     public function getUsedBookingNumbers() {
-        $stmt = $this->db->prepare("SELECT bn.*, b.id as booking_id, b.created_at as booking_created_at 
-                                    FROM booking_numbers bn 
-                                    INNER JOIN bookings b ON bn.id = b.booking_number_id 
-                                    ORDER BY b.created_at DESC");
-        $stmt->execute();
-        return $stmt->fetchAll();
+        // Booking numbers removed - system now uses availability based on stock and capacity
+        return [];
     }
     
     /**
@@ -177,9 +188,8 @@ class Booking extends Model {
     public function getRecentBookings($customerId, $limit = 5) {
         if ($customerId) {
             // Get bookings for specific customer
-            $sql = "SELECT b.*, bn.booking_number, s.service_name, u.fullname as customer_name
+            $sql = "SELECT b.*, s.service_name, u.fullname as customer_name
                     FROM {$this->table} b
-                    LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
                     LEFT JOIN services s ON b.service_id = s.id
                     LEFT JOIN users u ON b.user_id = u.id
                     WHERE b.user_id = ?
@@ -190,9 +200,8 @@ class Booking extends Model {
             $stmt->execute([$customerId, $limit]);
         } else {
             // Get all recent bookings (for admin dashboard)
-            $sql = "SELECT b.*, bn.booking_number, s.service_name, u.fullname as customer_name
+            $sql = "SELECT b.*, s.service_name, u.fullname as customer_name
                     FROM {$this->table} b
-                    LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
                     LEFT JOIN services s ON b.service_id = s.id
                     LEFT JOIN users u ON b.user_id = u.id
                     ORDER BY b.created_at DESC

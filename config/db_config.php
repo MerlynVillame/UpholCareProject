@@ -10,7 +10,7 @@ if (!defined('DB_HOST')) {
     define('DB_HOST', 'localhost');
 }
 if (!defined('DB_NAME')) {
-    define('DB_NAME', 'upholcare_customers');
+    define('DB_NAME', 'db_upholcare');
 }
 if (!defined('DB_USER')) {
     define('DB_USER', 'upholcare');

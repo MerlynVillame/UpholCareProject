@@ -6,18 +6,29 @@
 // Base URL configuration
 const BASE_URL = window.location.origin + "/UphoCare/";
 
+// Global AJAX setup to prevent caching issues
+if (typeof jQuery !== "undefined") {
+  jQuery.ajaxSetup({
+    cache: false,
+    beforeSend: function (xhr) {
+      xhr.setRequestHeader("Cache-Control", "no-cache");
+      xhr.setRequestHeader("Pragma", "no-cache");
+    },
+  });
+}
+
 // Wait for jQuery to be loaded before initializing
-(function() {
+(function () {
   function initUphoCare() {
-    if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+    if (typeof jQuery === "undefined" || typeof $ === "undefined") {
       // jQuery not loaded yet, wait a bit and try again
       setTimeout(initUphoCare, 50);
       return;
     }
-    
+
     // jQuery is loaded, proceed with initialization
     var $ = jQuery;
-    
+
     // Document Ready
     $(document).ready(function () {
       // Initialize all components
@@ -32,45 +43,111 @@ const BASE_URL = window.location.origin + "/UphoCare/";
 
       // Auto-hide alerts after 5 seconds
       autoHideAlerts();
-      
+
       // Initialize other jQuery-dependent code
       initJQueryDependentCode();
     });
   }
-  
+
   // Start initialization
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initUphoCare);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initUphoCare);
   } else {
     initUphoCare();
   }
 })();
 
 /**
- * Initialize DataTables
+ * Initialize DataTables with error handling
  */
 function initializeDataTables() {
-  if (typeof jQuery !== 'undefined' && jQuery.fn.DataTable) {
+  if (typeof jQuery !== "undefined" && jQuery.fn.DataTable) {
     var $ = jQuery;
-    $(".data-table").DataTable({
-      pageLength: 10,
-      ordering: true,
-      searching: true,
-      lengthChange: true,
-      info: true,
-      autoWidth: false,
-      responsive: true,
-      language: {
-        search: "Search:",
-        lengthMenu: "Show _MENU_ entries",
-        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-        paginate: {
-          first: "First",
-          last: "Last",
-          next: "Next",
-          previous: "Previous",
-        },
-      },
+
+    // Initialize tables with class .data-table
+    $(".data-table").each(function () {
+      try {
+        var $table = $(this);
+
+        // Check if table has proper structure
+        if (
+          $table.find("thead").length === 0 ||
+          $table.find("thead th").length === 0
+        ) {
+          console.warn("DataTable: Table missing thead or th elements", $table);
+          return;
+        }
+
+        // Check if DataTable is already initialized
+        if ($.fn.DataTable.isDataTable($table)) {
+          return;
+        }
+
+        $table.DataTable({
+          pageLength: 10,
+          ordering: true,
+          searching: true,
+          lengthChange: true,
+          info: true,
+          autoWidth: false,
+          responsive: true,
+          language: {
+            search: "Search:",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            paginate: {
+              first: "First",
+              last: "Last",
+              next: "Next",
+              previous: "Previous",
+            },
+          },
+        });
+      } catch (error) {
+        console.error("DataTable initialization error:", error, this);
+      }
+    });
+
+    // Also handle tables with id containing "Table" or "DataTable"
+    $('table[id*="Table"], table[id*="DataTable"]').each(function () {
+      try {
+        var $table = $(this);
+        var tableId = $table.attr("id");
+
+        // Skip if already initialized
+        if ($.fn.DataTable.isDataTable($table)) {
+          return;
+        }
+
+        // Check if table has proper structure
+        if (
+          $table.find("thead").length === 0 ||
+          $table.find("thead th").length === 0
+        ) {
+          return;
+        }
+
+        // Check if tbody exists and has at least one row or is empty (empty is OK)
+        var tbody = $table.find("tbody");
+        if (tbody.length === 0) {
+          return;
+        }
+
+        // Initialize with basic options
+        $table.DataTable({
+          pageLength: 10,
+          ordering: true,
+          searching: true,
+          responsive: true,
+          autoWidth: false,
+        });
+      } catch (error) {
+        console.error(
+          "DataTable initialization error for table:",
+          tableId,
+          error
+        );
+      }
     });
   }
 }
@@ -79,7 +156,7 @@ function initializeDataTables() {
  * Initialize Bootstrap Tooltips
  */
 function initializeTooltips() {
-  if (typeof jQuery !== 'undefined') {
+  if (typeof jQuery !== "undefined") {
     var $ = jQuery;
     $('[data-toggle="tooltip"]').tooltip();
   }
@@ -89,7 +166,7 @@ function initializeTooltips() {
  * Initialize Bootstrap Popovers
  */
 function initializePopovers() {
-  if (typeof jQuery !== 'undefined') {
+  if (typeof jQuery !== "undefined") {
     var $ = jQuery;
     $('[data-toggle="popover"]').popover();
   }
@@ -99,7 +176,7 @@ function initializePopovers() {
  * Initialize Confirm Dialogs
  */
 function initializeConfirmDialogs() {
-  if (typeof jQuery !== 'undefined') {
+  if (typeof jQuery !== "undefined") {
     var $ = jQuery;
     $(".confirm-action").on("click", function (e) {
       const message =
@@ -117,7 +194,7 @@ function initializeConfirmDialogs() {
  * Auto-hide alerts
  */
 function autoHideAlerts() {
-  if (typeof jQuery !== 'undefined') {
+  if (typeof jQuery !== "undefined") {
     var $ = jQuery;
     setTimeout(function () {
       $(".alert:not(.alert-permanent)").fadeOut("slow", function () {
@@ -131,7 +208,7 @@ function autoHideAlerts() {
  * Initialize Form Validation
  */
 function initializeFormValidation() {
-  if (typeof jQuery !== 'undefined') {
+  if (typeof jQuery !== "undefined") {
     var $ = jQuery;
     // Add custom validation for forms
     $("form.needs-validation").on("submit", function (e) {
@@ -157,7 +234,7 @@ function initializeFormValidation() {
  * Validate Email
  */
 function validateEmail(field) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   const email = field.val();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -179,7 +256,7 @@ function validateEmail(field) {
  * Validate Phone
  */
 function validatePhone(field) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   const phone = field.val();
   const phoneRegex = /^[0-9]{10,15}$/;
@@ -201,7 +278,7 @@ function validatePhone(field) {
  * Initialize AJAX Forms
  */
 function initializeAjaxForms() {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   $(".ajax-form").on("submit", function (e) {
     e.preventDefault();
@@ -250,7 +327,7 @@ function initializeAjaxForms() {
  * Initialize Datepickers
  */
 function initializeDatepickers() {
-  if (typeof jQuery !== 'undefined') {
+  if (typeof jQuery !== "undefined") {
     var $ = jQuery;
     // Set minimum date to today
     const today = new Date().toISOString().split("T")[0];
@@ -262,7 +339,7 @@ function initializeDatepickers() {
  * Initialize Status Updates
  */
 function initializeStatusUpdates() {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   $(".status-update-select").on("change", function () {
     const select = $(this);
@@ -282,7 +359,7 @@ function initializeStatusUpdates() {
  * Update Booking Status via AJAX
  */
 function updateBookingStatus(bookingId, status) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   $.ajax({
     url: BASE_URL + "admin/updateBookingStatus",
@@ -292,11 +369,16 @@ function updateBookingStatus(bookingId, status) {
       status: status,
     },
     dataType: "json",
+    cache: false,
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
     success: function (response) {
       if (response.success) {
         showNotification("success", "Status updated successfully!");
         setTimeout(function () {
-          location.reload();
+          location.reload(true); // Force reload from server
         }, 1500);
       } else {
         showNotification(
@@ -305,8 +387,12 @@ function updateBookingStatus(bookingId, status) {
         );
       }
     },
-    error: function () {
-      showNotification("error", "An error occurred while updating status.");
+    error: function (xhr, status, error) {
+      console.error("Status update error:", error);
+      showNotification(
+        "error",
+        "An error occurred while updating status. Please refresh the page."
+      );
     },
   });
 }
@@ -342,19 +428,35 @@ function filterBookings(status) {
  * Load Service Details
  */
 function loadServiceDetails(serviceId) {
-  if (!serviceId || typeof jQuery === 'undefined') return;
+  if (!serviceId || typeof jQuery === "undefined") return;
   var $ = jQuery;
   $.ajax({
-    url: BASE_URL + "customer/getServiceDetails/" + serviceId,
+    url:
+      BASE_URL +
+      "customer/getServiceDetails/" +
+      serviceId +
+      "?t=" +
+      new Date().getTime(),
     method: "GET",
     dataType: "json",
+    cache: false,
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
     success: function (response) {
       if (response.success) {
         displayServiceDetails(response.data);
       }
     },
-    error: function () {
-      console.error("Failed to load service details");
+    error: function (xhr, status, error) {
+      console.error("Failed to load service details:", error);
+      if (typeof showNotification === "function") {
+        showNotification(
+          "error",
+          "Failed to load service details. Please refresh the page."
+        );
+      }
     },
   });
 }
@@ -363,7 +465,7 @@ function loadServiceDetails(serviceId) {
  * Display Service Details
  */
 function displayServiceDetails(service) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   $("#servicePrice").text(
     "₱" +
@@ -421,7 +523,7 @@ function confirmDelete(url, message) {
  * Calculate Total Amount
  */
 function calculateTotal() {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   let total = 0;
   $(".item-price").each(function () {
@@ -443,7 +545,7 @@ function calculateTotal() {
  * Preview Image Before Upload
  */
 function previewImage(input, previewId) {
-  if (typeof jQuery === 'undefined' || !input.files || !input.files[0]) return;
+  if (typeof jQuery === "undefined" || !input.files || !input.files[0]) return;
   var $ = jQuery;
   const reader = new FileReader();
   reader.onload = function (e) {
@@ -458,7 +560,7 @@ function previewImage(input, previewId) {
  * Toggle Password Visibility
  */
 function togglePassword(buttonElement) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   const input = $(buttonElement).siblings("input");
   const icon = $(buttonElement).find("i");
@@ -541,7 +643,7 @@ function printTable(tableId) {
  * Scroll to Top
  */
 function scrollToTop() {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   $("html, body").animate({ scrollTop: 0 }, "smooth");
 }
@@ -550,7 +652,7 @@ function scrollToTop() {
  * Load More Items (Pagination)
  */
 function loadMore(url, containerId) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   $.ajax({
     url: url,
@@ -575,7 +677,7 @@ function loadMore(url, containerId) {
  * Real-time Search
  */
 function liveSearch(query, searchUrl, resultsContainer) {
-  if (typeof jQuery === 'undefined') return;
+  if (typeof jQuery === "undefined") return;
   var $ = jQuery;
   if (query.length < 2) {
     $(resultsContainer).empty();
@@ -596,12 +698,12 @@ function liveSearch(query, searchUrl, resultsContainer) {
  * Initialize jQuery-dependent code (called after jQuery is loaded)
  */
 function initJQueryDependentCode() {
-  if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+  if (typeof jQuery === "undefined" || typeof $ === "undefined") {
     return;
   }
-  
+
   var $ = jQuery;
-  
+
   /**
    * Initialize Live Search
    */
@@ -686,7 +788,7 @@ let sessionTimeout = 3600000; // 1 hour in milliseconds
 let warningTimeout = sessionTimeout - 300000; // 5 minutes before session expires
 
 setTimeout(function () {
-  if (typeof Swal !== "undefined") {
+  if (typeof Swal !== "undefined" && typeof jQuery !== "undefined") {
     Swal.fire({
       title: "Session Expiring Soon",
       text: "Your session will expire in 5 minutes. Do you want to continue?",
@@ -697,7 +799,15 @@ setTimeout(function () {
     }).then((result) => {
       if (result.isConfirmed) {
         // Refresh session
-        $.get(BASE_URL + "auth/refreshSession");
+        jQuery.ajax({
+          url: BASE_URL + "auth/refreshSession",
+          method: "GET",
+          cache: false,
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        });
       } else {
         window.location.href = BASE_URL + "auth/logout";
       }

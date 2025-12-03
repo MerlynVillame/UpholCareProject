@@ -79,6 +79,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+    justify-content: center;
+    align-items: center;
 }
 
 .filter-tag {
@@ -195,6 +197,8 @@
     overflow: hidden;
     position: relative;
     box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
 }
 
 .service-card:hover {
@@ -221,6 +225,9 @@
 
 .service-card-body {
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .service-name {
@@ -244,6 +251,7 @@
     line-height: 1.7;
     margin-bottom: 1.5rem;
     min-height: 60px;
+    flex: 1;
 }
 
 .service-info {
@@ -262,12 +270,13 @@
 }
 
 .price-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #6c757d;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     margin-bottom: 0.5rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .price-amount {
@@ -429,6 +438,8 @@
     padding: 2rem 0;
     border-radius: 1.5rem;
     transition: all 0.3s;
+    width: 100%;
+    overflow: hidden;
 }
 
 .category-section:hover {
@@ -478,13 +489,21 @@
 
 /* Add spacing around service cards */
 .service-item {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
-.row {
-    margin-left: -1rem;
-    margin-right: -1rem;
+#servicesContainer .row {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#servicesContainer .row > [class*="col-"] {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
 }
 
 /* Modal enhancements */
@@ -532,8 +551,19 @@
     }
     
     .service-item {
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    #servicesContainer .row {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+    
+    #servicesContainer .row > [class*="col-"] {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
 }
 </style>
@@ -552,12 +582,19 @@
         <p>We're currently updating our services catalog. Please check back later.</p>
     </div>
 <?php else: ?>
-    <!-- Search and Filter Section -->
+    <!-- Search Section -->
     <div class="search-filter-section">
         <div class="search-box">
             <i class="fas fa-search"></i>
             <input type="text" id="searchInput" placeholder="Search services by name or description...">
         </div>
+        <div class="results-count" id="resultsCount">
+            Showing all <?php echo count($services); ?> services
+        </div>
+    </div>
+    
+    <!-- Category Filters Section -->
+    <div class="search-filter-section" style="margin-top: 1rem;">
         <div class="filter-tags" id="filterTags">
             <div class="filter-tag active" data-filter="all">All Services</div>
             <?php
@@ -571,13 +608,10 @@
             }
             ?>
         </div>
-        <div class="results-count" id="resultsCount">
-            Showing all <?php echo count($services); ?> services
-        </div>
     </div>
 
     <!-- Service Categories -->
-    <div id="servicesContainer">
+    <div id="servicesContainer" style="width: 100%; overflow: hidden;">
         <?php 
         $currentCategory = '';
         $categoryCount = 0;
@@ -624,7 +658,7 @@
             <?php endif; ?>
             
              <!-- Service Card -->
-             <div class="col-lg-4 col-md-6 mb-4 px-3 service-item" 
+             <div class="col-lg-4 col-md-6 service-item" 
                   data-name="<?php echo strtolower(htmlspecialchars($service['service_name'])); ?>" 
                   data-description="<?php echo strtolower(htmlspecialchars($service['description'] ?? '')); ?>"
                   data-service-id="<?php echo $service['id']; ?>"
@@ -648,7 +682,7 @@
                         
                         <div class="service-info">
                             <div class="service-price">
-                                <div class="price-label">Starting from</div>
+                                <div class="price-label">From</div>
                                 <div class="price-amount">
                                     ₱<?php 
                                     $price = $service['price'] ?? $service['base_price'] ?? 0;
@@ -725,7 +759,7 @@
                         <div class="p-3" style="background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%); border-radius: 0.75rem; border: 1px solid #e3e6f0;">
                             <div class="d-flex align-items-center mb-2">
                                 <i class="fas fa-tag mr-2" style="color: #8B4513; font-size: 1.25rem;"></i>
-                                <h6 class="mb-0" style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Starting Price</h6>
+                                <h6 class="mb-0" style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Price</h6>
                             </div>
                             <h3 id="modalServicePrice" class="mb-0" style="font-weight: 800; background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></h3>
                         </div>

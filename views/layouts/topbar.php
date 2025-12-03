@@ -5,13 +5,13 @@
     <div id="content">
 
         <!-- Sidebar Backdrop (Mobile) -->
-        <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+        <div class="sidebar-backdrop"></div>
 
         <!-- Topbar -->
         <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
 
             <!-- Sidebar Toggle (Topbar) -->
-            <button id="sidebarToggleTop" class="btn btn-link d-lg-none rounded-circle mr-3" onclick="toggleSidebar()" type="button" aria-label="Toggle sidebar">
+            <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" type="button" aria-label="Toggle sidebar" style="color: #5a5c69; font-size: 1.25rem; padding: 0.5rem; z-index: 1051;">
                 <i class="fa fa-bars"></i>
             </button>
 

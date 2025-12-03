@@ -1,14 +1,14 @@
 <!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%);">
+<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important; background-color: #1a252f !important; opacity: 1 !important;">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>customer/dashboard" style="height: 80px; background: rgba(0,0,0,0.2);">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>customer/dashboard" style="height: 80px; background: #0d1117 !important; background-color: #0d1117 !important; opacity: 1 !important;">
         <div class="sidebar-brand-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px; border-radius: 12px;">
             <i class="fas fa-couch fa-lg" style="color: white;"></i>
         </div>
         <div class="sidebar-brand-text mx-2" style="font-weight: 700; font-size: 1.2rem; line-height: 1.3;">
             <?php echo APP_NAME; ?><br>
-            <small style="font-size: 0.65rem; font-weight: 400; opacity: 0.8;">Customer Portal</small>
+            <small style="font-size: 0.65rem; font-weight: 400; opacity: 1 !important; color: rgba(255, 255, 255, 0.9) !important;">Customer Portal</small>
         </div>
     </a>
 
@@ -40,15 +40,6 @@
         </a>
     </li>
 
-    <!-- Nav Item - Payments -->
-    <li class="nav-item <?php echo (strpos($_SERVER['REQUEST_URI'], 'payment') !== false) ? 'active' : ''; ?>">
-        <a class="nav-link" href="<?php echo BASE_URL; ?>customer/payments">
-            <i class="fas fa-fw fa-credit-card"></i>
-            <span>Payments</span>
-            
-        </a>
-    </li>
-
     <!-- Divider -->
     <hr class="sidebar-divider">
 
@@ -57,11 +48,11 @@
         SERVICES & INFO
     </div>
 
-    <!-- Nav Item - Services Catalog -->
-    <li class="nav-item <?php echo (strpos($_SERVER['REQUEST_URI'], 'service') !== false) ? 'active' : ''; ?>">
-        <a class="nav-link" href="<?php echo BASE_URL; ?>customer/servicesCatalog">
-            <i class="fas fa-fw fa-tools"></i>
-            <span>Services Catalog</span>
+    <!-- Nav Item - Fabric/Color Catalog -->
+    <li class="nav-item <?php echo (strpos($_SERVER['REQUEST_URI'], 'fabricsCatalog') !== false) ? 'active' : ''; ?>">
+        <a class="nav-link" href="<?php echo BASE_URL; ?>customer/fabricsCatalog">
+            <i class="fas fa-fw fa-palette"></i>
+            <span>Fabric/Color Catalog</span>
         </a>
     </li>
 
@@ -112,7 +103,8 @@
 
 <style>
 /* Sidebar border adjustments */
-.sidebar {
+.sidebar,
+#accordionSidebar {
     border-right: 3px solid #4e73df;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
@@ -124,6 +116,9 @@
     overflow-x: hidden;
     z-index: 999;
     width: 14rem; /* Ensure sidebar has fixed width on desktop */
+    background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
+    opacity: 1 !important;
+    background-color: #1a252f !important;
 }
 
 /* Business mode - hide sidebar (only on profile page) */
@@ -173,8 +168,66 @@ body:not(.customer-profile) .sidebar {
     display: block;
 }
 
-.sidebar .nav-item.active .nav-link {
-    background-color: rgba(255, 255, 255, 0.1);
+.sidebar .nav-item.active .nav-link,
+#accordionSidebar .nav-item.active .nav-link {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+}
+
+/* Ensure sidebar brand is not transparent */
+.sidebar-brand {
+    background: #0d1117 !important;
+    background-color: #0d1117 !important;
+    opacity: 1 !important;
+}
+
+/* Ensure all sidebar elements are fully opaque */
+.sidebar,
+.sidebar *,
+#accordionSidebar,
+#accordionSidebar * {
+    opacity: 1 !important;
+}
+
+/* Override any transparent backgrounds - use solid colors */
+.sidebar,
+#accordionSidebar {
+    background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
+    background-color: #1a252f !important;
+    opacity: 1 !important;
+}
+
+/* Ensure nav items are not transparent */
+.sidebar .nav-item,
+#accordionSidebar .nav-item {
+    opacity: 1 !important;
+    background: transparent !important;
+}
+
+.sidebar .nav-link,
+#accordionSidebar .nav-link {
+    opacity: 1 !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.sidebar .nav-link:hover,
+#accordionSidebar .nav-link:hover {
+    opacity: 1 !important;
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure dividers are visible */
+.sidebar-divider {
+    opacity: 1 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure headings are visible */
+.sidebar-heading {
+    opacity: 1 !important;
+    color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .sidebar .nav-link {
@@ -212,13 +265,151 @@ body:not(.customer-profile) .sidebar {
     background: rgba(255, 255, 255, 0.5);
 }
 
-/* Ensure iframes are properly positioned beside sidebar */
+/* Ensure iframes are properly positioned beside sidebar and fully visible */
 iframe {
     position: relative !important;
     z-index: 1 !important;
     background: white;
     width: 100%;
     display: block;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    vertical-align: top !important;
+}
+
+/* Ensure iframe containers don't cut off the top */
+iframe[src*="maps"],
+iframe[src*="map"],
+iframe[src*="google"],
+iframe[src*="embed"] {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    vertical-align: top !important;
+}
+
+/* Ensure iframe wrapper divs don't hide the top */
+div[style*="border-radius"] iframe,
+.card-body iframe,
+.card iframe {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+}
+
+/* Adjust container-fluid to ensure page titles are visible */
+.container-fluid {
+    margin-top: 80px; /* Space for fixed topbar */
+    padding-top: 1rem !important; /* Add padding to ensure titles are visible */
+    overflow: visible !important;
+}
+
+/* Ensure first child of container-fluid is fully visible */
+.container-fluid > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+/* Ensure page heading divs are fully visible */
+.container-fluid > .d-sm-flex,
+.container-fluid > .d-flex {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+/* Ensure h1, h2, h3 in page headings are fully visible */
+.container-fluid .d-sm-flex h1,
+.container-fluid .d-sm-flex .h1,
+.container-fluid .d-sm-flex h2,
+.container-fluid .d-sm-flex .h2,
+.container-fluid .d-sm-flex h3,
+.container-fluid .d-sm-flex .h3,
+.container-fluid .d-flex h1,
+.container-fluid .d-flex .h1,
+.container-fluid .d-flex h2,
+.container-fluid .d-flex .h2,
+.container-fluid .d-flex h3,
+.container-fluid .d-flex .h3 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+}
+
+/* Ensure page headings are fully visible and not cut off */
+.container-fluid > .d-sm-flex,
+.container-fluid > h1,
+.container-fluid > .h1,
+.container-fluid > h2,
+.container-fluid > .h2,
+.container-fluid > h3,
+.container-fluid > .h3,
+.container-fluid > .page-title,
+.container-fluid > .dashboard-title,
+.container-fluid h1,
+.container-fluid .h1,
+.container-fluid h2,
+.container-fluid .h2,
+.container-fluid h3,
+.container-fluid .h3,
+.container-fluid .page-title,
+.container-fluid .dashboard-title {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+/* Ensure breadcrumbs are visible */
+.container-fluid .breadcrumb {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* On mobile, reduce margin to show more content */
+@media (max-width: 991.98px) {
+    .container-fluid {
+        margin-top: 56px !important; /* Topbar height on mobile */
+        padding-top: 0.5rem !important; /* Smaller padding on mobile */
+    }
+    
+    /* Ensure page titles are fully visible on mobile */
+    .container-fluid h1,
+    .container-fluid .h1,
+    .container-fluid h2,
+    .container-fluid .h2,
+    .container-fluid h3,
+    .container-fluid .h3,
+    .container-fluid .page-title {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* Ensure iframes are fully visible on mobile */
+    iframe {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        top: 0 !important;
+    }
 }
 
 /* Content wrapper should be beside sidebar, not under it */
@@ -230,6 +421,17 @@ iframe {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: visible !important;
+}
+
+/* Ensure content area doesn't cut off iframes */
+#content {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    padding-bottom: 60px; /* Space for fixed footer */
+    overflow: visible !important;
+    padding-top: 0 !important;
 }
 
 /* When sidebar is toggled, adjust content margin */
@@ -237,12 +439,32 @@ body.sidebar-toggled #content-wrapper {
     margin-left: 6.5rem; /* Collapsed sidebar width */
 }
 
-/* Ensure content area is properly positioned */
-#content {
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    padding-bottom: 60px; /* Space for fixed footer */
+/* Ensure iframes in content area are fully visible at the top */
+#content iframe,
+.container-fluid iframe,
+.card iframe,
+.card-body iframe {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    vertical-align: top !important;
+}
+
+/* Ensure iframes in content area are fully visible at the top */
+#content iframe,
+.container-fluid iframe,
+.card iframe,
+.card-body iframe {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    vertical-align: top !important;
 }
 
 /* Topbar - Fixed positioning */
@@ -254,6 +476,14 @@ body.sidebar-toggled #content-wrapper {
     z-index: 998 !important;
     transition: left 0.3s ease;
     margin-bottom: 0 !important;
+    height: auto !important;
+    min-height: 56px !important;
+}
+
+/* Ensure topbar doesn't cover content */
+.topbar + .container-fluid {
+    margin-top: 80px !important;
+    padding-top: 1rem !important;
 }
 
 /* When sidebar is toggled, adjust topbar position */
@@ -295,36 +525,74 @@ body.sidebar-toggled .sticky-footer {
 /* Responsive: On mobile, sidebar should be overlay */
 @media (max-width: 991.98px) {
     /* Sidebar overlay on mobile */
-    .sidebar {
+    .sidebar,
+    #accordionSidebar {
         position: fixed !important;
-        top: 0;
+        top: 0 !important;
         left: -14rem; /* Hidden by default */
-        height: 100vh;
+        height: 100vh !important;
         width: 14rem !important;
-        z-index: 1050;
-        transition: left 0.3s ease;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        z-index: 1060 !important;
+        transition: left 0.3s ease, transform 0.3s ease !important;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.4) !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: translateX(0) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
+        background-color: #1a252f !important;
     }
     
-    /* Show sidebar when toggled */
-    body.sidebar-toggled .sidebar {
-        left: 0;
+    /* Show sidebar when toggled - ensure fully opaque */
+    body.sidebar-toggled .sidebar,
+    body.sidebar-toggled #accordionSidebar,
+    .sidebar.toggled,
+    #accordionSidebar.toggled,
+    body.sidebar-toggled .sidebar.toggled,
+    body.sidebar-toggled #accordionSidebar.toggled {
+        left: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: translateX(0) !important;
+        z-index: 1060 !important;
+        background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
+        background-color: #1a252f !important;
+    }
+    
+    /* Force all sidebar content to be opaque on mobile */
+    @media (max-width: 991.98px) {
+        body.sidebar-toggled .sidebar *,
+        body.sidebar-toggled #accordionSidebar * {
+            opacity: 1 !important;
+        }
+        
+        body.sidebar-toggled .sidebar-brand {
+            background: #0d1117 !important;
+            background-color: #0d1117 !important;
+            opacity: 1 !important;
+        }
     }
     
     /* Overlay backdrop when sidebar is open */
     .sidebar-backdrop {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1040;
+        display: none !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        z-index: 1050 !important;
+        opacity: 1 !important;
+        transition: opacity 0.3s ease !important;
     }
     
     body.sidebar-toggled .sidebar-backdrop {
-        display: block;
+        display: block !important;
+        opacity: 1 !important;
     }
     
     /* Content wrapper adjustments */
@@ -338,14 +606,67 @@ body.sidebar-toggled .sticky-footer {
         position: fixed !important;
         left: 0 !important;
         right: 0 !important;
-        z-index: 1030 !important;
+        z-index: 1020 !important;
+    }
+    
+    /* When sidebar is open, it should be above topbar */
+    body.sidebar-toggled .sidebar,
+    body.sidebar-toggled #accordionSidebar {
+        z-index: 1060 !important;
+        position: fixed !important;
+    }
+    
+    body.sidebar-toggled .sidebar-backdrop {
+        z-index: 1050 !important;
+        position: fixed !important;
+    }
+    
+    /* Ensure sidebar is always on top when toggled */
+    @media (max-width: 991.98px) {
+        body.sidebar-toggled .sidebar,
+        body.sidebar-toggled #accordionSidebar {
+            z-index: 9999 !important;
+        }
+        
+        body.sidebar-toggled .sidebar-backdrop {
+            z-index: 9998 !important;
+        }
+        
+        /* Ensure topbar doesn't cover sidebar */
+        body.sidebar-toggled .topbar {
+            z-index: 1020 !important;
+        }
     }
     
     /* Container fluid */
     .container-fluid {
         margin-top: 56px !important; /* Topbar height on mobile */
+        padding-top: 0.5rem !important; /* Smaller padding on mobile */
         padding-left: 15px;
         padding-right: 15px;
+        overflow: visible !important;
+    }
+    
+    /* Ensure page titles are fully visible on mobile */
+    .container-fluid > .d-sm-flex:first-child,
+    .container-fluid > h1:first-child,
+    .container-fluid > .h1:first-child,
+    .container-fluid > h3:first-child,
+    .container-fluid > .h3:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        visibility: visible !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* Ensure breadcrumbs are visible */
+    .container-fluid .breadcrumb {
+        margin-top: 0.25rem !important;
+        padding-top: 0 !important;
+        visibility: visible !important;
     }
     
     /* Footer */
@@ -392,6 +713,47 @@ body.sidebar-toggled .sticky-footer {
     /* Ensure sidebar toggle button in topbar is visible */
     #sidebarToggleTop {
         display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 10000 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+        background-color: transparent !important;
+        border: none !important;
+        color: #5a5c69 !important;
+        padding: 0.5rem !important;
+        margin-right: 0.5rem !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        touch-action: manipulation !important;
+    }
+    
+    #sidebarToggleTop:hover {
+        color: #8B4513 !important;
+        background-color: rgba(139, 69, 19, 0.1) !important;
+    }
+    
+    #sidebarToggleTop:active {
+        transform: scale(0.95);
+        background-color: rgba(139, 69, 19, 0.2) !important;
+    }
+    
+    #sidebarToggleTop:focus {
+        outline: 2px solid #8B4513 !important;
+        outline-offset: 2px !important;
+    }
+    
+    #sidebarToggleTop i {
+        pointer-events: none;
+        font-size: 1.25rem !important;
+    }
+    
+    /* Ensure button is always clickable even when sidebar is open */
+    body.sidebar-toggled #sidebarToggleTop {
+        z-index: 10001 !important;
+        position: relative !important;
     }
 }
 

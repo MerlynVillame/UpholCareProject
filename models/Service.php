@@ -22,7 +22,13 @@ class Service extends Model {
                 END as category_icon
                 FROM {$this->table} s
                 WHERE s.status = 'active'
-                ORDER BY s.service_type, s.service_name";
+                ORDER BY s.service_type, 
+                         CASE 
+                             WHEN s.service_name = 'Truck Cover Custom' THEN 1
+                             WHEN s.service_name = 'Motor Seat' THEN 2
+                             ELSE 3
+                         END,
+                         s.service_name";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -53,6 +59,20 @@ class Service extends Model {
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$categoryId, $type]);
         return $stmt->fetchAll();
+    }
+    
+    /**
+     * Get service by category and name
+     */
+    public function getByCategoryAndName($categoryId, $serviceName) {
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE category_id = ? AND service_name = ? AND status = 'active'
+                ORDER BY service_name
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$categoryId, $serviceName]);
+        return $stmt->fetch();
     }
     
     /**

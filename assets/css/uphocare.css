@@ -723,3 +723,148 @@ html {
     color: #000 !important;
   }
 }
+
+/* ============================================
+   MODAL FIXES - Ensure modals are visible and clickable
+   ============================================ */
+
+/* Fix Modal Visibility and Z-Index Issues */
+.modal {
+    z-index: 1050 !important;
+    display: none;
+}
+
+.modal.show {
+    display: block !important;
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+    pointer-events: none !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-backdrop.show {
+    opacity: 0.5;
+    z-index: 1040 !important;
+    pointer-events: none !important;
+}
+
+.modal-dialog {
+    z-index: 1055 !important;
+    pointer-events: auto !important;
+    position: relative;
+    margin: 1.75rem auto;
+    max-width: 500px;
+}
+
+.modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.3rem;
+    outline: 0;
+    z-index: 1055 !important;
+}
+
+/* Ensure modals are above everything */
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+
+body.modal-open .modal {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Fix for modal sizes */
+.modal-xl {
+    max-width: 1140px;
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+.modal-sm {
+    max-width: 300px;
+}
+
+/* Ensure close button is clickable */
+.modal-header .close {
+    z-index: 1056 !important;
+    position: relative;
+    cursor: pointer;
+    padding: 1rem;
+    margin: -1rem -1rem -1rem auto;
+    background-color: transparent;
+    border: 0;
+    opacity: 0.5;
+}
+
+.modal-header .close:hover {
+    opacity: 1;
+}
+
+/* Fix for buttons inside modals */
+.modal-footer button,
+.modal-body button,
+.modal-header button {
+    z-index: 1056 !important;
+    position: relative;
+    pointer-events: auto;
+}
+
+/* Ensure modal is visible when shown */
+.modal.fade.show {
+    opacity: 1;
+}
+
+.modal.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+/* Fix for nested modals if any */
+.modal.show .modal {
+    z-index: 1060 !important;
+}
+
+.modal.show .modal-backdrop {
+    z-index: 1055 !important;
+}
+
+/* Ensure all interactive elements in modals are clickable */
+.modal a,
+.modal input,
+.modal select,
+.modal textarea,
+.modal label {
+    pointer-events: auto;
+    z-index: 1056 !important;
+    position: relative;
+}
+
+/* Ensure topbar and navbar don't block modals */
+body.modal-open .topbar,
+body.modal-open .navbar {
+    z-index: 1 !important;
+}
+
+/* Ensure sidebar doesn't block modals */
+body.modal-open .sidebar,
+body.modal-open #accordionSidebar {
+    z-index: 1 !important;
+}

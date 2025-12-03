@@ -131,12 +131,6 @@
                 <div class="detail-label">Item Name</div>
                 <div class="detail-value"><?php echo htmlspecialchars($repairItem['item_name']); ?></div>
             </div>
-            <div class="col-md-6 mb-3">
-                <div class="detail-label">Item Type</div>
-                <div class="detail-value">
-                    <span class="badge badge-secondary"><?php echo ucfirst($repairItem['item_type']); ?></span>
-                </div>
-            </div>
             <div class="col-md-12 mb-3">
                 <div class="detail-label">Description</div>
                 <div class="detail-value"><?php echo nl2br(htmlspecialchars($repairItem['item_description'])); ?></div>

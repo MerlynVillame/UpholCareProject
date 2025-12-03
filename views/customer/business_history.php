@@ -133,9 +133,6 @@
                                 </td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($booking['item_description']); ?></strong>
-                                    <?php if (!empty($booking['item_type'])): ?>
-                                        <br><small class="text-muted"><?php echo htmlspecialchars($booking['item_type']); ?></small>
-                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php echo htmlspecialchars($booking['service_name']); ?>

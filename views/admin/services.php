@@ -41,6 +41,104 @@
     background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
     color: white;
 }
+
+/* ============================================
+   MODAL CLICKABILITY FIX - COMPREHENSIVE
+   ============================================ */
+
+/* Ensure modal is always on top */
+#serviceModal {
+    z-index: 1055 !important;
+    position: fixed !important;
+}
+
+#serviceModal.show {
+    display: block !important;
+    z-index: 1055 !important;
+}
+
+/* Backdrop - MUST NOT block clicks */
+.modal-backdrop {
+    z-index: 1050 !important;
+    pointer-events: none !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-backdrop.show {
+    z-index: 1050 !important;
+    pointer-events: none !important;
+}
+
+/* Modal dialog and content - MUST be clickable */
+#serviceModal .modal-dialog {
+    z-index: 1056 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    margin: 1.75rem auto !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+}
+
+#serviceModal .modal-content {
+    z-index: 1057 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    border-radius: 0.35rem !important;
+}
+
+/* All form elements MUST be clickable */
+#serviceModal * {
+    pointer-events: auto !important;
+}
+
+#serviceModal input,
+#serviceModal select,
+#serviceModal textarea,
+#serviceModal button,
+#serviceModal label {
+    pointer-events: auto !important;
+    cursor: default !important;
+}
+
+#serviceModal input[type="text"],
+#serviceModal input[type="number"],
+#serviceModal textarea {
+    cursor: text !important;
+}
+
+#serviceModal select {
+    cursor: pointer !important;
+}
+
+#serviceModal button {
+    cursor: pointer !important;
+}
+
+/* Lower z-index of other elements when modal is open */
+body.modal-open .topbar,
+body.modal-open .navbar,
+body.modal-open .sidebar,
+body.modal-open #accordionSidebar {
+    z-index: 1 !important;
+}
+
+/* Ensure topbar doesn't block modal */
+.navbar {
+    z-index: 100 !important;
+}
+
+body.modal-open .navbar {
+    z-index: 1 !important;
+}
+
+/* Hide any other modals when serviceModal is open */
+body.modal-open #logoutModal {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+}
 </style>
 
 <!-- Page Heading -->
@@ -230,6 +328,114 @@
 <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
 <script>
+// ============================================
+// MODAL CLICKABILITY FIX - JAVASCRIPT
+// ============================================
+
+function fixServiceModalClickability() {
+    const modal = document.getElementById('serviceModal');
+    if (!modal) return;
+    
+    // Hide logoutModal completely
+    const logoutModal = document.getElementById('logoutModal');
+    if (logoutModal) {
+        logoutModal.style.cssText = 'display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -1 !important; opacity: 0 !important;';
+    }
+    
+    // Fix backdrop - MUST NOT block clicks
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(function(backdrop) {
+        backdrop.style.cssText = 'z-index: 1050 !important; pointer-events: none !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background-color: rgba(0, 0, 0, 0.5) !important;';
+    });
+    
+    // Ensure modal has highest z-index
+    modal.style.cssText = 'z-index: 1055 !important; position: fixed !important; display: block !important;';
+    
+    // Fix modal dialog
+    const modalDialog = modal.querySelector('.modal-dialog');
+    if (modalDialog) {
+        modalDialog.style.cssText = 'z-index: 1056 !important; position: relative !important; pointer-events: auto !important; margin: 1.75rem auto !important; max-height: 90vh !important; overflow-y: auto !important;';
+    }
+    
+    // Fix modal content
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.cssText = 'z-index: 1057 !important; position: relative !important; pointer-events: auto !important;';
+    }
+    
+    // Lower topbar and sidebar z-index
+    const topbar = document.querySelector('.topbar, .navbar');
+    if (topbar) {
+        topbar.style.zIndex = '1';
+    }
+    
+    const sidebar = document.querySelector('.sidebar, #accordionSidebar');
+    if (sidebar) {
+        sidebar.style.zIndex = '1';
+    }
+    
+    // Ensure all form elements are clickable
+    const formElements = modal.querySelectorAll('input, select, textarea, button, label');
+    formElements.forEach(function(el) {
+        el.style.pointerEvents = 'auto';
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.style.cursor = 'text';
+        } else if (el.tagName === 'SELECT' || el.tagName === 'BUTTON') {
+            el.style.cursor = 'pointer';
+        }
+    });
+}
+
+// Fix modal when it opens
+jQuery(function($) {
+    $('#serviceModal').on('show.bs.modal', function() {
+        setTimeout(fixServiceModalClickability, 10);
+    });
+    
+    $('#serviceModal').on('shown.bs.modal', function() {
+        fixServiceModalClickability();
+        // Keep fixing every 200ms while modal is open
+        const fixInterval = setInterval(function() {
+            if ($('#serviceModal').hasClass('show')) {
+                fixServiceModalClickability();
+            } else {
+                clearInterval(fixInterval);
+            }
+        }, 200);
+    });
+    
+    $('#serviceModal').on('hidden.bs.modal', function() {
+        // Reset styles when modal closes
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal) {
+            logoutModal.style.removeProperty('display');
+            logoutModal.style.removeProperty('visibility');
+            logoutModal.style.removeProperty('pointer-events');
+            logoutModal.style.removeProperty('z-index');
+            logoutModal.style.removeProperty('opacity');
+        }
+        
+        const topbar = document.querySelector('.topbar, .navbar');
+        if (topbar) {
+            topbar.style.removeProperty('z-index');
+        }
+        
+        const sidebar = document.querySelector('.sidebar, #accordionSidebar');
+        if (sidebar) {
+            sidebar.style.removeProperty('z-index');
+        }
+    });
+});
+
+// Also fix on any modal backdrop click (prevent backdrop from blocking)
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('modal-backdrop')) {
+        const backdrop = e.target;
+        backdrop.style.pointerEvents = 'none';
+        fixServiceModalClickability();
+    }
+});
+
 let isEditMode = false;
 
 function openServiceModal() {

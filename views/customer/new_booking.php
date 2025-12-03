@@ -198,18 +198,55 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Item Type</label>
-                                <input type="text" class="form-control" name="item_type" 
-                                       placeholder="e.g., Car Seat, Sofa, Mattress">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label class="form-label">Preferred Pickup Date</label>
                                 <input type="date" class="form-control" name="pickup_date" 
                                        min="<?php echo date('Y-m-d'); ?>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Selection Section -->
+                    <div class="form-group" id="colorSelectionSection" style="display: none;">
+                        <label class="form-label">Fabric/Color Selection <span class="text-danger">*</span></label>
+                        <small class="form-text text-muted mb-2 d-block">
+                            <i class="fas fa-info-circle"></i> 
+                            Select a color based on availability at your chosen store. Premium colors have additional cost.
+                        </small>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select class="form-control" id="selected_color" name="selected_color_id" required>
+                                    <option value="">Select Color...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-control" id="color_type" name="color_type" required>
+                                    <option value="standard">Standard</option>
+                                    <option value="premium">Premium (+₱<span id="premiumPriceDisplay">0.00</span>)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="colorPreview" class="mt-3" style="display: none;">
+                            <div class="card" style="border: 2px solid #e3e6f0;">
+                                <div class="card-body p-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            <div id="colorSwatch" style="width: 60px; height: 60px; border-radius: 8px; border: 2px solid #ddd; background-color: #ccc;"></div>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <h6 class="mb-1" id="colorNameDisplay">-</h6>
+                                            <p class="mb-1 text-muted small" id="colorCodeDisplay">-</p>
+                                            <p class="mb-0">
+                                                <strong>Price:</strong> 
+                                                <span class="text-primary" id="colorPriceDisplay">₱0.00</span>
+                                                <span id="colorTypeBadge" class="badge badge-secondary ml-2">Standard</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -392,6 +429,7 @@ function populateStoreDropdown() {
 document.getElementById('store_location').addEventListener('change', function() {
     const storeId = this.value;
     const storeInfo = document.getElementById('selectedStoreInfo');
+    const colorSection = document.getElementById('colorSelectionSection');
     
     if (storeId) {
         const selectedStore = stores.find(store => store.id == storeId);
@@ -402,11 +440,165 @@ document.getElementById('store_location').addEventListener('change', function() 
             document.getElementById('selectedStoreRating').textContent = `★ ${selectedStore.rating}/5.0`;
             
             storeInfo.style.display = 'block';
+            
+            // Load available colors for this store
+            loadAvailableColors(storeId);
+            colorSection.style.display = 'block';
         }
     } else {
         storeInfo.style.display = 'none';
+        colorSection.style.display = 'none';
     }
 });
+
+// Load available colors for selected store
+let availableColors = [];
+function loadAvailableColors(storeId) {
+    fetch(`<?php echo BASE_URL; ?>customer/getAvailableColors?store_id=${storeId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            availableColors = data.colors;
+            populateColorDropdown();
+        } else {
+            console.error('Error loading colors:', data.message);
+            availableColors = [];
+            populateColorDropdown();
+        }
+    })
+    .catch(error => {
+        console.error('Error loading colors:', error);
+        availableColors = [];
+        populateColorDropdown();
+    });
+}
+
+// Populate color dropdown
+function populateColorDropdown() {
+    const colorSelect = document.getElementById('selected_color');
+    colorSelect.innerHTML = '<option value="">Select Color...</option>';
+    
+    if (availableColors.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No colors available for this store';
+        option.disabled = true;
+        colorSelect.appendChild(option);
+        return;
+    }
+    
+    availableColors.forEach(color => {
+        const option = document.createElement('option');
+        option.value = color.id;
+        option.textContent = `${color.color_name} (${color.color_code}) - ${color.fabric_type === 'premium' ? 'Premium' : 'Standard'}`;
+        option.dataset.colorName = color.color_name;
+        option.dataset.colorCode = color.color_code;
+        option.dataset.colorHex = color.color_hex;
+        option.dataset.basePrice = color.price_per_unit;
+        option.dataset.premiumPrice = color.premium_price;
+        colorSelect.appendChild(option);
+    });
+}
+
+// Handle color selection change
+document.getElementById('selected_color').addEventListener('change', function() {
+    const colorId = this.value;
+    const colorPreview = document.getElementById('colorPreview');
+    const selectedOption = this.options[this.selectedIndex];
+    
+    if (colorId && selectedOption.dataset.colorName) {
+        document.getElementById('colorSwatch').style.backgroundColor = selectedOption.dataset.colorHex;
+        document.getElementById('colorNameDisplay').textContent = selectedOption.dataset.colorName;
+        document.getElementById('colorCodeDisplay').textContent = `Code: ${selectedOption.dataset.colorCode}`;
+        
+        updateColorPrice();
+        colorPreview.style.display = 'block';
+    } else {
+        colorPreview.style.display = 'none';
+    }
+});
+
+// Handle color type change (premium/standard)
+document.getElementById('color_type').addEventListener('change', function() {
+    updateColorPrice();
+    updatePremiumPriceDisplay();
+});
+
+// Update color price display
+function updateColorPrice() {
+    const colorSelect = document.getElementById('selected_color');
+    const colorType = document.getElementById('color_type').value;
+    const selectedOption = colorSelect.options[colorSelect.selectedIndex];
+    
+    if (!colorSelect.value || !selectedOption.dataset.basePrice) {
+        document.getElementById('colorPriceDisplay').textContent = '₱0.00';
+        return;
+    }
+    
+    const basePrice = parseFloat(selectedOption.dataset.basePrice || 0);
+    let totalPrice = basePrice;
+    
+    if (colorType === 'premium') {
+        const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
+        totalPrice = basePrice + premiumPrice;
+    }
+    
+    document.getElementById('colorPriceDisplay').textContent = '₱' + totalPrice.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Update badge
+    const badge = document.getElementById('colorTypeBadge');
+    if (colorType === 'premium') {
+        badge.textContent = 'Premium';
+        badge.className = 'badge badge-warning ml-2';
+    } else {
+        badge.textContent = 'Standard';
+        badge.className = 'badge badge-secondary ml-2';
+    }
+    
+    // Update total amount
+    updateTotalAmount();
+}
+
+// Update premium price display
+function updatePremiumPriceDisplay() {
+    const colorSelect = document.getElementById('selected_color');
+    const selectedOption = colorSelect.options[colorSelect.selectedIndex];
+    
+    if (selectedOption.dataset.premiumPrice) {
+        const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
+        document.getElementById('premiumPriceDisplay').textContent = premiumPrice.toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    } else {
+        document.getElementById('premiumPriceDisplay').textContent = '0.00';
+    }
+}
+
+// Update total amount including color price
+function updateTotalAmount() {
+    const servicePrice = parseFloat(document.getElementById('total_amount').value || 0);
+    const colorSelect = document.getElementById('selected_color');
+    const colorType = document.getElementById('color_type').value;
+    const selectedOption = colorSelect.options[colorSelect.selectedIndex];
+    
+    let colorPrice = 0;
+    if (colorSelect.value && selectedOption.dataset.basePrice) {
+        const basePrice = parseFloat(selectedOption.dataset.basePrice || 0);
+        if (colorType === 'premium') {
+            const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
+            colorPrice = basePrice + premiumPrice;
+        } else {
+            colorPrice = basePrice;
+        }
+    }
+    
+    const totalAmount = servicePrice + colorPrice;
+    document.getElementById('total_amount').value = totalAmount.toFixed(2);
+}
 
 // Open store locations page
 function openStoreLocations() {

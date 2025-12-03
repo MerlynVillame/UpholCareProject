@@ -19,13 +19,11 @@ class Quotation extends Model {
                    b.booking_date,
                    s.service_name,
                    s.service_type,
-                   bn.booking_number,
                    u.fullname as customer_name,
                    u.email as customer_email
             FROM quotations q
             LEFT JOIN bookings b ON q.booking_id = b.id
             LEFT JOIN services s ON b.service_id = s.id
-            LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
             LEFT JOIN users u ON b.user_id = u.id
             WHERE b.user_id = ?
             ORDER BY q.created_at DESC
@@ -47,14 +45,12 @@ class Quotation extends Model {
                    s.service_name,
                    s.service_type,
                    s.description as service_description,
-                   bn.booking_number,
                    u.fullname as customer_name,
                    u.email as customer_email,
                    u.phone as customer_phone
             FROM quotations q
             LEFT JOIN bookings b ON q.booking_id = b.id
             LEFT JOIN services s ON b.service_id = s.id
-            LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
             LEFT JOIN users u ON b.user_id = u.id
             WHERE q.id = ?
         ");
@@ -183,13 +179,11 @@ class Quotation extends Model {
                    b.status as booking_status,
                    s.service_name,
                    s.service_type,
-                   bn.booking_number,
                    u.fullname as customer_name,
                    u.email as customer_email
             FROM quotations q
             LEFT JOIN bookings b ON q.booking_id = b.id
             LEFT JOIN services s ON b.service_id = s.id
-            LEFT JOIN booking_numbers bn ON b.booking_number_id = bn.id
             LEFT JOIN users u ON b.user_id = u.id
         ";
         

@@ -54,57 +54,476 @@
     <!-- <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/chart.js/Chart.min.js"></script> -->
     <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/dataTables.bootstrap4.min.js"></script>
-
-    <!-- SweetAlert2 for beautiful notifications -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- UphoCare Custom JavaScript -->
-    <script src="<?php echo BASE_URL; ?>assets/js/uphocare.js"></script>
-
-    <!-- Mobile Sidebar Toggle -->
-    <script>
-    // Mobile sidebar toggle function
-    function toggleSidebar() {
-        if (window.innerWidth <= 991.98) {
-            document.body.classList.toggle('sidebar-toggled');
-        } else {
-            // Desktop behavior - use default SB Admin 2 toggle
-            document.body.classList.toggle('sidebar-toggled');
-        }
-    }
     
-    // Close sidebar when clicking backdrop
-    document.addEventListener('DOMContentLoaded', function() {
-        const backdrop = document.querySelector('.sidebar-backdrop');
-        if (backdrop) {
-            backdrop.addEventListener('click', function() {
-                if (window.innerWidth <= 991.98) {
-                    document.body.classList.remove('sidebar-toggled');
+    <!-- Safe DataTables Initialization -->
+    <script>
+    (function() {
+        function safeInitDataTables() {
+            if (typeof jQuery === 'undefined' || !jQuery.fn.DataTable) {
+                return;
+            }
+            
+            var $ = jQuery;
+            
+            // Initialize tables with proper error handling
+            $('table[id*="Table"], table[id*="DataTable"], table.data-table').each(function() {
+                try {
+                    var $table = $(this);
+                    var tableId = $table.attr('id') || 'unnamed';
+                    
+                    // Skip if table has data-skip-datatable or data-no-datatable attribute
+                    if ($table.attr('data-skip-datatable') || $table.attr('data-no-datatable') || $table.data('skip-datatable') || $table.data('no-datatable')) {
+                        // Silently skip custom tables (no console message needed)
+                        return;
+                    }
+                    
+                    // Skip if already initialized
+                    if ($.fn.DataTable.isDataTable($table)) {
+                        return;
+                    }
+                    
+                    // Skip if this table previously failed initialization
+                    if ($table.data('datatable-error')) {
+                        return;
+                    }
+                    
+                    // Check if table has proper structure
+                    var thead = $table.find('thead');
+                    var tbody = $table.find('tbody');
+                    
+                    if (thead.length === 0) {
+                        return; // No thead, skip
+                    }
+                    
+                    var headerCells = thead.find('th');
+                    if (headerCells.length === 0) {
+                        return; // No header cells, skip
+                    }
+                    
+                    // Check if tbody exists
+                    if (tbody.length === 0) {
+                        // Create empty tbody if missing
+                        $table.append('<tbody></tbody>');
+                        tbody = $table.find('tbody');
+                    }
+                    
+                    // Validate row structure - check if all rows have same number of cells as headers
+                    var headerCount = headerCells.length;
+                    var rows = tbody.find('tr');
+                    var isValid = true;
+                    var fixedRows = false;
+                    
+                    // Fix rows with incorrect cell counts
+                    rows.each(function() {
+                        var $row = $(this);
+                        var cells = $row.find('td, th');
+                        var cellCount = cells.length;
+                        
+                        // Check for colspan which would affect cell count
+                        var totalColspan = 0;
+                        cells.each(function() {
+                            var colspan = parseInt($(this).attr('colspan') || '1', 10);
+                            totalColspan += colspan;
+                        });
+                        
+                        // If row has wrong number of cells and no colspan, fix it
+                        if (cellCount !== headerCount && totalColspan === cellCount) {
+                            // Row might have colspan, check if total matches
+                            if (totalColspan !== headerCount) {
+                                // Fix by adding or removing cells
+                                if (cellCount < headerCount) {
+                                    // Add missing cells
+                                    for (var i = cellCount; i < headerCount; i++) {
+                                        $row.append('<td></td>');
+                                    }
+                                    fixedRows = true;
+                                } else if (cellCount > headerCount) {
+                                    // Remove extra cells
+                                    cells.slice(headerCount).remove();
+                                    fixedRows = true;
+                                }
+                            }
+                        } else if (cellCount !== headerCount && totalColspan === cellCount) {
+                            // No colspan but wrong count
+                            if (cellCount < headerCount) {
+                                for (var i = cellCount; i < headerCount; i++) {
+                                    $row.append('<td></td>');
+                                }
+                                fixedRows = true;
+                            } else if (cellCount > headerCount) {
+                                cells.slice(headerCount).remove();
+                                fixedRows = true;
+                            }
+                        }
+                        
+                        // Final validation - ensure all cells exist
+                        var finalCells = $row.find('td, th');
+                        if (finalCells.length !== headerCount) {
+                            isValid = false;
+                            return false;
+                        }
+                        
+                        // Ensure no undefined cells
+                        finalCells.each(function(index) {
+                            if (!this || !this.nodeName) {
+                                isValid = false;
+                                return false;
+                            }
+                        });
+                        
+                        if (!isValid) {
+                            return false;
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        console.warn('DataTable: Table structure invalid for', tableId, '- skipping initialization');
+                        return;
+                    }
+                    
+                    if (fixedRows) {
+                        console.info('DataTable: Fixed row structure for', tableId);
+                    }
+                    
+                    // Additional safety check - ensure table is visible and has dimensions
+                    // Skip modal tables as they may not have dimensions yet
+                    if ($table.closest('.modal').length > 0) {
+                        // Silently skip modal tables
+                        return;
+                    }
+                    
+                    if ($table.is(':hidden') || $table.width() === 0) {
+                        // Silently skip hidden tables
+                        return;
+                    }
+                    
+                    // Initialize DataTable with error handling and columnDefs to handle edge cases
+                    try {
+                        // Wrap in additional try-catch for cell index errors
+                        var dtOptions = {
+                            pageLength: 10,
+                            ordering: true,
+                            searching: true,
+                            responsive: true,
+                            autoWidth: false,
+                            destroy: false,
+                            retrieve: true,
+                            columnDefs: [
+                                {
+                                    // Default renderer for all columns to handle undefined/null
+                                    render: function(data, type, row, meta) {
+                                        if (data === null || data === undefined || data === '') {
+                                            return '';
+                                        }
+                                        return String(data);
+                                    },
+                                    targets: '_all'
+                                }
+                            ],
+                            // Error handling
+                            error: function(xhr, error, thrown) {
+                                console.error('DataTable error for', tableId, ':', error, thrown);
+                            }
+                        };
+                        
+                        // Additional validation before initialization
+                        var allRowsValid = true;
+                        rows.each(function() {
+                            var $row = $(this);
+                            var cells = $row.find('td, th');
+                            if (cells.length !== headerCount) {
+                                allRowsValid = false;
+                                return false;
+                            }
+                            // Check each cell exists
+                            cells.each(function() {
+                                if (!this || !this.nodeName) {
+                                    allRowsValid = false;
+                                    return false;
+                                }
+                            });
+                            if (!allRowsValid) {
+                                return false;
+                            }
+                        });
+                        
+                        if (!allRowsValid) {
+                            console.warn('DataTable: Invalid row structure detected for', tableId, '- skipping');
+                            return;
+                        }
+                        
+                        $table.DataTable(dtOptions);
+                    } catch (dtError) {
+                        console.error('DataTable initialization failed for', tableId, ':', dtError);
+                        // Mark table to prevent retry
+                        $table.data('datatable-error', true);
+                        // Don't rethrow - just log and continue
+                    }
+                    
+                } catch (error) {
+                    console.error('DataTable setup error for table:', error);
+                    // Prevent error from breaking the page
                 }
             });
         }
         
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(e) {
-            if (window.innerWidth <= 991.98) {
-                const sidebar = document.querySelector('.sidebar');
-                const toggleBtn = document.getElementById('sidebarToggleTop');
+        // Initialize after jQuery and DataTables are loaded with multiple attempts
+        function initWithRetry(attempts) {
+            attempts = attempts || 0;
+            if (attempts > 3) {
+                console.warn('DataTable initialization: Max retries reached');
+                return;
+            }
+            
+            if (typeof jQuery === 'undefined' || !jQuery.fn.DataTable) {
+                setTimeout(function() {
+                    initWithRetry(attempts + 1);
+                }, 200);
+                return;
+            }
+            
+            try {
+                safeInitDataTables();
+            } catch (e) {
+                console.error('DataTable initialization error:', e);
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    initWithRetry(0);
+                }, 100);
+            });
+        } else {
+            setTimeout(function() {
+                initWithRetry(0);
+            }, 100);
+        }
+    })();
+    </script>
+
+    <!-- SweetAlert2 for beautiful notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" crossorigin="anonymous" onerror="console.warn('SweetAlert2 failed to load from CDN')"></script>
+
+    <!-- UphoCare Custom JavaScript -->
+    <script src="<?php echo BASE_URL; ?>assets/js/uphocare.js?v=<?php echo time(); ?>" crossorigin="anonymous"></script>
+
+    <!-- Mobile Sidebar Toggle -->
+    <script>
+    // Enhanced sidebar toggle function that works with or without jQuery
+    // Make it globally accessible
+    window.toggleSidebar = function(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        const body = document.body;
+        const sidebar = document.querySelector('.sidebar') || document.querySelector('#accordionSidebar');
+        const backdrop = document.querySelector('.sidebar-backdrop');
+        
+        if (!sidebar) {
+            return false;
+        }
+        
+        // Check current state
+        const isCurrentlyToggled = body.classList.contains('sidebar-toggled');
+        
+        // Toggle the sidebar-toggled class on body
+        if (isCurrentlyToggled) {
+            body.classList.remove('sidebar-toggled');
+            sidebar.classList.remove('toggled');
+        } else {
+            body.classList.add('sidebar-toggled');
+            sidebar.classList.add('toggled');
+        }
+        
+        // Force sidebar visibility on mobile
+        if (window.innerWidth <= 991.98) {
+            if (!isCurrentlyToggled) {
+                // Opening sidebar - ensure it's fully visible and not transparent
+                sidebar.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; width: 14rem !important; z-index: 1060 !important; display: block !important; visibility: visible !important; opacity: 1 !important; transform: translateX(0) !important; background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important; background-color: #1a252f !important;';
                 
-                if (sidebar && !sidebar.contains(e.target) && 
-                    toggleBtn && !toggleBtn.contains(e.target) &&
-                    document.body.classList.contains('sidebar-toggled')) {
-                    document.body.classList.remove('sidebar-toggled');
+                // Ensure all child elements are also opaque
+                var sidebarChildren = sidebar.querySelectorAll('*');
+                for (var i = 0; i < sidebarChildren.length; i++) {
+                    sidebarChildren[i].style.opacity = '1';
+                }
+                
+                if (backdrop) {
+                    backdrop.style.cssText = 'display: block !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background-color: rgba(0, 0, 0, 0.5) !important; z-index: 1050 !important; opacity: 1 !important;';
+                }
+            } else {
+                // Closing sidebar
+                sidebar.style.left = '-14rem';
+                sidebar.style.transform = 'translateX(-14rem)';
+                if (backdrop) {
+                    backdrop.style.display = 'none';
+                    backdrop.style.opacity = '0';
                 }
             }
-        });
+        }
         
-        // Close sidebar when window is resized to desktop
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 991.98) {
-                document.body.classList.remove('sidebar-toggled');
+        return false;
+    };
+    
+    // Initialize sidebar toggle functionality
+    (function() {
+        let sidebarInitialized = false;
+        let isToggling = false; // Prevent multiple simultaneous toggles
+        
+        function initSidebar() {
+            if (sidebarInitialized) return; // Prevent multiple initializations
+            
+            const sidebar = document.querySelector('.sidebar') || document.querySelector('#accordionSidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            const toggleBtn = document.getElementById('sidebarToggleTop');
+            const toggleBtnBottom = document.getElementById('sidebarToggle');
+            
+            if (!sidebar) {
+                if (!sidebarInitialized) {
+                    setTimeout(initSidebar, 100);
+                }
+                return;
             }
-        });
-    });
+            
+            sidebarInitialized = true;
+            
+            // Ensure sidebar is hidden on mobile by default but not transparent
+            if (window.innerWidth <= 991.98) {
+                sidebar.style.cssText = 'position: fixed !important; top: 0 !important; left: -14rem !important; height: 100vh !important; width: 14rem !important; z-index: 1060 !important; display: block !important; visibility: visible !important; opacity: 1 !important; transition: left 0.3s ease, transform 0.3s ease !important; background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important; background-color: #1a252f !important;';
+                
+                // Ensure all child elements are opaque
+                var allChildren = sidebar.querySelectorAll('*');
+                for (var i = 0; i < allChildren.length; i++) {
+                    allChildren[i].style.opacity = '1';
+                }
+            }
+            
+            if (backdrop) {
+                backdrop.style.cssText = 'display: none !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background-color: rgba(0, 0, 0, 0.5) !important; z-index: 1050 !important; opacity: 0 !important; transition: opacity 0.3s ease !important;';
+            }
+            
+            // Add click handler to backdrop - close sidebar
+            if (backdrop) {
+                backdrop.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isToggling && window.innerWidth <= 991.98 && document.body.classList.contains('sidebar-toggled')) {
+                        isToggling = true;
+                        window.toggleSidebar(e);
+                        setTimeout(() => { isToggling = false; }, 300);
+                    }
+                }, { once: false, passive: false });
+            }
+            
+            // Add click handlers to toggle buttons - use once flag to prevent duplicates
+            if (toggleBtn) {
+                // Remove any existing onclick
+                toggleBtn.removeAttribute('onclick');
+                
+                // Use a flag to prevent duplicate handlers
+                if (!toggleBtn.dataset.handlerAttached) {
+                    toggleBtn.dataset.handlerAttached = 'true';
+                    toggleBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        if (!isToggling) {
+                            isToggling = true;
+                            window.toggleSidebar(e);
+                            setTimeout(() => { isToggling = false; }, 300);
+                        }
+                        return false;
+                    }, { capture: true, passive: false });
+                }
+            }
+            
+            if (toggleBtnBottom) {
+                toggleBtnBottom.removeAttribute('onclick');
+                if (!toggleBtnBottom.dataset.handlerAttached) {
+                    toggleBtnBottom.dataset.handlerAttached = 'true';
+                    toggleBtnBottom.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        if (!isToggling) {
+                            isToggling = true;
+                            window.toggleSidebar(e);
+                            setTimeout(() => { isToggling = false; }, 300);
+                        }
+                        return false;
+                    }, { capture: true, passive: false });
+                }
+            }
+            
+            // Close sidebar when clicking outside on mobile (with delay to avoid conflicts)
+            let clickTimeout;
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 991.98 && !isToggling) {
+                    clearTimeout(clickTimeout);
+                    clickTimeout = setTimeout(function() {
+                        const currentToggleBtn = document.getElementById('sidebarToggleTop');
+                        const currentToggleBtnBottom = document.getElementById('sidebarToggle');
+                        const currentSidebar = document.querySelector('.sidebar') || document.querySelector('#accordionSidebar');
+                        const currentBackdrop = document.querySelector('.sidebar-backdrop');
+                        
+                        if (currentSidebar && 
+                            !currentSidebar.contains(e.target) && 
+                            currentToggleBtn && !currentToggleBtn.contains(e.target) &&
+                            (!currentToggleBtnBottom || !currentToggleBtnBottom.contains(e.target)) &&
+                            currentBackdrop && !currentBackdrop.contains(e.target) &&
+                            document.body.classList.contains('sidebar-toggled')) {
+                            isToggling = true;
+                            window.toggleSidebar();
+                            setTimeout(() => { isToggling = false; }, 300);
+                        }
+                    }, 100);
+                }
+            }, { passive: true });
+            
+            // Close sidebar when window is resized to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 991.98) {
+                    document.body.classList.remove('sidebar-toggled');
+                    sidebar.classList.remove('toggled');
+                    sidebar.style.left = '';
+                    if (backdrop) {
+                        backdrop.style.display = 'none';
+                    }
+                } else {
+                    if (!document.body.classList.contains('sidebar-toggled')) {
+                        sidebar.style.left = '-14rem';
+                    }
+                }
+            }, { passive: true });
+            
+            // Also handle jQuery-based toggle if jQuery is available
+            if (typeof jQuery !== 'undefined') {
+                jQuery(document).ready(function($) {
+                    $("#sidebarToggle, #sidebarToggleTop").off('click.sidebar').on('click.sidebar', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        if (!isToggling) {
+                            isToggling = true;
+                            window.toggleSidebar(e);
+                            setTimeout(() => { isToggling = false; }, 300);
+                        }
+                        return false;
+                    });
+                });
+            }
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSidebar);
+        } else {
+            initSidebar();
+        }
+    })();
     </script>
 
     <!-- Notifications System -->
@@ -133,9 +552,14 @@
         var markReadUrl = role === 'admin' ? '<?php echo BASE_URL; ?>admin/markNotificationRead' : '<?php echo BASE_URL; ?>customer/markNotificationRead';
         
         $.ajax({
-            url: url,
+            url: url + '?t=' + new Date().getTime(),
             method: 'GET',
             dataType: 'json',
+            cache: false,
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            },
             success: function(response) {
                 if (response.success) {
                     updateNotificationBadge(response.unread_count);
@@ -234,6 +658,11 @@
                 notification_id: notificationId
             },
             dataType: 'json',
+            cache: false,
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            },
             success: function(response) {
                 if (response.success) {
                     $(element).removeClass('notification-unread');
