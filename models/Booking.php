@@ -9,17 +9,33 @@ class Booking extends Model {
     protected $table = 'bookings';
     
     /**
-     * Get all bookings for a customer
+     * Get all ACTIVE bookings for a customer (excludes completed/paid, delivered_and_paid, and cancelled)
+     * This shows only ongoing bookings that require customer attention
      */
     public function getCustomerBookings($customerId, $status = null) {
         $sql = "SELECT b.*, s.service_name, s.service_type, sc.category_name,
-                COALESCE(b.status, 'pending') as status
+                COALESCE(b.status, 'pending') as status,
+                COALESCE(b.payment_status, 'unpaid') as payment_status
                 FROM {$this->table} b
                 LEFT JOIN services s ON b.service_id = s.id
                 LEFT JOIN service_categories sc ON s.category_id = sc.id
-                WHERE b.user_id = ?";
+                WHERE b.user_id = ? AND b.is_archived = 0";
         
         $params = [$customerId];
+        
+        // Exclude completed/paid, delivered_and_paid, and cancelled bookings (these go to history)
+        // Show only active/ongoing bookings
+        $sql .= " AND NOT (
+            -- Exclude completed bookings that are paid
+            (LOWER(COALESCE(b.status, 'pending')) = 'completed' 
+             AND LOWER(COALESCE(b.payment_status, 'unpaid')) IN ('paid', 'paid_full_cash', 'paid_on_delivery_cod'))
+            OR
+            -- Exclude delivered_and_paid bookings
+            LOWER(COALESCE(b.status, 'pending')) = 'delivered_and_paid'
+            OR
+            -- Exclude cancelled bookings
+            LOWER(COALESCE(b.status, 'pending')) = 'cancelled'
+        )";
         
         if ($status && $status !== 'all') {
             $sql .= " AND COALESCE(b.status, 'pending') = ?";
@@ -129,11 +145,11 @@ class Booking extends Model {
     public function getBookingCountByStatus($customerId, $status) {
         if ($customerId) {
             $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM {$this->table} 
-                                        WHERE user_id = ? AND status = ?");
+                                        WHERE user_id = ? AND status = ? AND is_archived = 0");
             $stmt->execute([$customerId, $status]);
         } else {
             $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM {$this->table} 
-                                        WHERE status = ?");
+                                        WHERE status = ? AND is_archived = 0");
             $stmt->execute([$status]);
         }
         $result = $stmt->fetch();
@@ -144,7 +160,7 @@ class Booking extends Model {
      * Get total bookings count
      */
     public function getTotalBookings() {
-        $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM {$this->table}");
+        $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM {$this->table} WHERE is_archived = 0");
         $stmt->execute();
         $result = $stmt->fetch();
         return $result['count'];
@@ -188,11 +204,14 @@ class Booking extends Model {
     public function getRecentBookings($customerId, $limit = 5) {
         if ($customerId) {
             // Get bookings for specific customer
-            $sql = "SELECT b.*, s.service_name, u.fullname as customer_name
+            $sql = "SELECT b.*, 
+                    CONCAT('BK-', LPAD(b.id, 6, '0')) as booking_number,
+                    s.service_name, 
+                    u.fullname as customer_name
                     FROM {$this->table} b
                     LEFT JOIN services s ON b.service_id = s.id
                     LEFT JOIN users u ON b.user_id = u.id
-                    WHERE b.user_id = ?
+                    WHERE b.user_id = ? AND b.is_archived = 0
                     ORDER BY b.created_at DESC
                     LIMIT ?";
             
@@ -200,10 +219,14 @@ class Booking extends Model {
             $stmt->execute([$customerId, $limit]);
         } else {
             // Get all recent bookings (for admin dashboard)
-            $sql = "SELECT b.*, s.service_name, u.fullname as customer_name
+            $sql = "SELECT b.*, 
+                    CONCAT('BK-', LPAD(b.id, 6, '0')) as booking_number,
+                    s.service_name, 
+                    u.fullname as customer_name
                     FROM {$this->table} b
                     LEFT JOIN services s ON b.service_id = s.id
                     LEFT JOIN users u ON b.user_id = u.id
+                    WHERE b.is_archived = 0
                     ORDER BY b.created_at DESC
                     LIMIT ?";
             
@@ -221,6 +244,33 @@ class Booking extends Model {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch();
+    }
+    
+    /**
+     * Archive booking
+     */
+    public function archive($id) {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET is_archived = 1 WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
+    /**
+     * Get archived bookings
+     */
+    public function getArchivedBookings() {
+        $sql = "SELECT b.*, s.service_name, s.service_type, sc.category_name,
+                u.fullname as customer_name, u.email, u.phone,
+                COALESCE(b.status, 'pending') as status
+                FROM {$this->table} b
+                LEFT JOIN services s ON b.service_id = s.id
+                LEFT JOIN service_categories sc ON s.category_id = sc.id
+                LEFT JOIN users u ON b.user_id = u.id
+                WHERE b.is_archived = 1
+                ORDER BY b.updated_at DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 }
 

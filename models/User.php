@@ -121,10 +121,26 @@ class User extends Model {
      * Update user information
      */
     public function updateUser($userId, $data) {
+        // Get table columns to filter out non-existent columns
+        $columns = $this->getTableColumns();
+        
+        // Filter data to only include existing columns
+        $filteredData = [];
+        foreach ($data as $key => $value) {
+            if (in_array($key, $columns)) {
+                $filteredData[$key] = $value;
+            }
+        }
+        
+        if (empty($filteredData)) {
+            error_log("No valid columns to update for user ID: {$userId}");
+            return false;
+        }
+        
         $fields = [];
         $values = [];
         
-        foreach ($data as $key => $value) {
+        foreach ($filteredData as $key => $value) {
             $fields[] = "{$key} = ?";
             $values[] = $value;
         }
@@ -134,7 +150,35 @@ class User extends Model {
         $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
-        return $stmt->execute($values);
+        $result = $stmt->execute($values);
+        
+        // Log for debugging
+        if (!$result) {
+            error_log("Failed to update user ID: {$userId}. Error: " . implode(', ', $stmt->errorInfo()));
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Get table columns
+     */
+    private function getTableColumns() {
+        static $columnsCache = [];
+        
+        if (isset($columnsCache[$this->table])) {
+            return $columnsCache[$this->table];
+        }
+        
+        try {
+            $stmt = $this->db->query("DESCRIBE {$this->table}");
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $columnsCache[$this->table] = $columns;
+            return $columns;
+        } catch (Exception $e) {
+            error_log("Error getting table columns for {$this->table}: " . $e->getMessage());
+            return [];
+        }
     }
 }
 

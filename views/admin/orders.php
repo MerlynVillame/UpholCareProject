@@ -138,7 +138,7 @@ if ($statusFilter !== 'all') {
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Reservations</div>
+                        <div class="text-xs font-weight-bold text-primary-admin text-uppercase mb-1">Total Reservations</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $totalReservations; ?></div>
                     </div>
                     <div class="col-auto">
@@ -218,7 +218,7 @@ if ($statusFilter !== 'all') {
                 </select>
             </div>
             <div class="col-12">
-                <button type="submit" class="btn btn-sm btn-primary">
+                <button type="submit" class="btn btn-sm btn-primary-admin">
                     <i class="fas fa-search"></i> Search
                 </button>
                 <a href="<?php echo BASE_URL; ?>admin/orders" class="btn btn-sm btn-secondary">
@@ -232,7 +232,7 @@ if ($statusFilter !== 'all') {
 <!-- Reservations Table -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Reservations List</h6>
+        <h6 class="m-0 font-weight-bold text-primary-admin">Reservations List</h6>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -265,23 +265,16 @@ if ($statusFilter !== 'all') {
                                 <td><strong>₱<?php echo number_format($reservation['total_amount'], 2); ?></strong></td>
                                 <td>
                                     <?php
-                                    $badgeClass = '';
-                                    switch($reservation['status']) {
-                                        case 'completed':
-                                            $badgeClass = 'badge-success';
-                                            break;
-                                        case 'pending':
-                                            $badgeClass = 'badge-warning';
-                                            break;
-                                        case 'cancelled':
-                                            $badgeClass = 'badge-danger';
-                                            break;
-                                        default:
-                                            $badgeClass = 'badge-secondary';
-                                    }
+                                    $statusConfig = [
+                                        'completed' => ['color' => 'var(--uphol-green)', 'text' => 'Completed'],
+                                        'pending' => ['color' => 'var(--uphol-orange)', 'text' => 'Pending'],
+                                        'cancelled' => ['color' => '#e74a3b', 'text' => 'Cancelled']
+                                    ];
+                                    $currStatus = strtolower($reservation['status']);
+                                    $config = $statusConfig[$currStatus] ?? ['color' => '#6c757d', 'text' => ucfirst($reservation['status'])];
                                     ?>
-                                    <span class="badge <?php echo $badgeClass; ?>">
-                                        <?php echo ucfirst($reservation['status']); ?>
+                                    <span style="color: <?php echo $config['color']; ?>; font-weight: bold;">
+                                        <?php echo $config['text']; ?>
                                     </span>
                         </td>
                                 <td>
@@ -292,7 +285,7 @@ if ($statusFilter !== 'all') {
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <?php if ($reservation['status'] === 'pending'): ?>
-                                        <a href="#" class="btn btn-sm btn-primary" title="Mark Complete">
+                                        <a href="#" class="btn btn-sm btn-primary-admin" title="Mark Complete">
                                             <i class="fas fa-check"></i>
                                         </a>
                                     <?php endif; ?>

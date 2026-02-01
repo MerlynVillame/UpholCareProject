@@ -20,7 +20,6 @@ $activeCustomerAccounts = (strpos($currentUrl, 'customerAccounts') !== false) ? 
 $activeStoreRatings = (strpos($currentUrl, 'storeRatings') !== false) ? 'active' : '';
 $activeBannedStores = (strpos($currentUrl, 'bannedStores') !== false) ? 'active' : '';
 $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) ? 'active' : '';
-$activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
 ?>
 
 <style>
@@ -42,7 +41,7 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         left: 0;
         height: 100vh;
         width: 280px;
-        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        background: var(--uphol-navy) !important;
         box-shadow: 4px 0 20px rgba(0,0,0,0.3);
         z-index: 1000;
         overflow-y: auto;
@@ -54,10 +53,10 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
 
     .sidebar-user {
         padding: 20px;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        background: rgba(255, 255, 255, 0.05);
         border-bottom: 1px solid rgba(255,255,255,0.1);
         margin: 10px;
-        border-radius: 12px;
+        border-radius: var(--br-modern);
         backdrop-filter: blur(10px);
     }
 
@@ -72,33 +71,16 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--uphol-blue);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 22px;
         color: white;
         flex-shrink: 0;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
         border: 3px solid rgba(255,255,255,0.2);
         position: relative;
-    }
-
-    .sidebar-user-avatar::after {
-        content: '';
-        position: absolute;
-        top: -3px;
-        left: -3px;
-        right: -3px;
-        bottom: -3px;
-        border-radius: 50%;
-        border: 2px solid rgba(102, 126, 234, 0.5);
-        animation: rotate 3s linear infinite;
-    }
-
-    @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
     }
 
     .sidebar-user-details {
@@ -127,11 +109,12 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
     }
 
     .sidebar-user-role .role-badge {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: var(--uphol-orange);
         padding: 2px 8px;
         border-radius: 10px;
         font-size: 9px;
         font-weight: 600;
+        color: white;
     }
 
     .sidebar-menu {
@@ -155,14 +138,6 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         gap: 8px;
     }
 
-    .sidebar-menu-title::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        margin-left: 8px;
-    }
-
     .sidebar-menu-item {
         display: flex;
         align-items: center;
@@ -173,41 +148,19 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         border-left: 3px solid transparent;
         position: relative;
         margin: 2px 10px;
-        border-radius: 8px;
-    }
-
-    .sidebar-menu-item::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 3px;
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-        transform: scaleY(0);
-        transition: transform 0.3s ease;
+        border-radius: var(--br-modern);
     }
 
     .sidebar-menu-item:hover {
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.1) 100%);
+        background: rgba(255, 255, 255, 0.1);
         color: white;
         transform: translateX(5px);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-    }
-
-    .sidebar-menu-item:hover::before {
-        transform: scaleY(1);
     }
 
     .sidebar-menu-item.active {
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.2) 100%);
+        background: rgba(255, 255, 255, 0.2);
         color: white;
-        border-left-color: #667eea;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-
-    .sidebar-menu-item.active::before {
-        transform: scaleY(1);
+        border-left-color: var(--uphol-blue);
     }
 
     .sidebar-menu-item i {
@@ -215,33 +168,6 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         margin-right: 12px;
         font-size: 18px;
         text-align: center;
-        transition: transform 0.3s ease;
-    }
-
-    .sidebar-menu-item:hover i {
-        transform: scale(1.2);
-    }
-
-    .sidebar-menu-item span {
-        flex: 1;
-    }
-
-    .sidebar-menu-item .badge {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: 600;
-        min-width: 20px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
-        animation: pulse-badge 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-badge {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
     }
 
     .sidebar-footer {
@@ -256,42 +182,26 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         align-items: center;
         justify-content: center;
         padding: 12px 20px;
-        color: rgba(255,255,255,0.7);
+        color: white;
         text-decoration: none;
         transition: all 0.3s ease;
-        border-radius: 8px;
-        background: rgba(231, 76, 60, 0.1);
-        border: 1px solid rgba(231, 76, 60, 0.3);
+        border-radius: var(--br-modern);
+        background: #e74c3c;
     }
 
     .sidebar-footer-link:hover {
-        background: rgba(231, 76, 60, 0.2);
-        color: white;
-        border-color: rgba(231, 76, 60, 0.5);
+        background: #c0392b;
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-    }
-
-    .sidebar-footer-link i {
-        margin-right: 8px;
-    }
-
-    /* Main content wrapper */
-    .main-content-wrapper {
-        margin-left: 280px;
-        transition: all 0.3s ease;
     }
 
     /* Responsive */
     @media (max-width: 768px) {
         .sidebar {
             transform: translateX(-100%);
-            width: 280px;
         }
 
         .sidebar.show {
             transform: translateX(0);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.5);
         }
 
         .main-content-wrapper {
@@ -304,48 +214,12 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
             top: 15px;
             left: 15px;
             z-index: 1001;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--uphol-blue);
             border: none;
             color: white;
             padding: 10px 15px;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
-    }
-
-    /* Scrollbar styling */
-    .sidebar::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .sidebar::-webkit-scrollbar-track {
-        background: rgba(0,0,0,0.2);
-        border-radius: 10px;
-    }
-
-    .sidebar::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-    }
-
-    .sidebar::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
-    }
-
-    /* Tooltip */
-    .sidebar-menu-item[title]:hover::after {
-        content: attr(title);
-        position: absolute;
-        left: 100%;
-        margin-left: 10px;
-        padding: 8px 12px;
-        background: rgba(0,0,0,0.9);
-        color: white;
-        border-radius: 6px;
-        font-size: 12px;
-        white-space: nowrap;
-        z-index: 10000;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 </style>
 
@@ -455,20 +329,6 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         </div>
         <?php endif; ?>
 
-        <!-- System & Security (Super Admin Only) -->
-        <?php if ($isSuperAdmin): ?>
-        <div class="sidebar-menu-section">
-            <div class="sidebar-menu-title">
-                <i class="fas fa-shield-alt"></i> System & Security
-            </div>
-            <a href="<?= BASE_URL ?>control-panel/register" 
-               class="sidebar-menu-item <?= $activeRegister ?>"
-               title="Register New Super Admin">
-                <i class="fas fa-user-plus"></i>
-                <span>New Super Admin</span>
-            </a>
-        </div>
-        <?php endif; ?>
     </nav>
 
     <!-- Sidebar Footer -->
@@ -537,4 +397,3 @@ $activeRegister = (strpos($currentUrl, 'register') !== false) ? 'active' : '';
         });
     });
 </script>
-

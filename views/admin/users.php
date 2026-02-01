@@ -10,7 +10,7 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Users List</h6>
-        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addUserModal">
+        <a href="#" class="btn btn-primary-admin btn-sm" data-toggle="modal" data-target="#addUserModal">
             <i class="fas fa-plus"></i> Add New User
         </a>
     </div>
@@ -40,21 +40,21 @@
                             <td><?php echo htmlspecialchars($usr['phone'] ?? 'N/A'); ?></td>
                             <td>
                                 <?php if ($usr['role'] === 'admin'): ?>
-                                    <span class="badge badge-danger">Admin</span>
+                                    <span class="text-danger font-weight-bold">Admin</span>
                                 <?php else: ?>
-                                    <span class="badge badge-info">Customer</span>
+                                    <span class="text-info font-weight-bold">Customer</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($usr['status'] === 'active'): ?>
-                                    <span class="badge badge-success">Active</span>
+                                    <span class="text-success font-weight-bold">Active</span>
                                 <?php else: ?>
-                                    <span class="badge badge-secondary">Inactive</span>
+                                    <span class="text-secondary font-weight-bold">Inactive</span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
-                                <a href="#" class="btn btn-sm btn-success"><i class="fas fa-edit"></i></a>
+                                <a href="#" class="btn btn-sm btn-info text-white" style="background-color: var(--uphol-blue); border-color: var(--uphol-blue);"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-success" style="background-color: var(--uphol-green); border-color: var(--uphol-green);"><i class="fas fa-edit"></i></a>
                                 <a href="#" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
                             </td>
                         </tr>

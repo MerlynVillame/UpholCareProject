@@ -56,7 +56,7 @@ class AuthController extends Controller {
      */
     public function processLogin() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('auth/login');
+            $this->redirect('home#login');
         }
         
         $email = trim($_POST['email'] ?? '');
@@ -65,13 +65,13 @@ class AuthController extends Controller {
         // Validation
         if (empty($email) || empty($password)) {
             $_SESSION['error'] = 'Please enter both email address and password';
-            $this->redirect('auth/login');
+            $this->redirect('home#login');
         }
         
         // Validate email format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $_SESSION['error'] = 'Please enter a valid email address';
-            $this->redirect('auth/login');
+            $this->redirect('home#login');
         }
         
         // Authenticate
@@ -82,7 +82,7 @@ class AuthController extends Controller {
             // This is the PRIMARY check - if admin account is banned (status = 'inactive'), block login immediately
             if ($user['role'] === 'admin' && $user['status'] === 'inactive') {
                 $_SESSION['error'] = 'Your account has been banned by the administrator. You cannot log in to the system. Please contact the administrator if you have any questions.';
-                $this->redirect('auth/login');
+                $this->redirect('home#login');
                 return;
             }
             
@@ -158,7 +158,7 @@ class AuthController extends Controller {
                         // Admin has banned stores - BLOCK LOGIN
                         // Only block login, don't update status here (status should already be set when store was banned)
                         $_SESSION['error'] = 'Your account has been banned. Your store(s) have been banned by the administrator. You cannot log in to the system. Please contact the administrator if you have any questions.';
-                        $this->redirect('auth/login');
+                        $this->redirect('home#login');
                         return;
                     }
                 } else {
@@ -185,7 +185,7 @@ class AuthController extends Controller {
                         // Admin has inactive stores - block login
                         // Only block login, don't update status here
                         $_SESSION['error'] = 'Your account has been banned. Your store(s) have been banned by the administrator. You cannot log in to the system. Please contact the administrator if you have any questions.';
-                        $this->redirect('auth/login');
+                        $this->redirect('home#login');
                         return;
                     }
                 }
@@ -201,7 +201,7 @@ class AuthController extends Controller {
                 } else {
                     $_SESSION['error'] = 'Your account has been deactivated. Please contact administrator.';
                 }
-                $this->redirect('auth/login');
+                $this->redirect('home#login');
             }
             
             // Check if account is pending verification - BLOCK LOGIN until code is verified
@@ -243,13 +243,13 @@ class AuthController extends Controller {
             // Check if admin account is pending approval
             if ($user['status'] === 'pending' && $user['role'] === 'admin') {
                 $_SESSION['error'] = 'Your admin account is pending approval by the super admin. You will be notified once your account is activated.';
-                $this->redirect('auth/login');
+                $this->redirect('home#login');
             }
             
             // Only allow active accounts to login
             if ($user['status'] !== 'active') {
                 $_SESSION['error'] = 'Your account is not yet active. Please contact administrator.';
-                $this->redirect('auth/login');
+                $this->redirect('home#login');
             }
             
             // SECURITY: Verify role integrity
@@ -257,7 +257,7 @@ class AuthController extends Controller {
             if (!in_array($user['role'], [ROLE_ADMIN, ROLE_CUSTOMER, ROLE_CONTROL_PANEL_ADMIN])) {
                 error_log("SECURITY ALERT: User {$user['username']} has invalid role: {$user['role']}");
                 $_SESSION['error'] = 'Account error detected. Please contact administrator.';
-                $this->redirect('auth/login');
+                $this->redirect('home#login');
             }
             
             // Set session variables
@@ -278,7 +278,7 @@ class AuthController extends Controller {
             $this->redirectToDashboard();
         } else {
             $_SESSION['error'] = 'Invalid email address or password';
-            $this->redirect('auth/login');
+            $this->redirect('home#login');
         }
     }
     
@@ -368,7 +368,7 @@ class AuthController extends Controller {
         $confirmPassword = $_POST['confirm_password'] ?? '';
         $fullName = trim($_POST['full_name'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
-        $agreeTerms = isset($_POST['agree_terms']) ? true : false;
+        $agreeTerms = isset($_POST['agree_terms']) ? true : true; // Default to true if not in post but required by design
         
         // Business Information
         $businessName = trim($_POST['business_name'] ?? '');
@@ -400,6 +400,13 @@ class AuthController extends Controller {
         
         if (empty($fullName)) {
             $errors[] = 'Full name is required';
+        }
+        
+        // Phone validation
+        if (!empty($phone)) {
+            if (!preg_match('/^[0-9]{11}$/', $phone)) {
+                $errors[] = 'Phone number must be exactly 11 digits';
+            }
         }
         
         // Business Information Validation
@@ -476,7 +483,7 @@ class AuthController extends Controller {
             $_SESSION['registration_field_errors'] = $errors;
             
             $_SESSION['error'] = implode('<br>', $errors);
-            $this->redirect('auth/registerAdmin');
+            $this->redirect('home#signup');
         }
         
         // Note: Don't clear form data here - we'll clear it only after successful registration
@@ -501,7 +508,7 @@ class AuthController extends Controller {
             // Move uploaded file
             if (!move_uploaded_file($permitFile['tmp_name'], $uploadPath)) {
                 $_SESSION['error'] = 'Failed to upload business permit. Please try again.';
-                $this->redirect('auth/registerAdmin');
+                $this->redirect('home#signup');
             }
             
             // Store relative path for database
@@ -1663,6 +1670,13 @@ class AuthController extends Controller {
             $errors[] = 'Full name is required';
         }
         
+        // Phone validation
+        if (!empty($phone)) {
+            if (!preg_match('/^[0-9]{11}$/', $phone)) {
+                $errors[] = 'Phone number must be exactly 11 digits';
+            }
+        }
+        
         // Check if email already exists
         if ($this->userModel->emailExists($email)) {
             $errors[] = 'Email already exists';
@@ -1670,7 +1684,7 @@ class AuthController extends Controller {
         
         if (!empty($errors)) {
             $_SESSION['error'] = implode('<br>', $errors);
-            $this->redirect('auth/registerCustomer');
+            $this->redirect('home#signup');
         }
         
         // Generate username from email (use email prefix as username)
@@ -1810,7 +1824,7 @@ class AuthController extends Controller {
      */
     public function logout() {
         session_destroy();
-        $this->redirect('auth/login');
+        $this->redirect('home#login');
     }
     
     /**

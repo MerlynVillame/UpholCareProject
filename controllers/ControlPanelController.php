@@ -239,6 +239,10 @@ class ControlPanelController extends Controller {
      * Log login attempt
      */
     public function logLoginAttempt($userId, $userType, $email, $fullname, $ipAddress, $userAgent, $status, $failureReason = null) {
+        try {
+            // For control panel admins, set user_id to NULL since they're in a different table
+            $userIdToLog = ($userType === 'control_panel') ? null : $userId;
+            
         $stmt = $this->db->prepare("
             INSERT INTO login_logs 
             (user_id, user_type, email, fullname, ip_address, user_agent, login_status, failure_reason) 
@@ -246,7 +250,7 @@ class ControlPanelController extends Controller {
         ");
         
         $stmt->execute([
-            $userId,
+                $userIdToLog,
             $userType,
             $email,
             $fullname,
@@ -255,6 +259,10 @@ class ControlPanelController extends Controller {
             $status,
             $failureReason
         ]);
+        } catch (Exception $e) {
+            // Log error but don't fail the login process
+            error_log("Error logging login attempt: " . $e->getMessage());
+        }
     }
     
     /**
@@ -3100,5 +3108,142 @@ class ControlPanelController extends Controller {
             error_log("Error checking ban columns: " . $e->getMessage());
             return false;
         }
+    }
+    
+    /**
+     * Show Forgot Password Page
+     */
+    public function forgotPassword() {
+        // If already logged in, redirect to dashboard
+        if ($this->isControlPanelLoggedIn()) {
+            $this->redirect('control-panel/dashboard');
+        }
+        
+        $data['title'] = 'Forgot Password - Control Panel';
+        $this->view('control_panel/forgot_password', $data);
+    }
+    
+    /**
+     * Process Forgot Password Request
+     */
+    public function processForgotPassword() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('control-panel/forgotPassword');
+        }
+        
+        $email = trim($_POST['email'] ?? '');
+        
+        // Validate email
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['error'] = 'Please enter a valid email address.';
+            $this->redirect('control-panel/forgotPassword');
+        }
+        
+        // Check if admin exists
+        $stmt = $this->db->prepare("SELECT * FROM control_panel_admins WHERE email = ?");
+        $stmt->execute([$email]);
+        $admin = $stmt->fetch();
+        
+        if (!$admin) {
+            $_SESSION['error'] = 'No account found with that email address.';
+            $this->redirect('control-panel/forgotPassword');
+        }
+        
+        // Generate reset code
+        $resetCode = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        
+        // Store reset code in database
+        $stmt = $this->db->prepare("
+            UPDATE control_panel_admins 
+            SET reset_code = ?, reset_code_expires = ? 
+            WHERE id = ?
+        ");
+        $stmt->execute([$resetCode, $expiresAt, $admin['id']]);
+        
+        // Store email in session for reset page
+        $_SESSION['reset_email'] = $email;
+        $_SESSION['success'] = "Reset code generated: <strong>{$resetCode}</strong><br>This code will expire in 1 hour. Please use it to reset your password.";
+        
+        $this->redirect('control-panel/resetPassword?email=' . urlencode($email));
+    }
+    
+    /**
+     * Show Reset Password Page
+     */
+    public function resetPassword() {
+        // If already logged in, redirect to dashboard
+        if ($this->isControlPanelLoggedIn()) {
+            $this->redirect('control-panel/dashboard');
+        }
+        
+        $email = $_GET['email'] ?? $_SESSION['reset_email'] ?? '';
+        
+        if (empty($email)) {
+            $_SESSION['error'] = 'Invalid reset request. Please start over.';
+            $this->redirect('control-panel/forgotPassword');
+        }
+        
+        $data['title'] = 'Reset Password - Control Panel';
+        $data['email'] = $email;
+        $this->view('control_panel/reset_password', $data);
+    }
+    
+    /**
+     * Process Password Reset
+     */
+    public function processResetPassword() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('control-panel/forgotPassword');
+        }
+        
+        $email = trim($_POST['email'] ?? '');
+        $resetCode = trim($_POST['reset_code'] ?? '');
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        // Validate inputs
+        if (empty($email) || empty($resetCode) || empty($newPassword) || empty($confirmPassword)) {
+            $_SESSION['error'] = 'All fields are required.';
+            $this->redirect('control-panel/resetPassword?email=' . urlencode($email));
+        }
+        
+        if ($newPassword !== $confirmPassword) {
+            $_SESSION['error'] = 'Passwords do not match.';
+            $this->redirect('control-panel/resetPassword?email=' . urlencode($email));
+        }
+        
+        if (strlen($newPassword) < 6) {
+            $_SESSION['error'] = 'Password must be at least 6 characters long.';
+            $this->redirect('control-panel/resetPassword?email=' . urlencode($email));
+        }
+        
+        // Verify reset code
+        $stmt = $this->db->prepare("
+            SELECT * FROM control_panel_admins 
+            WHERE email = ? AND reset_code = ? AND reset_code_expires > NOW()
+        ");
+        $stmt->execute([$email, strtoupper($resetCode)]);
+        $admin = $stmt->fetch();
+        
+        if (!$admin) {
+            $_SESSION['error'] = 'Invalid or expired reset code. Please request a new one.';
+            $this->redirect('control-panel/forgotPassword');
+        }
+        
+        // Update password
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("
+            UPDATE control_panel_admins 
+            SET password = ?, reset_code = NULL, reset_code_expires = NULL 
+            WHERE id = ?
+        ");
+        $stmt->execute([$hashedPassword, $admin['id']]);
+        
+        // Clear session
+        unset($_SESSION['reset_email']);
+        
+        $_SESSION['success'] = 'Password reset successful! You can now login with your new password.';
+        $this->redirect('control-panel/login');
     }
 }

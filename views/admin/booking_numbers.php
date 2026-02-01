@@ -2,24 +2,7 @@
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'admin_sidebar.php'; ?>
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
 
-<style>
-/* Override Bootstrap primary colors with brown */
-.btn-primary {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
-    color: white !important;
-}
 
-.btn-primary:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
-    color: white !important;
-}
-
-.text-primary {
-    color: #8B4513 !important;
-}
-</style>
 
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -32,7 +15,7 @@
             </ol>
         </nav>
     </div>
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addNumbersModal">
+    <button type="button" class="btn btn-primary-admin" data-toggle="modal" data-target="#addNumbersModal">
         <i class="fas fa-plus mr-2"></i>Add Booking Numbers
     </button>
 </div>
@@ -57,7 +40,7 @@
 
 <!-- Available Numbers Card -->
 <div class="card shadow mb-4">
-    <div class="card-header py-3" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+    <div class="card-header py-3" style="background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%); color: white;">
         <h6 class="m-0 font-weight-bold">
             <i class="fas fa-check-circle mr-2"></i>Available Booking Numbers (<?php echo count($availableNumbers); ?>)
         </h6>
@@ -77,7 +60,7 @@
                         <?php foreach ($availableNumbers as $number): ?>
                         <tr>
                             <td><?php echo $number['id']; ?></td>
-                            <td><span class="badge badge-success" style="font-size: 0.9rem; padding: 0.5rem 1rem;"><?php echo htmlspecialchars($number['booking_number']); ?></span></td>
+                            <td><span class="text-primary-admin font-weight-bold" style="font-size: 0.9rem;"><?php echo htmlspecialchars($number['booking_number']); ?></span></td>
                             <td><?php echo date('M d, Y H:i', strtotime($number['created_at'])); ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -97,7 +80,7 @@
 
 <!-- Used Numbers Card -->
 <div class="card shadow mb-4">
-    <div class="card-header py-3" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+    <div class="card-header py-3" style="background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%); color: white;">
         <h6 class="m-0 font-weight-bold">
             <i class="fas fa-calendar-check mr-2"></i>Used Booking Numbers (<?php echo count($usedNumbers); ?>)
         </h6>
@@ -116,7 +99,7 @@
                     <?php if (!empty($usedNumbers)): ?>
                         <?php foreach ($usedNumbers as $number): ?>
                         <tr>
-                            <td><span class="badge badge-info" style="font-size: 0.9rem; padding: 0.5rem 1rem;"><?php echo htmlspecialchars($number['booking_number']); ?></span></td>
+                            <td><span class="text-primary-admin font-weight-bold" style="font-size: 0.9rem;"><?php echo htmlspecialchars($number['booking_number']); ?></span></td>
                             <td>#<?php echo $number['booking_id']; ?></td>
                             <td><?php echo date('M d, Y H:i', strtotime($number['booking_created_at'])); ?></td>
                         </tr>
@@ -139,7 +122,7 @@
 <div class="modal fade" id="addNumbersModal" tabindex="-1" role="dialog" aria-labelledby="addNumbersModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%); color: white;">
                 <h5 class="modal-title" id="addNumbersModalLabel">
                     <i class="fas fa-plus mr-2"></i>Add New Booking Numbers
                 </h5>
@@ -175,7 +158,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Generate Numbers</button>
+                    <button type="submit" class="btn btn-primary-admin">Generate Numbers</button>
                 </div>
             </form>
         </div>

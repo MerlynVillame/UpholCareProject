@@ -6,7 +6,7 @@
 .page-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #654321;
+    color: #0F3C5F;
 }
 
 .form-card {
@@ -16,7 +16,7 @@
 }
 
 .form-card .card-header {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     color: white;
     border-radius: 0.75rem 0.75rem 0 0 !important;
     padding: 1.5rem;
@@ -24,7 +24,7 @@
 
 .form-label {
     font-weight: 600;
-    color: #654321;
+    color: #0F3C5F;
     margin-bottom: 0.5rem;
 }
 
@@ -293,12 +293,12 @@ select.form-control option {
 }
 
 .form-control:focus {
-    border-color: #8B4513;
+    border-color: #1F4E79;
     box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
 }
 
 .btn-submit {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     border: none;
     color: white;
     padding: 0.75rem 2rem;
@@ -308,7 +308,7 @@ select.form-control option {
 }
 
 .btn-submit:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%);
+    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     color: white;
@@ -329,23 +329,23 @@ select.form-control option {
     border-radius: 0.5rem;
     padding: 1rem;
     margin-top: 1rem;
-    border-left: 4px solid #8B4513;
+    border-left: 4px solid #1F4E79;
 }
 
 /* Override Bootstrap primary colors with brown */
 .btn-outline-primary {
-    color: #8B4513 !important;
-    border-color: #8B4513 !important;
+    color: #1F4E79 !important;
+    border-color: #1F4E79 !important;
 }
 
 .btn-outline-primary:hover {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    border-color: #1F4E79 !important;
     color: white !important;
 }
 
 .text-primary {
-    color: #8B4513 !important;
+    color: #1F4E79 !important;
 }
 
 /* Additional styling consolidated - all dropdowns already styled above */
@@ -373,7 +373,7 @@ select#color_type option {
 
 /* Custom brown badge styling */
 .badge-brown {
-    background-color: #8B4513;
+    background-color: #1F4E79;
     color: white;
 }
 
@@ -384,17 +384,17 @@ select#color_type option {
 
 /* Breadcrumb styling */
 .breadcrumb-item a {
-    color: #8B4513;
+    color: #1F4E79;
     text-decoration: none;
 }
 
 .breadcrumb-item a:hover {
-    color: #654321;
+    color: #0F3C5F;
     text-decoration: underline;
 }
 
 .breadcrumb-item.active {
-    color: #A0522D;
+    color: #4CAF50;
 }
 
 /* Responsive adjustments for mobile Android */
@@ -708,20 +708,23 @@ select#color_type option {
                         <label class="form-label">Fabric/Color Selection <span class="text-danger">*</span></label>
                         <small class="form-text text-muted mb-2 d-block">
                             <i class="fas fa-info-circle"></i> 
-                            Select a color based on availability at your chosen store. Premium colors have additional cost.
+                            First select Standard or Premium, then choose a color from the available options. Prices are shown for each color.
                         </small>
                         
                         <div class="row">
-                            <div class="col-md-8">
-                                <select class="form-control" id="selected_color" name="selected_color_id" disabled>
-                                    <option value="">Select Color...</option>
-                                    <option value="" disabled>Please select a store location first</option>
+                            <div class="col-md-4">
+                                <label class="form-label small">Leather Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="color_type" name="color_type" disabled>
+                                    <option value="">Select Type...</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="premium">Premium</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <select class="form-control" id="color_type" name="color_type" disabled>
-                                    <option value="standard">Standard</option>
-                                    <option value="premium">Premium (+₱<span id="premiumPriceDisplay">0.00</span>)</option>
+                            <div class="col-md-8">
+                                <label class="form-label small">Select Color <span class="text-danger">*</span></label>
+                                <select class="form-control" id="selected_color" name="selected_color_id" required>
+                                    <option value="">Select Color...</option>
+                                    <option value="" disabled>Please select a store location first</option>
                                 </select>
                             </div>
                         </div>
@@ -760,12 +763,12 @@ select#color_type option {
                                 </small>
                             </div>
                             <div class="form-group" id="deliveryDateGroup" style="display: none;">
-                                <label class="form-label">Preferred Delivery Date</label>
+                                <label class="form-label">Preferred Drop-off Item to the Shop <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="delivery_date" id="delivery_date"
-                                       min="<?php echo date('Y-m-d'); ?>">
+                                       min="<?php echo date('Y-m-d'); ?>" required>
                                 <small class="form-text text-muted">
-                                    <i class="fas fa-truck"></i> 
-                                    Select when you prefer to receive the item at your location.
+                                    <i class="fas fa-store"></i> 
+                                    Select when you prefer to bring your item to the shop for inspection.
                                 </small>
                             </div>
                         </div>
@@ -780,13 +783,15 @@ select#color_type option {
                                 </small>
                             </div>
                             <!-- Distance field removed - no longer required -->
+                        </div>
+                        <div class="col-md-6">
                             <div class="form-group" id="deliveryAddressGroup" style="display: none;">
                                 <label class="form-label">Delivery Address <span class="text-danger">*</span></label>
                                 <textarea class="form-control" name="delivery_address" id="delivery_address" rows="3"
-                                          placeholder="Enter your complete delivery address..."><?php echo htmlspecialchars($userAddress ?? ''); ?></textarea>
+                                          placeholder="Enter your complete delivery address for final delivery after repair..."></textarea>
                                 <small class="form-text text-muted">
                                     <i class="fas fa-map-marker-alt"></i> 
-                                    Your account address is pre-filled. You can modify it if needed.
+                                    Provide your complete address where we will deliver your repaired item. This is required for "Both" service option (Pick Up & Delivery).
                                 </small>
                             </div>
                         </div>
@@ -911,15 +916,70 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fix dropdown visibility issues
     fixDropdownVisibility();
     
-    // Check service option on page load and disable color selection if delivery
-    const serviceOption = document.getElementById('service_option');
-    if (serviceOption && serviceOption.value === 'delivery') {
-        disableColorSelection();
+    // Ensure color dropdown is enabled if store is already selected
+    const storeLocation = document.getElementById('store_location');
+    const colorSelect = document.getElementById('selected_color');
+    const colorType = document.getElementById('color_type');
+    
+    if (storeLocation && storeLocation.value && colorSelect) {
+        // Store is selected - enable color dropdown
+        colorSelect.disabled = false;
+        colorSelect.removeAttribute('disabled');
+        colorSelect.setAttribute('required', 'required');
+        colorSelect.style.opacity = '1';
+        colorSelect.style.pointerEvents = 'auto';
+        colorSelect.style.cursor = 'pointer';
+        colorSelect.style.backgroundColor = '#fff';
+        
+        // Enable color type dropdown
+        if (colorType) {
+            colorType.disabled = false;
+            colorType.removeAttribute('disabled');
+            colorType.setAttribute('required', 'required');
+            colorType.style.opacity = '1';
+            colorType.style.pointerEvents = 'auto';
+            colorType.style.cursor = 'pointer';
+            colorType.style.backgroundColor = '#fff';
+        }
+        
+        // Load colors if store is selected
+        const fabricType = colorType && colorType.value ? colorType.value : null;
+        loadAvailableColors(storeLocation.value, fabricType);
     }
     
-    // Trigger service option change to ensure proper state
-    if (serviceOption && serviceOption.value) {
-        serviceOption.dispatchEvent(new Event('change'));
+    // Reset service option to default on page load (don't restore from sessionStorage)
+    const serviceOption = document.getElementById('service_option');
+    if (serviceOption) {
+        // Always reset service option to empty/default on page refresh
+        serviceOption.value = '';
+        
+        // Clear service_option from sessionStorage to prevent it from being restored
+        const savedData = sessionStorage.getItem('repairReservationFormData');
+        if (savedData) {
+            try {
+                const formData = JSON.parse(savedData);
+                delete formData.service_option; // Remove service_option from saved data
+                sessionStorage.setItem('repairReservationFormData', JSON.stringify(formData));
+            } catch (e) {
+                console.error('Error clearing service option from sessionStorage:', e);
+            }
+        }
+        
+        // Hide pickup date field initially since no service option is selected
+        const pickupDateGroup = document.getElementById('pickupDateGroup');
+        if (pickupDateGroup) {
+            pickupDateGroup.style.display = 'none';
+        }
+        
+        // Also hide other date/address fields initially
+        const deliveryDateGroup = document.getElementById('deliveryDateGroup');
+        const pickupAddressGroup = document.getElementById('pickupAddressGroup');
+        if (deliveryDateGroup) {
+            deliveryDateGroup.style.display = 'none';
+        }
+        if (pickupAddressGroup) {
+            pickupAddressGroup.style.display = 'none';
+        }
     }
 });
 
@@ -1054,56 +1114,172 @@ function populateStoreDropdown() {
     });
 }
 
-// Load available colors for selected store
+// Load available colors for selected store and fabric type
 let availableColors = [];
-function loadAvailableColors(storeId) {
-    fetch(`<?php echo BASE_URL; ?>customer/getAvailableColors?store_id=${storeId}`)
-    .then(response => response.json())
+let allAvailableColors = []; // Store all colors for filtering
+
+function loadAvailableColors(storeId, fabricType = null) {
+    if (!storeId) {
+        console.error('Store ID is required to load colors');
+        const colorSelect = document.getElementById('selected_color');
+        if (colorSelect) {
+            colorSelect.disabled = true;
+            colorSelect.innerHTML = '<option value="">Select Color...</option><option value="" disabled>Please select a store location first</option>';
+        }
+        return;
+    }
+    
+    // Always enable color dropdown when store is selected
+    const colorSelect = document.getElementById('selected_color');
+    if (colorSelect) {
+        colorSelect.disabled = false;
+        colorSelect.removeAttribute('disabled');
+        colorSelect.setAttribute('required', 'required');
+        colorSelect.style.opacity = '1';
+        colorSelect.style.pointerEvents = 'auto';
+        colorSelect.style.cursor = 'pointer';
+        colorSelect.style.backgroundColor = '#fff';
+    }
+    
+    // If no fabric type selected, load all colors (both standard and premium)
+    // If fabric type is selected, filter by that type
+    const timestamp = new Date().getTime();
+    let url = `<?php echo BASE_URL; ?>customer/getAvailableColors?store_id=${storeId}&_t=${timestamp}`;
+    
+    if (fabricType && fabricType !== '') {
+        url += `&fabric_type=${fabricType}`;
+    }
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // Check if response is actually JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            availableColors = data.colors;
-            populateColorDropdown();
+            if (fabricType && fabricType !== '') {
+                // Filter by type
+                availableColors = data.colors || [];
         } else {
-            console.error('Error loading colors:', data.message);
+                // Store all colors for later filtering
+                allAvailableColors = data.colors || [];
+                availableColors = allAvailableColors;
+            }
+            populateColorDropdown(fabricType);
+        } else {
+            console.error('Error loading colors:', data.message || 'Unknown error');
             availableColors = [];
-            populateColorDropdown();
+            allAvailableColors = [];
+            populateColorDropdown(fabricType);
         }
     })
     .catch(error => {
         console.error('Error loading colors:', error);
+        console.error('Error details:', error.message);
         availableColors = [];
-        populateColorDropdown();
+        allAvailableColors = [];
+        populateColorDropdown(fabricType);
+        // Show user-friendly message but keep dropdown enabled
+        if (colorSelect) {
+            colorSelect.innerHTML = '<option value="">Select Color...</option><option value="" disabled>Error loading colors. Please try again.</option>';
+        }
     });
 }
 
-// Populate color dropdown
-function populateColorDropdown() {
+// Populate color dropdown with prices based on selected type
+function populateColorDropdown(fabricType = null) {
     const colorSelect = document.getElementById('selected_color');
     if (!colorSelect) return;
     
     colorSelect.innerHTML = '<option value="">Select Color...</option>';
     
-    if (availableColors.length === 0) {
+    // Always ensure color dropdown is enabled
+    colorSelect.disabled = false;
+    colorSelect.removeAttribute('disabled');
+    colorSelect.setAttribute('required', 'required');
+    colorSelect.style.opacity = '1';
+    colorSelect.style.pointerEvents = 'auto';
+    colorSelect.style.cursor = 'pointer';
+    colorSelect.style.backgroundColor = '#fff';
+    
+    // Filter colors by fabric type if specified (backend should already filter, but double-check on frontend)
+    let filteredColors = availableColors;
+    if (fabricType && fabricType !== '') {
+        filteredColors = availableColors.filter(color => {
+            const colorType = (color.fabric_type || color.leather_type || '').toLowerCase();
+            return colorType === fabricType.toLowerCase();
+        });
+    }
+    
+    if (filteredColors.length === 0) {
         const option = document.createElement('option');
         option.value = '';
+        if (fabricType) {
+            const typeLabel = fabricType === 'premium' ? 'Premium' : 'Standard';
+            option.textContent = `No ${typeLabel} colors available for this store`;
+        } else {
         option.textContent = 'No colors available for this store';
+        }
         option.disabled = true;
         colorSelect.appendChild(option);
         // Hide preview if no colors
         const colorPreview = document.getElementById('colorPreview');
         if (colorPreview) colorPreview.style.display = 'none';
+        // Keep enabled but show message
         return;
     }
     
-    availableColors.forEach(color => {
+    filteredColors.forEach(color => {
         const option = document.createElement('option');
         option.value = color.id;
-        option.textContent = `${color.color_name} (${color.color_code}) - ${color.fabric_type === 'premium' ? 'Premium' : 'Standard'}`;
+        
+        // Get the color's fabric/leather type
+        const colorFabricType = (color.fabric_type || color.leather_type || 'standard').toLowerCase();
+        
+        // Determine which price to use - prioritize price_per_meter
+        let price = 0;
+        let premiumPrice = 0;
+        
+        if (color.price_per_meter) {
+            // Use price_per_meter if available (this is the most accurate)
+            price = parseFloat(color.price_per_meter);
+        } else if (color.price_per_unit) {
+            // Fallback to price_per_unit
+            price = parseFloat(color.price_per_unit);
+        } else {
+            price = 0;
+        }
+        
+        // Get premium price if available
+        if (color.premium_price) {
+            premiumPrice = parseFloat(color.premium_price);
+        }
+        
+        // Format price
+        const formattedPrice = price.toFixed(2);
+        
+        // Display color name, code, and price (type is already filtered, so we don't need to show it in the text)
+        option.textContent = `${color.color_name} (${color.color_code}) - ₱${formattedPrice} per meter`;
         option.dataset.colorName = color.color_name;
         option.dataset.colorCode = color.color_code;
-        option.dataset.colorHex = color.color_hex;
-        option.dataset.basePrice = color.price_per_unit;
-        option.dataset.premiumPrice = color.premium_price;
+        option.dataset.colorHex = color.color_hex || '#cccccc';
+        option.dataset.pricePerMeter = price;
+        option.dataset.premiumPrice = premiumPrice;
+        option.dataset.fabricType = colorFabricType;
         colorSelect.appendChild(option);
     });
 }
@@ -1129,10 +1305,43 @@ if (colorSelect) {
     });
 }
 
-// Handle color type change (premium/standard)
+// Handle color type change (premium/standard) - Filter colors based on selected type
 const colorTypeSelect = document.getElementById('color_type');
 if (colorTypeSelect) {
     colorTypeSelect.addEventListener('change', function() {
+        const fabricType = this.value;
+        const storeId = document.getElementById('store_location').value;
+        const colorSelect = document.getElementById('selected_color');
+        
+        // Always keep color dropdown enabled
+        if (colorSelect) {
+            colorSelect.disabled = false;
+            colorSelect.removeAttribute('disabled');
+            colorSelect.setAttribute('required', 'required');
+        }
+        
+        if (!fabricType || fabricType === '') {
+            // If no type selected, show all colors
+            if (storeId) {
+                loadAvailableColors(storeId, null); // Load all colors
+            }
+            updateColorPrice();
+            updatePremiumPriceDisplay();
+            return;
+        }
+        
+        if (!storeId) {
+            // Store must be selected first
+            if (colorSelect) {
+                colorSelect.innerHTML = '<option value="">Select Color...</option><option value="" disabled>Please select a store location first</option>';
+            }
+            return;
+        }
+        
+        // Load colors filtered by fabric type
+        loadAvailableColors(storeId, fabricType);
+        
+        // Update price displays
         updateColorPrice();
         updatePremiumPriceDisplay();
     });
@@ -1144,16 +1353,18 @@ function updateColorPrice() {
     const colorType = document.getElementById('color_type').value;
     const selectedOption = colorSelect ? colorSelect.options[colorSelect.selectedIndex] : null;
     
-    if (!colorSelect || !colorSelect.value || !selectedOption || !selectedOption.dataset.basePrice) {
+    if (!colorSelect || !colorSelect.value || !selectedOption || !selectedOption.dataset.pricePerMeter) {
         const priceDisplay = document.getElementById('colorPriceDisplay');
         if (priceDisplay) priceDisplay.textContent = '₱0.00';
         return;
     }
     
-    const basePrice = parseFloat(selectedOption.dataset.basePrice || 0);
+    // Get price from pricePerMeter dataset (this comes from inventory table)
+    const basePrice = parseFloat(selectedOption.dataset.pricePerMeter || 0);
     let totalPrice = basePrice;
     
-    if (colorType === 'premium') {
+    // If premium type, check if there's a premium price to add
+    if (colorType === 'premium' && selectedOption.dataset.premiumPrice) {
         const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
         totalPrice = basePrice + premiumPrice;
     }
@@ -1213,9 +1424,9 @@ function updateTotalAmount() {
     const selectedOption = colorSelect && colorSelect.value ? colorSelect.options[colorSelect.selectedIndex] : null;
     
     let colorPrice = 0;
-    if (colorSelect && colorSelect.value && selectedOption && selectedOption.dataset.basePrice) {
-        const basePrice = parseFloat(selectedOption.dataset.basePrice || 0);
-        if (colorType === 'premium') {
+    if (colorSelect && colorSelect.value && selectedOption && selectedOption.dataset.pricePerMeter) {
+        const basePrice = parseFloat(selectedOption.dataset.pricePerMeter || 0);
+        if (colorType === 'premium' && selectedOption.dataset.premiumPrice) {
             const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
             colorPrice = basePrice + premiumPrice;
         } else {
@@ -1247,29 +1458,35 @@ document.getElementById('store_location').addEventListener('change', function() 
             
             storeInfo.style.display = 'block';
             
-            // Check service option - disable color selection for delivery
-            const serviceOption = document.getElementById('service_option').value;
-            if (serviceOption === 'delivery') {
-                // Disable color selection for delivery service
-                disableColorSelection();
-            } else {
-                // Enable and make color fields required for other service options
-                if (colorSelect) {
-                    colorSelect.removeAttribute('disabled');
-                    colorSelect.setAttribute('required', 'required');
-                }
+            // Enable color type selection (Standard/Premium)
                 if (colorType) {
                     colorType.removeAttribute('disabled');
                     colorType.setAttribute('required', 'required');
-                }
-                
-                // Load available colors for this store
-                loadAvailableColors(storeId);
+                colorType.style.opacity = '1';
+                colorType.style.pointerEvents = 'auto';
+                colorType.style.cursor = 'pointer';
+                colorType.style.backgroundColor = '#fff';
+            }
+            
+            // Enable color selection immediately when store is selected
+            // Load all colors initially, then filter when type is selected
+            if (colorSelect) {
+                colorSelect.disabled = false;
+                colorSelect.removeAttribute('disabled');
+                colorSelect.setAttribute('required', 'required');
+                colorSelect.style.opacity = '1';
+                colorSelect.style.pointerEvents = 'auto';
+                colorSelect.style.cursor = 'pointer';
+                colorSelect.style.backgroundColor = '#fff';
+            }
+            
+            // Load all colors initially (will be filtered when type is selected)
+            loadAvailableColors(storeId, null);
+            
                 if (colorSection) {
                     colorSection.style.display = 'block';
                     colorSection.style.opacity = '1';
                     colorSection.style.pointerEvents = 'auto';
-                }
             }
         }
     } else {
@@ -1367,11 +1584,8 @@ function restoreFormData() {
                 }, 100);
             }
             
-            // Restore service option
-            if (formData.service_option) {
-                document.getElementById('service_option').value = formData.service_option;
-                document.getElementById('service_option').dispatchEvent(new Event('change'));
-            }
+            // DO NOT restore service option - it should always reset to "Select Option" on page refresh
+            // This ensures the customer must explicitly select a service option each time
             
             // Restore other form fields
             if (formData.pickup_date) {
@@ -1411,55 +1625,56 @@ function restoreFormData() {
 
 // Setup auto-save for form fields
 function setupAutoSave() {
-    // List of fields to auto-save
-    const fieldsToSave = [
-        'service_category',
-        'service_type',
-        '[name="pickup_date"]',
-        '[name="pickup_address"]',
-        '[name="item_description"]',
-        '[name="notes"]'
-    ];
-    
     // Function to save current form state
     const saveFormState = function() {
         const formData = {
-            service_category: document.getElementById('service_category').value,
-            service_type: document.getElementById('service_type').value,
-            service_option: document.getElementById('service_option').value,
-            pickup_date: document.querySelector('[name="pickup_date"]').value,
-            pickup_address: document.querySelector('[name="pickup_address"]').value,
-            delivery_date: document.querySelector('[name="delivery_date"]').value,
-            delivery_address: document.querySelector('[name="delivery_address"]').value,
-            notes: document.querySelector('[name="notes"]').value,
+            service_category: document.getElementById('service_category')?.value || '',
+            service_type: document.getElementById('service_type')?.value || '',
+            service_option: document.getElementById('service_option')?.value || '',
+            pickup_date: document.querySelector('[name="pickup_date"]')?.value || '',
+            pickup_address: document.querySelector('[name="pickup_address"]')?.value || '',
+            delivery_date: document.querySelector('[name="delivery_date"]')?.value || '',
+            delivery_address: document.querySelector('[name="delivery_address"]')?.value || '',
+            notes: document.querySelector('[name="notes"]')?.value || '',
             returnTo: 'repairReservation'
         };
         sessionStorage.setItem('repairReservationFormData', JSON.stringify(formData));
     };
     
-    // Add event listeners to all fields
-    document.getElementById('service_category').addEventListener('change', saveFormState);
-    document.getElementById('service_type').addEventListener('change', saveFormState);
-    document.getElementById('service_option').addEventListener('change', saveFormState);
-    document.querySelector('[name="pickup_date"]').addEventListener('change', saveFormState);
-    document.querySelector('[name="pickup_address"]').addEventListener('input', saveFormState);
-    document.querySelector('[name="delivery_date"]').addEventListener('change', saveFormState);
-    document.querySelector('[name="delivery_address"]').addEventListener('input', saveFormState);
-    document.querySelector('[name="notes"]').addEventListener('input', saveFormState);
+    // Add event listeners to all fields (check if elements exist first)
+    const serviceCategory = document.getElementById('service_category');
+    const serviceType = document.getElementById('service_type');
+    const serviceOption = document.getElementById('service_option');
+    const pickupDate = document.querySelector('[name="pickup_date"]');
+    const pickupAddress = document.querySelector('[name="pickup_address"]');
+    const deliveryDate = document.querySelector('[name="delivery_date"]');
+    const deliveryAddress = document.querySelector('[name="delivery_address"]');
+    const notes = document.querySelector('[name="notes"]');
+    
+    if (serviceCategory) serviceCategory.addEventListener('change', saveFormState);
+    if (serviceType) serviceType.addEventListener('change', saveFormState);
+    if (serviceOption) serviceOption.addEventListener('change', saveFormState);
+    if (pickupDate) pickupDate.addEventListener('change', saveFormState);
+    if (pickupAddress) pickupAddress.addEventListener('input', saveFormState);
+    if (deliveryDate) deliveryDate.addEventListener('change', saveFormState);
+    if (deliveryAddress) deliveryAddress.addEventListener('input', saveFormState);
+    if (notes) notes.addEventListener('input', saveFormState);
 }
 
-// Helper function to enable color selection
-function enableColorSelection() {
-    const colorSelectionSection = document.getElementById('colorSelectionSection');
+// Helper function to enable fabric and quality selection
+function enableFabricAndQuality() {
     const selectedColor = document.getElementById('selected_color');
     const colorType = document.getElementById('color_type');
+    const colorSelectionSection = document.getElementById('colorSelectionSection');
     const storeLocation = document.getElementById('store_location');
     const colorLabel = colorSelectionSection ? colorSelectionSection.querySelector('label.form-label') : null;
     const colorHelpText = colorSelectionSection ? colorSelectionSection.querySelector('small.form-text') : null;
     
+    // Enable color selection section
     if (colorSelectionSection) {
         colorSelectionSection.style.opacity = '1';
         colorSelectionSection.style.pointerEvents = 'auto';
+        colorSelectionSection.style.display = 'block';
     }
     
     // Restore original label and help text
@@ -1471,23 +1686,51 @@ function enableColorSelection() {
         colorHelpText.className = 'form-text text-muted mb-2 d-block';
     }
     
-    // Only enable if store location is selected
-    if (selectedColor && storeLocation && storeLocation.value) {
-        selectedColor.disabled = false;
-        selectedColor.setAttribute('required', 'required');
-    }
-    
+    // ALWAYS enable color type dropdown (Standard/Premium) - should be clickable immediately
     if (colorType) {
         colorType.disabled = false;
+        colorType.removeAttribute('disabled');
         colorType.setAttribute('required', 'required');
+        colorType.classList.remove('disabled');
+        colorType.style.opacity = '1';
+        colorType.style.pointerEvents = 'auto';
+        colorType.style.cursor = 'pointer';
+        colorType.style.backgroundColor = '#fff';
+    }
+    
+    // Enable fabric/color selection dropdown when store location is selected
+    if (selectedColor) {
+        const storeLocation = document.getElementById('store_location');
+        
+        if (storeLocation && storeLocation.value) {
+            // Store selected - enable color dropdown immediately
+            selectedColor.disabled = false;
+            selectedColor.removeAttribute('disabled');
+            selectedColor.setAttribute('required', 'required');
+            selectedColor.style.opacity = '1';
+            selectedColor.style.pointerEvents = 'auto';
+            selectedColor.style.cursor = 'pointer';
+            selectedColor.style.backgroundColor = '#fff';
+        } else {
+            // No store selected - keep disabled
+            selectedColor.disabled = true;
+            selectedColor.setAttribute('disabled', 'disabled');
+            selectedColor.removeAttribute('required');
+            selectedColor.innerHTML = '<option value="">Select Color...</option><option value="" disabled>Please select a store location first</option>';
+        }
     }
 }
 
-// Helper function to disable color selection
-function disableColorSelection() {
-    const colorSelectionSection = document.getElementById('colorSelectionSection');
+// Alias for backward compatibility
+function enableColorSelection() {
+    enableFabricAndQuality();
+}
+
+// Helper function to disable fabric and quality selection
+function disableFabricAndQuality() {
     const selectedColor = document.getElementById('selected_color');
     const colorType = document.getElementById('color_type');
+    const colorSelectionSection = document.getElementById('colorSelectionSection');
     const colorLabel = colorSelectionSection ? colorSelectionSection.querySelector('label.form-label') : null;
     const colorHelpText = colorSelectionSection ? colorSelectionSection.querySelector('small.form-text') : null;
     
@@ -1498,22 +1741,26 @@ function disableColorSelection() {
     
     if (selectedColor) {
         selectedColor.disabled = true;
+        selectedColor.setAttribute('disabled', 'disabled');
         selectedColor.removeAttribute('required');
+        selectedColor.classList.add('disabled');
         selectedColor.value = ''; // Clear selection
     }
     
     if (colorType) {
         colorType.disabled = true;
+        colorType.setAttribute('disabled', 'disabled');
         colorType.removeAttribute('required');
+        colorType.classList.add('disabled');
         colorType.value = 'standard'; // Reset to standard
     }
     
-    // Update label and help text to indicate it's disabled for delivery
+    // Update label and help text to indicate it's disabled
     if (colorLabel) {
-        colorLabel.innerHTML = 'Fabric/Color Selection <span class="text-muted">(Disabled for Delivery Service)</span>';
+        colorLabel.innerHTML = 'Fabric/Color Selection <span class="text-muted">(Disabled)</span>';
     }
     if (colorHelpText) {
-        colorHelpText.innerHTML = '<i class="fas fa-info-circle"></i> Color selection is not available for delivery service. Fabric will be selected during inspection.';
+        colorHelpText.innerHTML = '<i class="fas fa-info-circle"></i> Color selection is not available for this service option.';
         colorHelpText.className = 'form-text text-muted mb-2 d-block';
     }
     
@@ -1524,9 +1771,20 @@ function disableColorSelection() {
     }
 }
 
-// Handle service option change (Pickup, Delivery, Both, or Walk In)
-document.getElementById('service_option').addEventListener('change', function() {
-    const serviceOption = this.value;
+// Alias for backward compatibility
+function disableColorSelection() {
+    disableFabricAndQuality();
+}
+
+// MAIN LOGIC - Handle service option change (Pickup, Delivery, Both, or Walk In)
+// Get elements
+const serviceOption = document.getElementById('service_option');
+const fabricSelect = document.getElementById('selected_color');
+const qualitySelect = document.getElementById('color_type');
+
+// Handle service option change
+serviceOption.addEventListener('change', function() {
+    const option = this.value;
     const pickupDateGroup = document.getElementById('pickupDateGroup');
     const deliveryDateGroup = document.getElementById('deliveryDateGroup');
     const pickupAddressGroup = document.getElementById('pickupAddressGroup');
@@ -1535,84 +1793,141 @@ document.getElementById('service_option').addEventListener('change', function() 
     const pickupAddress = document.getElementById('pickup_address');
     const deliveryDate = document.getElementById('delivery_date');
     const pickupDate = document.getElementById('pickup_date');
+    const storeLocation = document.getElementById('store_location');
     
-    // Distance field removed - no longer required
-    
-    if (serviceOption === 'pickup') {
+        // Handle date and address fields based on service option
+    if (option === 'pickup') {
         // Show pickup date and address, hide delivery fields
         pickupDateGroup.style.display = 'block';
         pickupAddressGroup.style.display = 'block';
         deliveryDateGroup.style.display = 'none';
+        if (deliveryAddressGroup) {
         deliveryAddressGroup.style.display = 'none';
+        }
         pickupAddress.setAttribute('required', 'required');
         pickupDate.setAttribute('required', 'required');
+        if (deliveryAddress) {
         deliveryAddress.removeAttribute('required');
+        }
         deliveryDate.removeAttribute('required');
         
         // Enable fabric/color selection for pickup
-        enableColorSelection();
-    } else if (serviceOption === 'delivery') {
-        // Show delivery date and address, hide pickup fields
+        enableFabricAndQuality();
+        
+    } else if (option === 'delivery') {
+        // Delivery = customer drops item to shop → fabric selection MUST be enabled
+        // Show drop-off date only, hide pickup fields and delivery address (removed)
+        // Hide Preferred Pickup Date field completely
+        if (pickupDateGroup) {
         pickupDateGroup.style.display = 'none';
+        }
         pickupAddressGroup.style.display = 'none';
         deliveryDateGroup.style.display = 'block';
-        deliveryAddressGroup.style.display = 'block';
-        deliveryAddress.setAttribute('required', 'required');
+        // Delivery address removed - customer brings item to shop, no delivery address needed
+        if (deliveryAddressGroup) {
+            deliveryAddressGroup.style.display = 'none';
+        }
         deliveryDate.setAttribute('required', 'required');
         pickupAddress.removeAttribute('required');
+        if (pickupDate) {
         pickupDate.removeAttribute('required');
-        // Auto-fill delivery address from user's account if empty
-        const userAddress = `<?php echo addslashes($userAddress ?? ''); ?>`;
-        if (userAddress && !deliveryAddress.value) {
-            deliveryAddress.value = userAddress;
+        }
+        if (deliveryAddress) {
+            deliveryAddress.removeAttribute('required');
         }
         
-        // Disable fabric/color selection for delivery service
-        disableColorSelection();
-    } else if (serviceOption === 'both') {
-        // Show both pickup and delivery fields
+        // ✅ CRITICAL: Enable fabric/color selection for delivery service
+        // DAPAT ENABLED ANG COLOR SELECTION KAPAG DELIVERY SERVICE
+        console.log('Delivery Service selected - Enabling fabric/color selection');
+        enableFabricAndQuality();
+        
+        // Verify it's enabled
+        const colorTypeCheck = document.getElementById('color_type');
+        const colorSelectCheck = document.getElementById('selected_color');
+        if (colorTypeCheck) {
+            console.log('Color Type (Standard/Premium) enabled:', !colorTypeCheck.disabled);
+        }
+        if (colorSelectCheck && storeLocation && storeLocation.value) {
+            console.log('Color Select enabled:', !colorSelectCheck.disabled);
+        }
+        
+        // If store is already selected, trigger store change to load colors
+        if (storeLocation && storeLocation.value) {
+            storeLocation.dispatchEvent(new Event('change'));
+        }
+        
+    } else if (option === 'both') {
+        // Show pickup fields and delivery address (for final delivery after repair)
+        // Hide drop-off date field - "Both" means pickup service, not customer drop-off
         pickupDateGroup.style.display = 'block';
         pickupAddressGroup.style.display = 'block';
-        deliveryDateGroup.style.display = 'block';
+        deliveryDateGroup.style.display = 'none'; // Hide drop-off date for "Both" option
+        // For "both" service, show delivery address (for final delivery after repair)
+        if (deliveryAddressGroup) {
         deliveryAddressGroup.style.display = 'block';
+        }
         pickupAddress.setAttribute('required', 'required');
         pickupDate.setAttribute('required', 'required');
+        if (deliveryAddress) {
         deliveryAddress.setAttribute('required', 'required');
-        deliveryDate.setAttribute('required', 'required');
+        }
+        deliveryDate.removeAttribute('required'); // Remove required since drop-off date is hidden
+        
         // Auto-fill delivery address from user's account if empty
         const userAddress = `<?php echo addslashes($userAddress ?? ''); ?>`;
-        if (userAddress && !deliveryAddress.value) {
+        if (userAddress && deliveryAddress && !deliveryAddress.value) {
             deliveryAddress.value = userAddress;
         }
         
         // Enable fabric/color selection for both (has pickup)
-        enableColorSelection();
-    } else if (serviceOption === 'walk_in') {
+        enableFabricAndQuality();
+        
+    } else if (option === 'walk_in') {
+        // Walk-in = enable normally
         // Hide all date and address fields for walk-in
+        // Hide Preferred Pickup Date field completely
+        if (pickupDateGroup) {
         pickupDateGroup.style.display = 'none';
+        }
         pickupAddressGroup.style.display = 'none';
         deliveryDateGroup.style.display = 'none';
+        if (deliveryAddressGroup) {
         deliveryAddressGroup.style.display = 'none';
+        }
         pickupAddress.removeAttribute('required');
+        if (pickupDate) {
         pickupDate.removeAttribute('required');
+        }
+        if (deliveryAddress) {
         deliveryAddress.removeAttribute('required');
+        }
         deliveryDate.removeAttribute('required');
         
         // Enable fabric/color selection for walk-in
-        enableColorSelection();
+        enableFabricAndQuality();
+        
     } else {
         // Hide all if nothing selected
-        pickupDateGroup.style.display = 'block';
+        // Hide Preferred Pickup Date field when no service option is selected
+        if (pickupDateGroup) {
+            pickupDateGroup.style.display = 'none';
+        }
         pickupAddressGroup.style.display = 'none';
         deliveryDateGroup.style.display = 'none';
+        if (deliveryAddressGroup) {
         deliveryAddressGroup.style.display = 'none';
+        }
         pickupAddress.removeAttribute('required');
+        if (pickupDate) {
         pickupDate.removeAttribute('required');
+        }
+        if (deliveryAddress) {
         deliveryAddress.removeAttribute('required');
+        }
         deliveryDate.removeAttribute('required');
         
         // Disable color selection when nothing is selected
-        disableColorSelection();
+        disableFabricAndQuality();
     }
 });
 
@@ -1647,8 +1962,8 @@ document.getElementById('repairReservationForm').addEventListener('submit', func
         return false;
     }
     
-    // Validate color selection if store is selected (skip for delivery service)
-    if (storeLocation && serviceOption !== 'delivery') {
+    // Validate color selection if store is selected (required for all service options including delivery)
+    if (storeLocation) {
         const selectedColor = document.getElementById('selected_color');
         const colorType = document.getElementById('color_type');
         
@@ -1690,22 +2005,28 @@ document.getElementById('repairReservationForm').addEventListener('submit', func
         }
     }
     
-    // Validate delivery fields if delivery or both is selected
-    if (serviceOption === 'delivery' || serviceOption === 'both') {
-        const deliveryAddress = document.getElementById('delivery_address').value.trim();
+    // Validate delivery fields based on service option
+    if (serviceOption === 'delivery') {
+        // For delivery service: customer drops off item to shop - only date is required, no address needed
         const deliveryDate = document.getElementById('delivery_date').value;
-        
-        if (!deliveryAddress) {
-            e.preventDefault();
-            alert('Please provide delivery address');
-            return false;
-        }
         
         if (!deliveryDate) {
             e.preventDefault();
-            alert('Please select a delivery date');
+            alert('Please select a drop-off date');
             return false;
         }
+    } else if (serviceOption === 'both') {
+        // For "both" service: needs delivery address (for final delivery after repair)
+        // Drop-off date is not required for "Both" option (only pickup date is needed)
+        const deliveryAddress = document.getElementById('delivery_address')?.value.trim();
+        
+        if (!deliveryAddress) {
+            e.preventDefault();
+            alert('Please provide delivery address for final delivery');
+            return false;
+        }
+        
+        // No delivery date validation needed for "Both" option
     }
     
     // If validation passes, clear saved form data

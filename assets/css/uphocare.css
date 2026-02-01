@@ -1,5 +1,25 @@
 /* UphoCare Custom Styles for Admin Panel */
 
+:root {
+    /* Brand Colors directly from Logo */
+    --uphol-navy: #103058;    /* Sidebar & Super Admin */
+    --uphol-blue: #2196F3;    /* Admin Actions */
+    --uphol-orange: #F57C00;  /* Customer Booking / Pending Status */
+    --uphol-green: #388E3C;   /* Completed Status */
+
+    /* Neutral Tones from Landing.php */
+    --text-dark: #2C3E50;
+    --bg-light: #F8F9FA;
+    --white: #FFFFFF;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+    
+    /* Modern Styling */
+    --br-modern: 12px;
+    --br-modern-lg: 15px;
+}
+
 /* Font Loading Optimization - Ensure smooth font rendering */
 /* Fallback fonts are already defined in sb-admin-2.css */
 /* The display=swap parameter in the Google Fonts link ensures immediate text visibility */
@@ -12,19 +32,55 @@
   border-radius: 0.375rem;
 }
 
+/* Role-specific button classes */
+.btn-primary-admin { 
+    background-color: var(--uphol-blue); 
+    border-color: var(--uphol-blue);
+    color: white; 
+    border-radius: var(--br-modern);
+}
+.btn-primary-admin:hover {
+    background-color: var(--uphol-navy);
+    border-color: var(--uphol-navy);
+    color: white;
+}
+
+.btn-reserve-customer { 
+    background-color: var(--uphol-orange); 
+    border-color: var(--uphol-orange);
+    color: white;
+    border-radius: var(--br-modern);
+}
+.btn-reserve-customer:hover {
+    background-color: #d35400;
+    border-color: #d35400;
+    color: white;
+}
+
+.btn-super-admin {
+    background-color: var(--uphol-navy);
+    border-color: var(--uphol-navy);
+    color: white;
+    border-radius: var(--br-modern);
+}
+
+/* Status classes */
+.status-pending { color: var(--uphol-orange); font-weight: 700; }
+.status-completed { color: var(--uphol-green); font-weight: 700; }
+
 /* Status badge colors */
 .badge-warning {
-  background-color: #f6c23e;
-  color: #212529;
+  background-color: var(--uphol-orange);
+  color: #fff;
 }
 
 .badge-info {
-  background-color: #36b9cc;
+  background-color: var(--uphol-blue);
   color: #fff;
 }
 
 .badge-success {
-  background-color: #1cc88a;
+  background-color: var(--uphol-green);
   color: #fff;
 }
 
@@ -39,8 +95,28 @@
 }
 
 .badge-primary {
-  background-color: #4e73df;
+  background-color: var(--uphol-blue);
   color: #fff;
+}
+
+.text-primary {
+  color: var(--uphol-blue) !important;
+}
+
+.text-primary-admin {
+    color: var(--uphol-blue) !important;
+}
+
+
+.btn-primary {
+  background-color: var(--uphol-blue);
+  border-color: var(--uphol-blue);
+  border-radius: var(--br-modern);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-navy);
+  border-color: var(--primary-navy);
 }
 
 /* Action buttons styling */
@@ -99,8 +175,26 @@
 /* Alert enhancements */
 .alert {
   border: none;
-  border-radius: 0.35rem;
+  border-radius: var(--br-modern);
 }
+
+/* Card enhancements */
+.card {
+  border: none;
+  box-shadow: var(--shadow-md);
+  border-radius: var(--br-modern-lg);
+}
+
+/* Sidebar Styling */
+.sidebar {
+    background-color: var(--uphol-navy) !important;
+}
+
+.sidebar-dark .nav-item.active .nav-link {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0;
+}
+
 
 .alert-success {
   background-color: #d1ecf1;
@@ -732,27 +826,63 @@ html {
 .modal {
     z-index: 1050 !important;
     display: none;
+    opacity: 1 !important; /* ensure modal is not transparent */
 }
 
 .modal.show {
     display: block !important;
     z-index: 1050 !important;
+    opacity: 1 !important; /* ensure modal is not transparent */
 }
 
 .modal-backdrop {
+    background-color: transparent !important; /* Fully transparent - no dark overlay */
+    opacity: 0 !important; /* Fully transparent */
     z-index: 1040 !important;
-    pointer-events: none !important;
+    pointer-events: none !important; /* Allow clicks through transparent backdrop */
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal-backdrop.show {
-    opacity: 0.5;
+    opacity: 0 !important; /* Fully transparent - bright modal like Official Receipt */
     z-index: 1040 !important;
+    pointer-events: none !important;
+    background-color: transparent !important; /* No dark overlay */
+}
+
+/* Force confirmation modal (customDialogModal) to appear above all other modals */
+#customDialogModal {
+    z-index: 99999 !important;
+}
+#customDialogModal.show {
+    z-index: 99999 !important;
+}
+.modal-backdrop.confirmation-backdrop {
+    z-index: 99998 !important;
+}
+body.modal-open #customDialogModal {
+    z-index: 99999 !important;
+}
+
+/* Accept Booking Confirmation Modal - Ensure it appears on top */
+#acceptBookingConfirmModal {
+    z-index: 99999 !important;
+}
+#acceptBookingConfirmModal.show {
+    z-index: 99999 !important;
+}
+body.modal-open #acceptBookingConfirmModal {
+    z-index: 99999 !important;
+}
+/* Ensure modal backdrop is transparent for accept booking modal */
+#acceptBookingConfirmModal ~ .modal-backdrop,
+body.modal-open .modal-backdrop:last-of-type {
+    background-color: transparent !important;
+    opacity: 0 !important;
     pointer-events: none !important;
 }
 
@@ -765,12 +895,14 @@ html {
 }
 
 .modal-content {
+    background-color: #ffffff !important; /* bright white */
+    opacity: 1 !important; /* ensure not transparent */
+    backdrop-filter: none !important; /* remove any backdrop filter */
     position: relative;
     display: flex;
     flex-direction: column;
     width: 100%;
     pointer-events: auto;
-    background-color: #fff;
     background-clip: padding-box;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 0.3rem;
@@ -867,4 +999,40 @@ body.modal-open .navbar {
 body.modal-open .sidebar,
 body.modal-open #accordionSidebar {
     z-index: 1 !important;
+}
+
+/* ============================================
+   MODAL STACKING FIX - Ensure modals stack correctly
+   ============================================ */
+
+/* Base z-index for modals */
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+/* Stacking fix for multiple modals - Force all shown modals to be on top */
+.modal.show {
+    z-index: 3000 !important;
+}
+
+.modal-backdrop.show {
+    z-index: 2990 !important;
+}
+
+/* CRITICAL: Custom dialog modal (confirm/alert) MUST always be on top */
+#customDialogModal {
+    z-index: 5000 !important;
+}
+
+#customDialogModal.show {
+    z-index: 5000 !important;
+}
+
+/* Ensure custom dialog backdrop is below modal but above all others */
+body.modal-open .modal-backdrop:last-of-type {
+    z-index: 4990 !important;
 }

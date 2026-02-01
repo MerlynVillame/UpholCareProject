@@ -50,9 +50,21 @@
         .btn-primary-action {
             font-weight: 600;
             padding: 9px 12px;
-            width: 40px;
-            height: 40px;
+            min-width: 40px;
+            min-height: 40px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+        
+        /* Buttons with text should auto-width */
+        .btn-primary-action:not(:only-child) {
+            width: auto;
+        }
+        
+        /* Mark Pick Up button - allow text to show */
+        .mark-pickup-btn {
+            width: auto !important;
+            padding: 9px 15px !important;
+            white-space: nowrap;
         }
         
         .btn-primary-action:hover {
@@ -98,14 +110,14 @@
         
         /* Update Button - Special styling */
         .update-btn {
-            border-color: #007bff;
-            color: #007bff;
+            border-color: var(--uphol-blue);
+            color: var(--uphol-blue);
         }
         
         .update-btn:hover {
-            background-color: #007bff;
+            background-color: var(--uphol-blue);
             color: white;
-            border-color: #007bff;
+            border-color: var(--uphol-blue);
         }
         
         /* Receipt Button - Special styling */
@@ -132,6 +144,43 @@
         
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        
+        /* Official Receipt Modal Footer Buttons - Small and Clean */
+        #officialReceiptModal .modal-footer {
+            padding: 10px 15px !important;
+            border-top: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+        
+        #officialReceiptModal .modal-footer .btn {
+            min-width: 36px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin: 0 2px;
+            transition: all 0.2s ease;
+        }
+        
+        #officialReceiptModal .modal-footer .btn i {
+            font-size: 0.9rem;
+        }
+        
+        #officialReceiptModal .modal-footer .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        
+        #officialReceiptModal .modal-footer .btn-group {
+            gap: 4px;
+        }
+        
+        #officialReceiptModal .modal-footer .btn-group .btn {
+            margin: 0;
         }
         
         /* Responsive adjustments */
@@ -205,13 +254,13 @@
                 <li class="nav-item">
                     <a class="nav-link active" id="active-tab" data-toggle="tab" href="#activeBookings" role="tab" aria-controls="activeBookings" aria-selected="true">
                         <i class="fas fa-clock mr-2"></i>Active Bookings
-                        <span class="badge badge-warning ml-2" id="activeCount">0</span>
+                        <span class="text-warning font-weight-bold ml-2" id="activeCount">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" id="completed-tab" data-toggle="tab" href="#completedBookings" role="tab" aria-controls="completedBookings" aria-selected="false">
                         <i class="fas fa-check-circle mr-2"></i>Completed Bookings
-                        <span class="badge badge-success ml-2" id="completedCount">0</span>
+                        <span class="text-success font-weight-bold ml-2" id="completedCount">0</span>
                     </a>
                 </li>
             </ul>
@@ -268,49 +317,57 @@
                                         // Function to generate status-specific action buttons based on workflow (ENHANCED)
                                         function getStatusActionButtons($booking) {
                                             $bookingId = (int)$booking['id'];
-                                            $rawStatus = $booking['status'] ?? 'pending';
+                                            $rawStatus = $booking['status'] ?? '';
                                             $status = strtolower(trim((string)$rawStatus));
-                                            if (empty($status) || $status === 'null') {
+                                            
+                                            // Normalize status variations (handle spaces, underscores, etc.)
+                                            $status = str_replace(' ', '_', $status); // Convert spaces to underscores
+                                            
+                                            // CRITICAL: Preserve actual status from database
+                                            // Only default to 'pending' if status is truly NULL or empty
+                                            // Do NOT override valid statuses like 'to_inspect', 'for_repair', etc.
+                                            if (empty($status) || $status === 'null' || $status === '') {
                                                 $status = 'pending';
+                                            }
+                                            
+                                            // Debug logging for to_inspect status
+                                            if ($status === 'to_inspect') {
+                                                error_log("DEBUG getStatusActionButtons: Booking #{$bookingId} has status 'to_inspect' - showing Preview Receipt button");
                                             }
                                             
                                             $buttons = [];
                                             
-                                            // Always show View Details button (Required First Step) - Icon Only
+                                            // Show View Details button only for certain statuses (not for inspect_completed and later)
+                                            $statusesWithoutViewButton = ['inspect_completed', 'inspection_completed_waiting_approval', 'preview_receipt_sent', 'under_repair', 'for_repair', 'repair_completed', 'repair_completed_ready_to_deliver', 'out_for_delivery', 'completed', 'delivered_and_paid', 'paid'];
+                                            if (!in_array($status, $statusesWithoutViewButton)) {
+                                                // View Details button (Required First Step) - Icon Only
                                             $buttons[] = '<button type="button" class="btn btn-sm btn-info action-btn view-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="handleViewDetails(' . $bookingId . ')" title="View Details - Check Service Option & Booking Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>';
+                                            }
                                             
                                             // Status-specific buttons based on workflow - Icon Only
                                             switch ($status) {
                                                 case 'pending':
-                                                    // Pending: Approve → Approved (then auto to For Pickup if Pick Up service) - Icon Only
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn approve-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleApprove(' . $bookingId . ')" title="Approve - Status will change to Approved, then For Pick Up if Pick Up service">
+                                                    // Pending: Accept → Accepted (then auto to For Pickup if Pick Up service) - Icon Only
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn approve-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="acceptBooking(' . $bookingId . ')" title="Accept Booking - Status will change to Accepted">
                                                         <i class="fas fa-check-circle"></i>
                                                     </button>';
                                                     break;
                                                     
-                                                case 'approved':
-                                                    // Approved: If Pick Up service, show "Mark for Pickup" button
-                                                    // Otherwise, show "Start Repair" or other appropriate action
-                                                    $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
-                                                    if ($serviceOption === 'pickup' || $serviceOption === 'both') {
-                                                        // Auto-update should have happened, but show button as fallback
-                                                        $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'for_pickup\', event)" title="Mark for Pick Up - Item ready for collection">
-                                                            <i class="fas fa-truck"></i>
-                                                        </button>';
-                                                    } else {
-                                                        // For non-pickup services, can proceed directly
-                                                        $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" onclick="openComputeTotal(' . $bookingId . ')" title="Compute Total & Start Repair">
-                                                            <i class="fas fa-calculator"></i>
-                                                        </button>';
-                                                    }
+                                                case 'for_dropoff':
+                                                    // For Drop-off: Mark as Item Received → For Inspect (Delivery Service)
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="markItemReceived(' . $bookingId . ', event)" title="Mark as Item Received - Customer brought item to shop">
+                                                        <i class="fas fa-box-check"></i>
+                                                    </button>';
                                                     break;
                                                     
                                                 case 'for_pickup':
-                                                    // For Pickup: Mark as Picked Up → To Inspect - Icon Only
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'to_inspect\', event)" title="Mark as Picked Up - Item collected, ready for inspection">
-                                                        <i class="fas fa-truck-loading"></i>
+                                                case 'for pickup': // Handle space variation
+                                                case 'forpickup': // Handle no space variation
+                                                    // For Pickup: Mark as Picked Up → To Inspect
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary-admin action-btn enhanced-btn btn-primary-action mark-pickup-btn" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'to_inspect\', event)" title="Mark Pick Up - Item collected, status will change to To Inspect">
+                                                        <i class="fas fa-truck-loading mr-1"></i>Mark Pick Up
                                                     </button>';
                                                     break;
                                                     
@@ -321,41 +378,25 @@
                                                     </button>';
                                                     break;
                                                     
+                                                case 'for_inspect':
+                                                    // For Inspect: Send Preview Receipt button (Delivery Service workflow)
+                                                    // Admin inspects damage, measurements, fabric, estimates costs, then sends preview receipt
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="openCompleteInspection(' . $bookingId . ')" title="Complete Inspection & Send Preview Receipt - Record Measurements, Damages, Materials & Send Preview Receipt to Customer">
+                                                        <i class="fas fa-file-invoice-dollar"></i>
+                                                    </button>';
+                                                    break;
+                                                    
                                                 case 'to_inspect':
-                                                    // To Inspect: Full Inspection Workflow Buttons - Icon Only
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-info action-btn enhanced-btn" onclick="openRecordMeasurements(' . $bookingId . ')" title="Record Measurements - Height, Width, Thickness">
-                                                        <i class="fas fa-ruler-combined"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-warning action-btn enhanced-btn" onclick="openRecordDamages(' . $bookingId . ')" title="Record Damages / Defects - Tears, Foam, Frames, Stains">
-                                                        <i class="fas fa-exclamation-triangle"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn" onclick="openAddMaterials(' . $bookingId . ')" title="Add Materials / Fabrics Used - Fabric Type, Meters, Foam, Accessories">
-                                                        <i class="fas fa-cut"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn" onclick="openComputeTotal(' . $bookingId . ')" title="Compute Total - Calculate Fabric, Labor, Repair Costs">
-                                                        <i class="fas fa-calculator"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-secondary action-btn enhanced-btn btn-primary-action" onclick="sendPreviewReceipt(' . $bookingId . ')" title="Send Preview Receipt - Send to Customer (Status: For Repair)">
-                                                        <i class="fas fa-paper-plane"></i>
+                                                    // To Inspect: Combined Inspection Workflow Button - Opens all-in-one modal
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary-admin action-btn enhanced-btn btn-primary-action" onclick="openCompleteInspection(' . $bookingId . ')" title="Complete Inspection - Record Measurements, Damages, Materials & Create Receipt">
+                                                        <i class="fas fa-clipboard-check"></i>
                                                     </button>';
                                                     break;
                                                     
                                                 case 'for_inspection':
-                                                    // For Inspection (legacy): Use same as to_inspect
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-info action-btn enhanced-btn" onclick="openRecordMeasurements(' . $bookingId . ')" title="Record Measurements">
-                                                        <i class="fas fa-ruler-combined"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-warning action-btn enhanced-btn" onclick="openRecordDamages(' . $bookingId . ')" title="Record Damages">
-                                                        <i class="fas fa-exclamation-triangle"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn" onclick="openAddMaterials(' . $bookingId . ')" title="Add Materials">
-                                                        <i class="fas fa-cut"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn" onclick="openComputeTotal(' . $bookingId . ')" title="Compute Total">
-                                                        <i class="fas fa-calculator"></i>
-                                                    </button>';
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-secondary action-btn enhanced-btn btn-primary-action" onclick="sendPreviewReceipt(' . $bookingId . ')" title="Send Preview Receipt - Send to Customer (Status: For Repair)">
-                                                        <i class="fas fa-paper-plane"></i>
+                                                    // For Inspection (legacy): Use same as to_inspect - Combined Inspection Workflow
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-primary action-btn enhanced-btn btn-primary-action" onclick="openCompleteInspection(' . $bookingId . ')" title="Complete Inspection - Record Measurements, Damages, Materials & Create Receipt">
+                                                        <i class="fas fa-clipboard-check"></i>
                                                     </button>';
                                                     break;
                                                     
@@ -369,10 +410,10 @@
                                                     </button>';
                                                     break;
                                                     
-                                                case 'approved':
+                                                // Legacy statuses
                                                 case 'accepted':
                                                 case 'confirmed':
-                                                    // Approved (legacy): Generate Receipt - Icon Only
+                                                    // Legacy statuses: Generate Receipt - Icon Only
                                                     $buttons[] = '<button type="button" 
                                                                 class="btn btn-sm btn-success action-btn receipt-btn enhanced-btn btn-primary-action" 
                                                                 data-booking-id="' . $bookingId . '" 
@@ -382,33 +423,99 @@
                                                         </button>';
                                                     break;
                                                     
-                                                case 'in_progress':
                                                 case 'under_repair':
                                                 case 'ongoing':
                                                     // In Progress / Under Repair: Mark Completed - Icon Only
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'completed\', event)" title="Mark as Completed">
+                                                    // Use service option to determine next status
+                                                    $serviceOption = isset($booking['service_option']) ? htmlspecialchars($booking['service_option'], ENT_QUOTES, 'UTF-8') : 'Pickup';
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="markAsCompleted(' . $bookingId . ', \'' . $serviceOption . '\')" title="Mark as Completed">
                                                         <i class="fas fa-check-circle"></i>
                                                     </button>';
                                                     break;
                                                     
-                                                case 'completed':
-                                                    // Completed: No additional action buttons needed
+                                                case 'repair_completed':
+                                                    // Repair Completed: Show next button based on service option
+                                                    $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
+                                                    if ($serviceOption === 'delivery' || $serviceOption === 'both') {
+                                                        // Delivery or Both: Ready to Deliver button
+                                                        $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'repair_completed_ready_to_deliver\', event)" title="Ready to Deliver">
+                                                            <i class="fas fa-truck"></i>
+                                                        </button>';
+                                                    } else {
+                                                        // Pickup only: Completed/Paid button
+                                                        $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'completed\', event)" title="Mark as Completed/Paid" style="background-color: var(--uphol-green); border-color: var(--uphol-green);">
+                                                            <i class="fas fa-check-circle"></i>
+                                                        </button>';
+                                                    }
                                                     break;
                                                     
+                                                case 'repair_completed_ready_to_deliver':
+                                                    // Ready to Deliver: Mark as Out for Delivery button
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-info action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="markOutForDelivery(' . $bookingId . ', event)" title="Mark as Out for Delivery - Item is being delivered">
+                                                        <i class="fas fa-shipping-fast"></i>
+                                                    </button>';
+                                                    break;
+                                                    
+                                                case 'inspect_completed':
+                                                case 'preview_receipt_sent':
+                                                    // Inspect Completed / Preview Receipt Sent: View Preview Receipt button
+                                                    // Admin can view the exact preview receipt that was sent to customer
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-info action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleViewDetails(' . $bookingId . ')" title="View Preview Receipt - See the exact receipt sent to customer">
+                                                        <i class="fas fa-receipt"></i>
+                                                    </button>';
+                                                    break;
+                                                    
+                                                case 'inspection_completed_waiting_approval':
+                                                    // Inspection Completed - Waiting for Customer Approval: Show status only
+                                                    // Customer must approve preview receipt before repair can begin
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-secondary action-btn enhanced-btn" disabled title="Waiting for Customer Approval - Customer must approve preview receipt">
+                                                        <i class="fas fa-hourglass-half"></i>
+                                                    </button>';
+                                                    break;
+                                                    
+                                                case 'out_for_delivery':
+                                                    // On Delivery: Delivered/Paid button
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'delivered_and_paid\', event)" title="Mark as Delivered/Paid">
+                                                        <i class="fas fa-check-double"></i>
+                                                    </button>';
+                                                    break;
+                                                    
+                                                case 'completed':
                                                 case 'paid':
-                                                    // Paid: Close Booking - Icon Only
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-dark action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleQuickStatusUpdate(' . $bookingId . ', \'closed\', event)" title="Close Booking">
-                                                        <i class="fas fa-lock"></i>
+                                                    // These statuses should appear in Completed Bookings tab
+                                                    // No action buttons needed here - they will show in completed bookings
+                                                    break;
+                                                    
+                                                case 'delivered_and_paid':
+                                                    // Delivered/Paid: Generate Official Receipt button
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="handleGenerateReceipt(' . $bookingId . ')" title="Generate Official Receipt - Issue and send OR to customer">
+                                                        <i class="fas fa-file-invoice"></i>
                                                     </button>';
                                                     break;
                                             }
                                             
                                             // Update Status button removed - use workflow-specific buttons only
                                             
-                                            // Always show Delete button - Icon Only
-                                            $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger action-btn delete-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="handleDelete(' . $bookingId . ', event)" title="Delete Booking">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>';
+                                            // Archive or Delete button based on status
+                                            // Only show Archive for Completed/Paid bookings
+                                            $status = strtolower($status);
+                                            $isCompleted = (
+                                                $status === 'delivered_and_paid' || 
+                                                ($status === 'completed' && in_array(strtolower($booking['payment_status'] ?? ''), ['paid', 'paid_full_cash', 'paid_on_delivery_cod'])) ||
+                                                ($status === 'paid' && in_array(strtolower($booking['payment_status'] ?? ''), ['paid', 'paid_full_cash', 'paid_on_delivery_cod']))
+                                            );
+                                            
+                                            if ($isCompleted) {
+                                                // Completed bookings can be archived
+                                                $buttons[] = '<button type="button" class="btn btn-sm btn-outline-secondary action-btn archive-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="handleArchive(' . $bookingId . ', event)" title="Archive Booking">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>';
+                                            } else {
+                                                // Active bookings can be deleted
+                                                $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger action-btn delete-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="handleDelete(' . $bookingId . ', event)" title="Delete Booking">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>';
+                                            }
                                             
                                             return '<div class="btn-group btn-group-enhanced" role="group" aria-label="Booking Actions">' . implode('', $buttons) . '</div>';
                                         }
@@ -417,13 +524,20 @@
                                         $completedCount = 0;
                                         if (!empty($bookings)): 
                                             foreach ($bookings as $booking): 
-                                                // Check if booking is completed (status = completed/delivered_and_paid AND payment = paid)
+                                                // Check if booking is completed
+                                                // delivered_and_paid status automatically means completed (payment received)
+                                                // completed status with paid payment_status also means completed
                                                 $status = strtolower($booking['status'] ?? '');
                                                 $paymentStatus = strtolower($booking['payment_status'] ?? 'unpaid');
+                                                
+                                                // delivered_and_paid status is always considered completed
+                                                // completed status with paid payment is also completed
                                                 $isCompleted = (
-                                                    in_array($status, ['completed', 'delivered_and_paid']) && 
-                                                    in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod'])
+                                                    $status === 'delivered_and_paid' || 
+                                                    ($status === 'completed' && in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod'])) ||
+                                                    ($status === 'paid' && in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod']))
                                                 );
+                                                
                                                 if ($isCompleted) {
                                                     $completedCount++;
                                                     continue; // Skip completed bookings in active tab
@@ -432,7 +546,7 @@
                                         ?>
                                             <tr>
                                                 <td>
-                                                    <span class="badge badge-info">Booking #<?php echo htmlspecialchars($booking['id']); ?></span>
+                                                    <span class="text-primary font-weight-bold">Booking #<?php echo htmlspecialchars($booking['id']); ?></span>
                                                 </td>
                                                 <td>
                                                     <div class="customer-info">
@@ -451,7 +565,7 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span class="badge badge-secondary"><?php echo htmlspecialchars($booking['category_name']); ?></span>
+                                                    <span class="text-secondary font-weight-bold"><!-- Category: --><?php echo htmlspecialchars($booking['category_name']); ?></span>
                                                 </td>
                                                 <td>
                                                     <?php
@@ -465,8 +579,8 @@
                                                     ];
                                                     $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['class' => 'badge-secondary', 'icon' => 'fa-question', 'text' => ucfirst($serviceOption)];
                                                     ?>
-                                                    <span class="badge <?php echo $optionConfig['class']; ?>" style="font-weight: 600;">
-                                                        <i class="fas <?php echo $optionConfig['icon']; ?> mr-1"></i>
+                                                    <span class="text-dark font-weight-bold">
+                                                        <i class="fas <?php echo $optionConfig['icon']; ?> mr-1 text-secondary"></i>
                                                         <?php echo htmlspecialchars($optionConfig['text']); ?>
                                                     </span>
                                                 </td>
@@ -480,14 +594,21 @@
                                                         // PICKUP Workflow
                                                         'for_pickup' => ['class' => 'badge-info', 'text' => 'For Pickup'],
                                                         'picked_up' => ['class' => 'badge-primary', 'text' => 'Picked Up'],
+                                                        'to_inspect' => ['class' => 'badge-warning', 'text' => 'To Inspect'],
+                                                        'for_dropoff' => ['class' => 'badge-warning', 'text' => 'For Drop-off'],
+                                                        'for_inspect' => ['class' => 'badge-warning', 'text' => 'For Inspect'],
                                                         'for_inspection' => ['class' => 'badge-warning', 'text' => 'For Inspection'],
+                                                        'to_inspect' => ['class' => 'badge-warning', 'text' => 'To Inspect'],
+                                                        'inspect_completed' => ['class' => 'badge-success', 'text' => 'Inspect Completed'],
+                                                        'inspection_completed_waiting_approval' => ['class' => 'badge-info', 'text' => 'Inspection Completed - Waiting for Approval'],
+                                                        'preview_receipt_sent' => ['class' => 'badge-info', 'text' => 'Preview Receipt Sent'],
+                                                        'for_repair' => ['class' => 'badge-info', 'text' => 'For Repair'],
                                                         // 'for_quotation' status removed
                                                         
                                                         // Work in Progress
-                                                        'approved' => ['class' => 'badge-success', 'text' => 'Approved'],
-                                                        'in_queue' => ['class' => 'badge-info', 'text' => 'In Queue'],
-                                                        'in_progress' => ['class' => 'badge-primary', 'text' => 'In Progress'],
                                                         'under_repair' => ['class' => 'badge-primary', 'text' => 'Under Repair'],
+                                                        'repair_completed' => ['class' => 'badge-success', 'text' => 'Repair Completed'],
+                                                        'repair_completed_ready_to_deliver' => ['class' => 'badge-success', 'text' => 'Repair Completed - Ready to Deliver'],
                                                         'for_quality_check' => ['class' => 'badge-info', 'text' => 'For Quality Check'],
                                                         
                                                         // Completion
@@ -504,15 +625,20 @@
                                                         // Legacy statuses (for backward compatibility)
                                                         'accepted' => ['class' => 'badge-success', 'text' => 'Approved'],
                                                         'confirmed' => ['class' => 'badge-success', 'text' => 'Approved'],
-                                                        'ongoing' => ['class' => 'badge-primary', 'text' => 'In Progress'],
-                                                        'rejected' => ['class' => 'badge-danger', 'text' => 'Rejected'],
+                                                        'ongoing' => ['class' => 'badge-primary', 'text' => 'Under Repair'],
                                                         'declined' => ['class' => 'badge-danger', 'text' => 'Declined']
                                                     ];
                                                     
-                                                    $status = strtolower(trim($booking['status'] ?? 'pending'));
-                                                    // Ensure status is never empty
-                                                    if (empty($status) || $status === 'null') {
+                                                    $status = strtolower(trim($booking['status'] ?? ''));
+                                                    // CRITICAL: Preserve actual status from database
+                                                    // Only default to 'pending' if status is truly NULL or empty string
+                                                    // Do NOT override valid statuses like 'to_inspect', 'for_repair', etc.
+                                                    if (empty($status) || $status === 'null' || $status === '') {
                                                         $status = 'pending';
+                                                    }
+                                                    // Log status for debugging
+                                                    if ($status === 'to_inspect') {
+                                                        error_log("DEBUG: Booking #{$booking['id']} has status 'to_inspect' - should show Preview Receipt button");
                                                     }
                                                     $config = $statusConfig[$status] ?? ['class' => 'badge-secondary', 'text' => ucwords(str_replace('_', ' ', $status))];
                                                     
@@ -520,10 +646,16 @@
                                                     // If status is delivered_and_paid, it's already paid
                                                     if ($status === 'completed') {
                                                         $paymentStatus = $booking['payment_status'] ?? 'unpaid';
-                                                        // For COD: completed + unpaid = "Completed (Unpaid)"
-                                                        // For Full Cash: completed + paid_full_cash = "Completed (Paid)"
-                                                        if ($paymentStatus === 'paid_full_cash' || $paymentStatus === 'paid') {
-                                                            $config['text'] = 'Completed (Paid)';
+                                                        $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
+                                                        
+                                                        // Determine status text based on service option and payment
+                                                        if ($paymentStatus === 'paid_full_cash' || $paymentStatus === 'paid' || $paymentStatus === 'paid_on_delivery_cod') {
+                                                            // If service option is delivery or both, show "Delivered/Paid"
+                                                            if ($serviceOption === 'delivery' || $serviceOption === 'both') {
+                                                                $config['text'] = 'Delivered/Paid';
+                                                            } else {
+                                                                $config['text'] = 'Completed & Paid';
+                                                            }
                                                             $config['class'] = 'badge-success';
                                                         } else {
                                                             $config['text'] = 'Completed (Unpaid)';
@@ -531,7 +663,9 @@
                                                         }
                                                     } elseif ($status === 'delivered_and_paid') {
                                                         // Delivered and Paid status (COD after payment received)
-                                                        $config['text'] = 'Delivered and Paid';
+                                                        $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
+                                                        // Always show "Delivered/Paid" for delivered_and_paid status
+                                                        $config['text'] = 'Delivered/Paid';
                                                         $config['class'] = 'badge-success';
                                                     }
                                                     
@@ -541,9 +675,10 @@
                                                         $config['class'] = 'badge-success';
                                                     }
                                                     ?>
-                                                    <span class="badge <?php echo $config['class']; ?>" style="font-weight: 600;">
-                                                        <?php echo htmlspecialchars($config['text']); ?>
-                                                    </span>
+                                                    <span class="text-<?php echo str_replace('badge-', '', $config['class']); ?> font-weight-bold">
+                                        <i class="fas fa-circle mr-1" style="font-size: 0.6rem;"></i>
+                                        <?php echo htmlspecialchars($config['text']); ?>
+                                    </span>
                                                 </td>
                                                 <td>
                                                     <span class="date-info"><?php echo date('M d, Y', strtotime($booking['created_at'])); ?></span>
@@ -589,20 +724,27 @@
                                         <?php 
                                         if (!empty($bookings)): 
                                             foreach ($bookings as $booking): 
-                                                // Only show completed bookings (status = completed/delivered_and_paid AND payment = paid)
+                                                // Show completed bookings
+                                                // delivered_and_paid status is always considered completed (payment received)
+                                                // completed status with paid payment is also completed
                                                 $status = strtolower($booking['status'] ?? '');
                                                 $paymentStatus = strtolower($booking['payment_status'] ?? 'unpaid');
+                                                
+                                                // delivered_and_paid status is always completed (payment already received)
+                                                // completed status with paid payment is also completed
                                                 $isCompleted = (
-                                                    in_array($status, ['completed', 'delivered_and_paid']) && 
-                                                    in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod'])
+                                                    $status === 'delivered_and_paid' || 
+                                                    ($status === 'completed' && in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod'])) ||
+                                                    ($status === 'paid' && in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod']))
                                                 );
+                                                
                                                 if (!$isCompleted) {
                                                     continue; // Skip non-completed bookings
                                                 }
                                         ?>
                                             <tr>
                                                 <td>
-                                                    <span class="badge badge-info">Booking #<?php echo htmlspecialchars($booking['id']); ?></span>
+                                                    <span class="text-primary font-weight-bold">Booking #<?php echo htmlspecialchars($booking['id']); ?></span>
                                                 </td>
                                                 <td>
                                                     <div class="customer-info">
@@ -621,7 +763,7 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span class="badge badge-secondary"><?php echo htmlspecialchars($booking['category_name']); ?></span>
+                                                    <span class="text-secondary font-weight-bold"><!-- Category: --><?php echo htmlspecialchars($booking['category_name']); ?></span>
                                                 </td>
                                                 <td>
                                                     <?php
@@ -635,14 +777,24 @@
                                                     ];
                                                     $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['class' => 'badge-secondary', 'icon' => 'fa-question', 'text' => ucfirst($serviceOption)];
                                                     ?>
-                                                    <span class="badge <?php echo $optionConfig['class']; ?>" style="font-weight: 600;">
-                                                        <i class="fas <?php echo $optionConfig['icon']; ?> mr-1"></i>
+                                                    <span class="text-dark font-weight-bold">
+                                                        <i class="fas <?php echo $optionConfig['icon']; ?> mr-1 text-secondary"></i>
                                                         <?php echo htmlspecialchars($optionConfig['text']); ?>
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge badge-success">
-                                                        <i class="fas fa-check-circle mr-1"></i>Completed & Paid
+                                                    <?php
+                                                    // Determine status text based on service option
+                                                    $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
+                                                    $statusText = 'Completed & Paid'; // Default for pickup
+                                                    
+                                                    // If service option is delivery or both, show "Delivered/Paid"
+                                                    if ($serviceOption === 'delivery' || $serviceOption === 'both') {
+                                                        $statusText = 'Delivered/Paid';
+                                                    }
+                                                    ?>
+                                                    <span class="text-success font-weight-bold">
+                                                        <i class="fas fa-check-circle mr-1"></i><?php echo htmlspecialchars($statusText); ?>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -660,24 +812,16 @@
                                                                 data-booking-id="<?php echo (int)$booking['id']; ?>"
                                                                 data-action="receipt"
                                                                 onclick="handleGenerateReceipt(<?php echo (int)$booking['id']; ?>)"
-                                                                title="Generate Receipt">
+                                                                title="Generate Official Receipt">
                                                             <i class="fas fa-receipt"></i>
                                                         </button>
                                                         <button type="button" 
-                                                                class="btn btn-sm btn-info action-btn view-btn enhanced-btn" 
+                                                                class="btn btn-sm btn-outline-secondary action-btn archive-btn enhanced-btn" 
                                                                 data-booking-id="<?php echo (int)$booking['id']; ?>"
-                                                                data-action="view"
-                                                                onclick="handleViewDetails(<?php echo (int)$booking['id']; ?>)"
-                                                                title="View Details">
-                                                            <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        <button type="button" 
-                                                                class="btn btn-sm btn-outline-danger action-btn delete-btn enhanced-btn" 
-                                                                data-booking-id="<?php echo (int)$booking['id']; ?>"
-                                                                data-action="delete"
-                                                                onclick="handleDelete(<?php echo (int)$booking['id']; ?>, event)"
-                                                                title="Delete Booking">
-                                                            <i class="fas fa-trash-alt"></i>
+                                                                data-action="archive"
+                                                                onclick="handleArchive(<?php echo (int)$booking['id']; ?>, event)"
+                                                                title="Archive Booking">
+                                                            <i class="fas fa-archive"></i>
                                                         </button>
                                                     </div>
                                                 </td>
@@ -782,9 +926,6 @@
                                         <!-- For Quotation status removed -->
                                     </optgroup>
                                     <optgroup label="Work in Progress">
-                                        <option value="approved">Approved - Customer approved quotation, ready for repair</option>
-                                    <option value="in_queue">In Queue - Waiting to be processed</option>
-                                        <option value="in_progress">In Progress - Work has started</option>
                                         <option value="under_repair">Under Repair - Technicians working on item</option>
                                         <option value="for_quality_check">For Quality Check - Final inspection</option>
                                     </optgroup>
@@ -1003,6 +1144,10 @@
                                         <td><strong>Leather Cost:</strong></td>
                                         <td class="text-right"><span id="leather_cost_display">₱0.00</span></td>
                                     </tr>
+                                    <tr id="color_price_row" style="display: none;">
+                                        <td><strong>Color Price:</strong></td>
+                                        <td class="text-right"><span id="color_price_display">₱0.00</span></td>
+                                    </tr>
                                     <tr>
                                         <td><strong>Labor Fee:</strong></td>
                                         <td class="text-right"><span id="labor_fee_display">₱0.00</span></td>
@@ -1069,11 +1214,6 @@
                                 <input type="number" class="form-control" id="measurement_thickness" name="thickness" step="0.01" min="0">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="measurement_custom">Custom Size / Additional Measurements</label>
-                        <textarea class="form-control" id="measurement_custom" name="custom_measurements" rows="3" placeholder="Enter any custom measurements or size details..."></textarea>
                     </div>
                     
                     <div class="form-group">
@@ -1148,11 +1288,6 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="damage_location">Damage Location / Affected Areas</label>
-                        <input type="text" class="form-control" id="damage_location" name="location" placeholder="e.g., Seat cushion, Backrest, Armrests, etc.">
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="damage_severity">Severity Level</label>
                         <select class="form-control" id="damage_severity" name="severity">
                             <option value="minor">Minor - Cosmetic only</option>
@@ -1189,81 +1324,6 @@
                 <form id="materialsForm">
                     <input type="hidden" id="materials_booking_id" name="booking_id">
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="material_fabric_type">Fabric Type <span class="text-danger">*</span></label>
-                                <select class="form-control" id="material_fabric_type" name="fabric_type" required>
-                                    <option value="">Select fabric type...</option>
-                                    <option value="leather_standard">Leather - Standard</option>
-                                    <option value="leather_premium">Leather - Premium</option>
-                                    <option value="fabric">Fabric</option>
-                                    <option value="vinyl">Vinyl</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="material_meters">Yards/Meters Needed <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="material_meters" name="meters" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="material_foam">Foam Replacement</label>
-                                <select class="form-control" id="material_foam" name="foam_replacement">
-                                    <option value="none">No foam replacement</option>
-                                    <option value="partial">Partial replacement</option>
-                                    <option value="full">Full replacement</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="material_foam_thickness">Foam Thickness (inches)</label>
-                                <input type="number" class="form-control" id="material_foam_thickness" name="foam_thickness" step="0.1" min="0">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label><strong>Additional Materials / Accessories</strong></label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="material_thread" name="accessories[]" value="thread">
-                                    <label class="form-check-label" for="material_thread">Thread</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="material_buttons" name="accessories[]" value="buttons">
-                                    <label class="form-check-label" for="material_buttons">Buttons</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="material_zippers" name="accessories[]" value="zippers">
-                                    <label class="form-check-label" for="material_zippers">Zippers</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="material_adhesive" name="accessories[]" value="adhesive">
-                                    <label class="form-check-label" for="material_adhesive">Adhesive</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="material_hardware" name="accessories[]" value="hardware">
-                                    <label class="form-check-label" for="material_hardware">Hardware (screws, nails, etc.)</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="material_other" name="accessories[]" value="other">
-                                    <label class="form-check-label" for="material_other">Other</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <div class="form-group">
                         <label for="material_notes">Materials Notes</label>
                         <textarea class="form-control" id="material_notes" name="notes" rows="2" placeholder="Additional notes about materials used..."></textarea>
@@ -1275,6 +1335,437 @@
                 <button type="button" class="btn btn-success" onclick="saveMaterials()">
                     <i class="fas fa-save mr-1"></i>Save Materials
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Inspection Modal (Combined: Measurements + Damages + Materials + Receipt) -->
+<div class="modal fade" id="completeInspectionModal" tabindex="-1" role="dialog" aria-labelledby="completeInspectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document" style="max-width: 1200px;">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="completeInspectionModalLabel">
+                    <i class="fas fa-clipboard-check mr-2"></i>Complete Inspection Workflow
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs mb-3" id="inspectionTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="measurements-tab" data-toggle="tab" href="#measurements-panel" role="tab" aria-controls="measurements-panel" aria-selected="true">
+                            <i class="fas fa-ruler-combined mr-1"></i>Measurements
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="damages-tab" data-toggle="tab" href="#damages-panel" role="tab" aria-controls="damages-panel" aria-selected="false">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Damages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="materials-tab" data-toggle="tab" href="#materials-panel" role="tab" aria-controls="materials-panel" aria-selected="false">
+                            <i class="fas fa-cut mr-1"></i>Materials
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="receipt-tab" data-toggle="tab" href="#receipt-panel" role="tab" aria-controls="receipt-panel" aria-selected="false">
+                            <i class="fas fa-calculator mr-1"></i>Compute Total
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="inspectionTabContent">
+                    <!-- Measurements Panel -->
+                    <div class="tab-pane fade show active" id="measurements-panel" role="tabpanel" aria-labelledby="measurements-tab">
+                        <form id="combinedMeasurementsForm">
+                            <input type="hidden" id="combined_measurements_booking_id" name="booking_id">
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="combined_measurement_height">Height (cm) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="combined_measurement_height" name="height" step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="combined_measurement_width">Width (cm) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="combined_measurement_width" name="width" step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="combined_measurement_thickness">Thickness (cm)</label>
+                                        <input type="number" class="form-control" id="combined_measurement_thickness" name="thickness" step="0.01" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="combined_measurement_notes">Measurement Notes</label>
+                                <textarea class="form-control" id="combined_measurement_notes" name="notes" rows="2" placeholder="Additional notes about measurements..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Damages Panel -->
+                    <div class="tab-pane fade" id="damages-panel" role="tabpanel" aria-labelledby="damages-tab">
+                        <form id="combinedDamagesForm">
+                            <input type="hidden" id="combined_damages_booking_id" name="booking_id">
+                            
+                            <div class="form-group">
+                                <label><strong>Damage Types (Check all that apply)</strong></label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="combined_damage_tears" name="damage_types[]" value="tears">
+                                            <label class="form-check-label" for="combined_damage_tears">Tears / Rips</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="combined_damage_foam" name="damage_types[]" value="foam_damage">
+                                            <label class="form-check-label" for="combined_damage_foam">Foam Condition (Worn/Compressed)</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="combined_damage_frames" name="damage_types[]" value="broken_frames">
+                                            <label class="form-check-label" for="combined_damage_frames">Broken Frames / Springs</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="combined_damage_stains" name="damage_types[]" value="stains">
+                                            <label class="form-check-label" for="combined_damage_stains">Stains / Dirt</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="combined_damage_odor" name="damage_types[]" value="odor">
+                                            <label class="form-check-label" for="combined_damage_odor">Odor Issues</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="combined_damage_other" name="damage_types[]" value="other">
+                                            <label class="form-check-label" for="combined_damage_other">Other</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="combined_damage_description">Detailed Damage Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="combined_damage_description" name="description" rows="4" required placeholder="Describe all damages, defects, and issues found during inspection..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="combined_damage_severity">Severity Level</label>
+                                <select class="form-control" id="combined_damage_severity" name="severity">
+                                    <option value="minor">Minor - Cosmetic only</option>
+                                    <option value="moderate">Moderate - Requires repair</option>
+                                    <option value="severe">Severe - Major repair needed</option>
+                                    <option value="critical">Critical - Replacement required</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Materials Panel -->
+                    <div class="tab-pane fade" id="materials-panel" role="tabpanel" aria-labelledby="materials-tab">
+                        <form id="combinedMaterialsForm">
+                            <input type="hidden" id="combined_materials_booking_id" name="booking_id">
+                            
+                            <!-- Leather Details -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="m-0"><i class="fas fa-ruler mr-2"></i>Leather Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="combined_leather_quality">Leather Quality <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="combined_leather_quality" name="leather_quality" required disabled style="background-color: #f8f9fa; cursor: not-allowed;">
+                                                    <option value="">Select Quality...</option>
+                                                    <option value="standard">Standard</option>
+                                                    <option value="premium">Premium</option>
+                                                </select>
+                                                <small class="form-text text-muted">Customer's selected quality (pre-filled from booking)</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="combined_leather_color_id">Leather/Color <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="combined_leather_color_id" name="leather_color_id" required disabled style="background-color: #f8f9fa; cursor: not-allowed;">
+                                                    <option value="">Loading color...</option>
+                                                </select>
+                                                <small class="form-text text-muted">Customer's selected color (pre-filled from booking)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="combined_number_of_meters">Number of Meters <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="combined_number_of_meters" name="number_of_meters" 
+                                                       step="0.01" min="0" placeholder="0.00" required>
+                                                <small class="form-text text-muted">Enter the number of meters used</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="combined_price_per_meter">Price per Meter (₱) <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="combined_price_per_meter" name="price_per_meter" 
+                                                       step="0.01" min="0" placeholder="0.00" required>
+                                                <small class="form-text text-muted">Enter the price per meter (will auto-fill from inventory, but can be edited)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="combined_labor_fee">Labor Fee (₱) <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="combined_labor_fee" name="labor_fee" 
+                                                       step="0.01" min="0" placeholder="0.00" required>
+                                                <small class="form-text text-muted">Enter the labor fee</small>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="combined_repair_days">Allotted Repair Days <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="combined_repair_days" name="repair_days" 
+                                                       min="1" placeholder="e.g., 7" required>
+                                                <small class="form-text text-muted">Number of days allotted for repair work (e.g., 7 days)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Receipt/Compute Total Panel -->
+                    <div class="tab-pane fade" id="receipt-panel" role="tabpanel" aria-labelledby="receipt-tab">
+                        <form id="combinedReceiptForm">
+                            <input type="hidden" id="combined_receipt_booking_id" name="booking_id">
+                            
+                            <!-- Calculation Summary -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="m-0"><i class="fas fa-calculator mr-2"></i>Calculation Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Leather Cost:</strong></td>
+                                                <td class="text-right"><span id="combined_leather_cost_display">₱0.00</span></td>
+                                            </tr>
+                                            <tr id="combined_color_price_row" style="display: none;">
+                                                <td><strong>Color Price:</strong></td>
+                                                <td class="text-right"><span id="combined_color_price_display">₱0.00</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Labor Fee:</strong></td>
+                                                <td class="text-right"><span id="combined_labor_fee_display">₱0.00</span></td>
+                                            </tr>
+                                            <tr class="table-success" style="font-size: 1.1rem; font-weight: bold;">
+                                                <td><strong>GRAND TOTAL:</strong></td>
+                                                <td class="text-right"><span id="combined_grand_total_display">₱0.00</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="navigateToNextTab()">
+                    <i class="fas fa-arrow-right mr-1"></i>Next Step
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Receipt Modal -->
+<div class="modal fade" id="previewReceiptModal" tabindex="-1" role="dialog" aria-labelledby="previewReceiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="previewReceiptModalLabel">
+                    <i class="fas fa-receipt mr-2"></i>Preview Receipt - Review Before Sending
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Booking Information -->
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-calendar-check mr-2"></i>Booking Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Booking ID:</strong> <span id="preview_booking_id" class="badge badge-info">-</span></p>
+                                <p class="mb-2"><strong>Customer Name:</strong> <span id="preview_customer_name">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Service Type:</strong> <span id="preview_service_name">-</span></p>
+                                <p class="mb-2"><strong>Date of Inspection:</strong> <span id="preview_inspection_date">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Measurements - Hidden for inspect_completed and later statuses -->
+                <div class="card mb-3" id="preview_measurements_section">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-ruler-combined mr-2"></i>Measurements</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p class="mb-2"><strong>Height:</strong> <span id="preview_height">-</span></p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-2"><strong>Width:</strong> <span id="preview_width">-</span></p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-2"><strong>Thickness:</strong> <span id="preview_thickness">-</span></p>
+                            </div>
+                        </div>
+                        <p class="mb-1 mt-2"><strong>Notes:</strong></p>
+                        <p class="text-muted" id="preview_measurement_notes">-</p>
+                    </div>
+                </div>
+                
+                <!-- Damage Findings - Hidden for inspect_completed and later statuses -->
+                <div class="card mb-3" id="preview_damage_findings_section">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-exclamation-triangle mr-2"></i>Damage Findings</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Damage Types:</strong> <span id="preview_damage_types">-</span></p>
+                        <p class="mb-2"><strong>Severity:</strong> <span id="preview_damage_severity">-</span></p>
+                        <p class="mb-1 mt-2"><strong>Description:</strong></p>
+                        <p class="text-muted" id="preview_damage_description">-</p>
+                    </div>
+                </div>
+                
+                <!-- Materials Used -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-cut mr-2"></i>Materials Used</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Leather Quality:</strong> <span id="preview_leather_quality">-</span></p>
+                        <p class="mb-2"><strong>Leather/Color:</strong> <span id="preview_leather_color">-</span></p>
+                        <p class="mb-2"><strong>Fabric Type:</strong> <span id="preview_fabric_type">-</span></p>
+                        <p class="mb-2"><strong>Yards/Meters:</strong> <span id="preview_material_meters">-</span> @ <span id="preview_price_per_meter">₱0.00</span> = <span id="preview_material_cost" class="text-success">₱0.00</span></p>
+                        <p class="mb-2"><strong>Foam Replacement:</strong> <span id="preview_foam_replacement">-</span> <span id="preview_foam_cost" class="text-success"></span></p>
+                        <p class="mb-2"><strong>Accessories:</strong> <span id="preview_accessories">-</span> <span id="preview_accessories_cost" class="text-success"></span></p>
+                    </div>
+                </div>
+                
+                <!-- Calculation Summary -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-calculator mr-2"></i>Computed Total for Payment</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <tr>
+                                    <td><strong>Material Subtotal:</strong></td>
+                                    <td class="text-right"><span id="preview_material_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr id="preview_color_price_row" style="display: none;">
+                                    <td><strong>Color Price:</strong></td>
+                                    <td class="text-right"><span id="preview_color_price_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr id="preview_foam_row" style="display: none;">
+                                    <td><strong>Foam Replacement Subtotal:</strong></td>
+                                    <td class="text-right"><span id="preview_foam_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr id="preview_accessories_row" style="display: none;">
+                                    <td><strong>Accessories Subtotal:</strong></td>
+                                    <td class="text-right"><span id="preview_accessories_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Labor Fee Subtotal:</strong></td>
+                                    <td class="text-right"><span id="preview_labor_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Subtotal (Before VAT):</strong></td>
+                                    <td class="text-right"><span id="preview_subtotal_before_vat">₱0.00</span></td>
+                                </tr>
+                                <tr id="preview_vat_row" style="display: none;">
+                                    <td><strong>VAT (12%):</strong></td>
+                                    <td class="text-right"><span id="preview_vat_amount">₱0.00</span></td>
+                                </tr>
+                                <tr class="table-success" style="font-size: 1.2rem; font-weight: bold;">
+                                    <td><strong>FINAL TOTAL AMOUNT:</strong></td>
+                                    <td class="text-right"><span id="preview_final_total">₱0.00</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success btn-lg" id="previewSendReceiptBtn" onclick="sendReceiptFromPreview()">
+                    <i class="fas fa-check mr-2"></i>Send Receipt to Customer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Official Receipt Preview Modal -->
+<div class="modal fade" id="officialReceiptModal" tabindex="-1" role="dialog" aria-labelledby="officialReceiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="officialReceiptModalLabel">
+                    <i class="fas fa-receipt mr-2"></i>Official Receipt Preview
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="officialReceiptContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Receipt content will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading receipt data...</p>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center" style="padding: 12px 20px; border-top: 1px solid #dee2e6;">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-info" id="printReceiptBtn" onclick="printOfficialReceipt()" title="Print Receipt">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" id="emailReceiptBtn" onclick="emailOfficialReceipt()" title="Email to Customer">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" id="downloadReceiptBtn" onclick="downloadOfficialReceipt()" title="Download PDF">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning" id="issueReceiptBtn" onclick="issueOfficialReceipt()" title="Issue Receipt">
+                        <i class="fas fa-check-circle"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1405,6 +1896,33 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" onclick="confirmAcceptReservation()">
                     <i class="fas fa-check mr-1"></i> Accept Reservation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accept Booking Confirmation Modal -->
+<div class="modal fade" id="acceptBookingConfirmModal" tabindex="-1" role="dialog" aria-labelledby="acceptBookingConfirmModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 10px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header bg-success text-white" style="border-radius: 10px 10px 0 0;">
+                <h5 class="modal-title" id="acceptBookingConfirmModalLabel" style="font-weight: 600;">
+                    <i class="fas fa-check-circle mr-2"></i>Accept Booking
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p id="acceptBookingConfirmMessage" style="margin: 0; font-size: 1rem; line-height: 1.6;"></p>
+            </div>
+            <div class="modal-footer" style="border-top: 2px solid #e3e6f0;">
+                <button type="button" class="btn btn-secondary" id="acceptBookingCancelBtn" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="acceptBookingConfirmBtn">
+                    <i class="fas fa-check mr-1"></i>Accept
                 </button>
             </div>
         </div>
@@ -1545,11 +2063,190 @@ window.handleApprove = function(bookingId) { console.warn('handleApprove not yet
 window.handleUpdateStatus = function(bookingId, currentStatus) { console.warn('handleUpdateStatus not yet loaded'); };
 window.handleDelete = function(bookingId, event) { console.warn('handleDelete not yet loaded'); };
 window.handleGenerateReceipt = function(bookingId) { console.warn('handleGenerateReceipt not yet loaded'); };
+window.resetToPending = function(bookingId, event) { console.warn('resetToPending not yet loaded'); };
 window.handleQuickStatusUpdate = function(bookingId, newStatus, event) { console.warn('handleQuickStatusUpdate not yet loaded'); };
 window.handleConfirmPayment = function(bookingId, event) { console.warn('handleConfirmPayment not yet loaded'); };
 window.viewDetails = function(bookingId) { console.warn('viewDetails not yet loaded'); };
 window.loadBookingDetailsModal = function(bookingId) { console.warn('loadBookingDetailsModal not yet loaded'); };
 window.loadCalculatePaymentModal = function(bookingId) { console.warn('loadCalculatePaymentModal not yet loaded'); };
+
+// Open Complete Inspection Modal (Combined: Measurements + Damages + Materials + Receipt)
+// Defined early to prevent "not defined" errors when buttons are clicked
+window.openCompleteInspection = function(bookingId) {
+    // Set booking IDs for all forms
+    const measurementsBookingId = document.getElementById('combined_measurements_booking_id');
+    const damagesBookingId = document.getElementById('combined_damages_booking_id');
+    const materialsBookingId = document.getElementById('combined_materials_booking_id');
+    const receiptBookingId = document.getElementById('combined_receipt_booking_id');
+    
+    if (measurementsBookingId) measurementsBookingId.value = bookingId;
+    if (damagesBookingId) damagesBookingId.value = bookingId;
+    if (materialsBookingId) materialsBookingId.value = bookingId;
+    if (receiptBookingId) receiptBookingId.value = bookingId;
+    
+    // Load booking details
+    fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.booking) {
+                const booking = data.booking;
+                
+                // Load Measurements
+                const measurementHeight = document.getElementById('combined_measurement_height');
+                const measurementWidth = document.getElementById('combined_measurement_width');
+                const measurementThickness = document.getElementById('combined_measurement_thickness');
+                const measurementNotes = document.getElementById('combined_measurement_notes');
+                
+                if (measurementHeight && booking.measurement_height) measurementHeight.value = booking.measurement_height;
+                if (measurementWidth && booking.measurement_width) measurementWidth.value = booking.measurement_width;
+                if (measurementThickness && booking.measurement_thickness) measurementThickness.value = booking.measurement_thickness;
+                if (measurementNotes && booking.measurement_notes) measurementNotes.value = booking.measurement_notes;
+                
+                // Load Damages
+                const damageDescription = document.getElementById('combined_damage_description');
+                const damageSeverity = document.getElementById('combined_damage_severity');
+                
+                if (damageDescription && booking.damage_description) damageDescription.value = booking.damage_description;
+                if (damageSeverity && booking.damage_severity) damageSeverity.value = booking.damage_severity;
+                
+                // Store booking data for preview receipt
+                window.currentBookingData = booking;
+                
+                // Setup receipt form
+                const qualitySelect = document.getElementById('combined_leather_quality');
+                const colorSelect = document.getElementById('combined_leather_color_id');
+                
+                // Set quality from booking
+                if (qualitySelect) {
+                    if (booking.inventory_type) {
+                        qualitySelect.value = booking.inventory_type;
+                    } else {
+                        qualitySelect.value = 'standard'; // Default
+                    }
+                }
+                
+                // Load colors for receipt (function may not be loaded yet, but will be when called)
+                if (typeof loadCombinedLeatherColors === 'function') {
+                    loadCombinedLeatherColors(booking.store_location_id || null, booking, booking.selected_color_id);
+                } else {
+                    // If function not loaded yet, wait a bit and try again
+                    setTimeout(() => {
+                        if (typeof loadCombinedLeatherColors === 'function') {
+                            loadCombinedLeatherColors(booking.store_location_id || null, booking, booking.selected_color_id);
+                        }
+                    }, 100);
+                }
+                
+                // Load existing receipt data
+                const numberOfMeters = document.getElementById('combined_number_of_meters');
+                const pricePerMeter = document.getElementById('combined_price_per_meter');
+                const laborFee = document.getElementById('combined_labor_fee');
+                const repairDays = document.getElementById('combined_repair_days');
+                
+                if (numberOfMeters && booking.number_of_meters) numberOfMeters.value = booking.number_of_meters;
+                if (pricePerMeter && booking.price_per_meter) pricePerMeter.value = booking.price_per_meter;
+                if (laborFee && booking.labor_fee) laborFee.value = booking.labor_fee;
+                if (repairDays && booking.repair_days) repairDays.value = booking.repair_days;
+                
+                // Calculate totals (function may not be loaded yet)
+                setTimeout(() => {
+                    if (typeof calculateCombinedTotal === 'function') {
+                        calculateCombinedTotal();
+                    }
+                    if (typeof checkInspectionCompletion === 'function') {
+                        checkInspectionCompletion();
+                    }
+                }, 200);
+                
+                // Add event listeners to receipt inputs for real-time completion check
+                const receiptInputs = ['combined_number_of_meters', 'combined_price_per_meter', 'combined_labor_fee'];
+                receiptInputs.forEach(inputId => {
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        input.addEventListener('input', () => {
+                            if (typeof calculateCombinedTotal === 'function') {
+                                calculateCombinedTotal();
+                            }
+                            if (typeof checkInspectionCompletion === 'function') {
+                                checkInspectionCompletion();
+                            }
+                        });
+                        input.addEventListener('change', () => {
+                            if (typeof calculateCombinedTotal === 'function') {
+                                calculateCombinedTotal();
+                            }
+                            if (typeof checkInspectionCompletion === 'function') {
+                                checkInspectionCompletion();
+                            }
+                        });
+                    }
+                });
+                
+                // Add event listeners to measurements inputs
+                const measurementInputs = ['combined_measurement_height', 'combined_measurement_width'];
+                measurementInputs.forEach(inputId => {
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        input.addEventListener('input', () => {
+                            if (typeof checkInspectionCompletion === 'function') {
+                                checkInspectionCompletion();
+                            }
+                        });
+                        input.addEventListener('change', () => {
+                            if (typeof checkInspectionCompletion === 'function') {
+                                checkInspectionCompletion();
+                            }
+                        });
+                    }
+                });
+                
+                // Add event listeners to damages inputs
+                const damageInput = document.getElementById('combined_damage_description');
+                if (damageInput) {
+                    damageInput.addEventListener('input', () => {
+                        if (typeof checkInspectionCompletion === 'function') {
+                            checkInspectionCompletion();
+                        }
+                    });
+                    damageInput.addEventListener('change', () => {
+                        if (typeof checkInspectionCompletion === 'function') {
+                            checkInspectionCompletion();
+                        }
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading booking details:', error);
+            if (typeof showAlert === 'function') {
+                showAlert('warning', 'Could not load all booking details. You can still fill in the forms.');
+            }
+        });
+    
+    // Show modal
+    if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+        jQuery('#completeInspectionModal').modal('show');
+        
+        // Check completion when switching to receipt tab
+        jQuery('#receipt-tab').on('shown.bs.tab', function() {
+            if (typeof checkInspectionCompletion === 'function') {
+                checkInspectionCompletion();
+            }
+        });
+    } else {
+        const modalEl = document.getElementById('completeInspectionModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            new bootstrap.Modal(modalEl).show();
+        }
+    }
+    
+    // Initial check
+    setTimeout(() => {
+        if (typeof checkInspectionCompletion === 'function') {
+            checkInspectionCompletion();
+        }
+    }, 300);
+};
 
 window.updateBookingCounts = function() {
     const activeRows = document.querySelectorAll('#activeBookingsTable tbody tr:not(.empty-state)').length;
@@ -1848,9 +2545,238 @@ window.viewDetails = function(bookingId) {
 
 // Make loadBookingDetailsModal globally accessible
 window.loadBookingDetailsModal = function(bookingId) {
+    // First, fetch booking details to check status BEFORE opening any modal
+    fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.booking) {
+                const booking = data.booking;
+                const status = (booking.status || '').toLowerCase();
+                
+                // Determine if we should show the saved Preview Receipt or the inspection form
+                // Statuses that should show SAVED Preview Receipt (not inspection form):
+                // - inspect_completed (receipt already sent)
+                // - inspection_completed_waiting_approval (waiting for customer approval)
+                // - preview_receipt_sent (receipt sent)
+                // - under_repair (repair in progress - receipt is final)
+                // - for_repair (ready for repair - receipt is final)
+                // - repair_completed (repair done - receipt is final)
+                // - repair_completed_ready_to_deliver (ready to deliver - receipt is final)
+                // - out_for_delivery (delivering - receipt is final)
+                // - completed, delivered_and_paid (finished - receipt is final)
+                // Statuses that should show INSPECTION FORM:
+                // - to_inspect, for_inspect, for_inspection, picked_up (inspection not done yet)
+                // - pending, accepted, for_pickup, for_dropoff (before inspection)
+                const normalizedStatus = status.trim().toLowerCase();
+                const statusesWithSavedReceipt = [
+                    'inspect_completed',
+                    'inspection_completed_waiting_approval',
+                    'preview_receipt_sent',
+                    'under_repair',
+                    'for_repair',
+                    'repair_completed',
+                    'repair_completed_ready_to_deliver',
+                    'out_for_delivery',
+                    'completed',
+                    'delivered_and_paid',
+                    'paid'
+                ];
+                
+                const shouldShowSavedReceipt = statusesWithSavedReceipt.includes(normalizedStatus);
+                
+                if (shouldShowSavedReceipt) {
+                    console.log('Opening preview receipt for status:', normalizedStatus, 'Booking:', booking);
+                    console.log('Booking data received:', {
+                        id: booking.id,
+                        grand_total: booking.grand_total,
+                        fabric_total: booking.fabric_total,
+                        color_price: booking.color_price,
+                        labor_fee: booking.labor_fee,
+                        // Measurement fields
+                        measurement_height: booking.measurement_height,
+                        measurement_width: booking.measurement_width,
+                        measurement_thickness: booking.measurement_thickness,
+                        measurement_notes: booking.measurement_notes,
+                        // Damage fields
+                        damage_types: booking.damage_types,
+                        damage_severity: booking.damage_severity,
+                        damage_description: booking.damage_description,
+                        // Material fields
+                        number_of_meters: booking.number_of_meters,
+                        price_per_meter: booking.price_per_meter
+                    });
+                    
+                    // Store booking data for preview receipt
+                    window.currentBookingData = booking;
+                    
+                    // Check if preview receipt modal exists
+                    const previewModal = document.getElementById('previewReceiptModal');
+                    if (!previewModal) {
+                        console.error('Preview receipt modal not found in DOM');
+                        alert('Preview receipt modal not found. Please refresh the page.');
+                        return;
+                    }
+                    
+                    // Ensure we have all the data - if missing measurements/damages, fetch again
+                    const hasMeasurements = booking.measurement_height !== undefined || booking.measurement_width !== undefined || booking.measurement_thickness !== undefined;
+                    const hasDamages = booking.damage_description !== undefined || booking.damage_types !== undefined || booking.damage_severity !== undefined;
+                    const hasReceiptData = booking.grand_total || booking.total_amount;
+                    
+                    if (!hasMeasurements || !hasDamages || !hasReceiptData) {
+                        console.warn('Missing data, fetching again...', {
+                            hasMeasurements,
+                            hasDamages,
+                            hasReceiptData,
+                            measurement_height: booking.measurement_height,
+                            measurement_width: booking.measurement_width,
+                            damage_description: booking.damage_description,
+                            damage_types: booking.damage_types,
+                            grand_total: booking.grand_total
+                        });
+                        // Fetch booking details again to ensure we have all saved data
+                        fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Cache-Control': 'no-cache'
+                            },
+                            cache: 'no-store'
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (data.success && data.booking) {
+                                    console.log('Refetched booking data:', data.booking);
+                                    // Merge with existing booking data to ensure we have everything
+                                    window.currentBookingData = { ...booking, ...data.booking };
+                                    
+                                    // Wait for function to be available, then populate
+                                    const populateAfterFetch = () => {
+                                        if (typeof window.populatePreviewReceiptWithData === 'function') {
+                                            window.populatePreviewReceiptWithData(window.currentBookingData);
+                                        } else {
+                                            setTimeout(populateAfterFetch, 100);
+                                        }
+                                    };
+                                    populateAfterFetch();
+                                } else {
+                                    console.warn('Refetch returned no booking data:', data);
+                                    // Use existing booking data
+                                    if (typeof window.populatePreviewReceiptWithData === 'function') {
+                                        window.populatePreviewReceiptWithData(booking);
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error refetching booking details:', error);
+                                // Still try to populate with existing data
+                                if (typeof window.populatePreviewReceiptWithData === 'function') {
+                                    window.populatePreviewReceiptWithData(booking);
+                                }
+                            });
+                    }
+                    
+                    // Update modal title and buttons based on status FIRST
+                    const modalTitle = document.querySelector('#previewReceiptModalLabel');
+                    const sendReceiptBtn = document.getElementById('previewSendReceiptBtn');
+                    
+                    // For all saved receipt statuses, show the receipt that was sent to customer
+                    // Hide "Send Receipt" button since receipt is already sent and final
+                    if (modalTitle) {
+                        modalTitle.innerHTML = '<i class="fas fa-receipt mr-2"></i>Preview Receipt - Sent to Customer';
+                    }
+                    // Hide "Send Receipt" button - receipt is already sent and cannot be changed
+                    if (sendReceiptBtn) {
+                        sendReceiptBtn.style.display = 'none';
+                    }
+                    
+                    // Populate the modal with saved receipt data BEFORE opening
+                    // This ensures all sections (Booking Info, Measurements, Damages, Materials, Totals) are filled
+                    const populateReceipt = () => {
+                        if (typeof window.populatePreviewReceiptWithData === 'function') {
+                            window.populatePreviewReceiptWithData(booking);
+                            return true;
+                        } else if (typeof populatePreviewReceiptWithData === 'function') {
+                            populatePreviewReceiptWithData(booking);
+                            return true;
+                        }
+                        return false;
+                    };
+                    
+                    // Try to populate immediately
+                    let populated = populateReceipt();
+                    
+                    // If function doesn't exist yet, wait and retry with increasing delays
+                    if (!populated) {
+                        let retries = 0;
+                        const maxRetries = 5;
+                        const retryInterval = 100;
+                        
+                        const retryPopulate = () => {
+                            retries++;
+                            populated = populateReceipt();
+                            
+                            if (!populated && retries < maxRetries) {
+                                setTimeout(retryPopulate, retryInterval * retries);
+                            } else if (!populated) {
+                                console.error('populatePreviewReceiptWithData function not found after retries');
+                                // Try populatePreviewReceipt as fallback
+                                if (typeof window.populatePreviewReceipt === 'function') {
+                                    window.populatePreviewReceipt();
+                                } else {
+                                    // Last resort: manually populate basic fields
+                                    console.warn('Using fallback population method');
+                                    const previewBookingId = document.getElementById('preview_booking_id');
+                                    const previewCustomerName = document.getElementById('preview_customer_name');
+                                    const previewServiceName = document.getElementById('preview_service_name');
+                                    if (previewBookingId) previewBookingId.textContent = 'Booking #' + (booking.id || booking.booking_id || '');
+                                    if (previewCustomerName) previewCustomerName.textContent = booking.customer_name || '-';
+                                    if (previewServiceName) previewServiceName.textContent = booking.service_name || '-';
+                                }
+                            }
+                        };
+                        
+                        setTimeout(retryPopulate, retryInterval);
+                    }
+                    
+                    // Small delay to ensure data is populated before opening modal
+                    setTimeout(() => {
+                        // Open preview receipt modal directly (skip booking details modal)
+                        if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                            jQuery('#previewReceiptModal').modal('show');
+                        } else {
+                            const modalEl = document.getElementById('previewReceiptModal');
+                            if (modalEl && typeof bootstrap !== 'undefined') {
+                                new bootstrap.Modal(modalEl).show();
+                            }
+                        }
+                    }, 300);
+                } else {
+                    // For other statuses, show booking details modal
     // Show loading modal
     const modalHtml = `
-        <div class="modal fade" id="reviewBookingModal" tabindex="-1" role="dialog">
+                        <div class="modal fade" id="reviewBookingModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">
@@ -1881,26 +2807,62 @@ window.loadBookingDetailsModal = function(bookingId) {
     // Add modal to body
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // Show modal
+                    // Show modal - Fix caching issues by ensuring modal is properly initialized
     if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
-        jQuery('#reviewBookingModal').modal('show');
-    }
-    
-    // Load booking details
-    fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.booking) {
-                displayReviewBookingDetails(data.booking);
+                        const modal = jQuery('#reviewBookingModal');
+                        
+                        // Remove any inline display styles that might cause caching issues
+                        modal.removeAttr('style');
+                        modal.removeAttr('aria-hidden');
+                        
+                        // Add event listener to clean up focus when modal is hidden
+                        modal.off('hidden.bs.modal.cleanupFocus').on('hidden.bs.modal.cleanupFocus', function() {
+                            // Remove focus from any elements inside the modal
+                            const modalEl = document.getElementById('reviewBookingModal');
+                            if (modalEl) {
+                                const focusedElement = modalEl.querySelector(':focus');
+                                if (focusedElement) {
+                                    focusedElement.blur();
+                                }
+                                // Ensure aria-hidden is properly set
+                                modalEl.setAttribute('aria-hidden', 'true');
+                            }
+                        });
+                        
+                        // Also listen to the standard hidden event
+                        modal.off('hidden.bs.modal').on('hidden.bs.modal', function() {
+                            jQuery(this).trigger('hidden.bs.modal.cleanupFocus');
+                        });
+                        
+                        // Show modal using Bootstrap API (not CSS) - this prevents caching issues
+                        modal.modal('show');
+                    } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        const modalEl = document.getElementById('reviewBookingModal');
+                        if (modalEl) {
+                            // Remove any inline display styles
+                            modalEl.removeAttribute('style');
+                            modalEl.removeAttribute('aria-hidden');
+                            
+                            let bsModal = bootstrap.Modal.getInstance(modalEl);
+                            if (!bsModal) {
+                                bsModal = new bootstrap.Modal(modalEl);
+                            }
+                            bsModal.show();
+                        }
+                    }
+                    
+                    // Display booking details
+                    displayReviewBookingDetails(booking);
+                }
             } else {
-                document.querySelector('#reviewBookingModal .modal-body').innerHTML = 
-                    '<div class="alert alert-danger">Error loading booking details.</div>';
+                const errorMsg = data.message || 'Error loading booking details.';
+                // Show error in a simple alert since we haven't opened modal yet
+                alert(errorMsg);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            document.querySelector('#reviewBookingModal .modal-body').innerHTML = 
-                '<div class="alert alert-danger">Error loading booking details.</div>';
+            console.error('Error loading booking details:', error);
+            alert('Error loading booking details: ' + (error.message || 'Unknown error'));
         });
 }
 
@@ -2054,27 +3016,43 @@ function displayReviewBookingDetails(booking) {
                 <p><strong>Color:</strong> ${booking.color_name || 'N/A'}</p>
                 <p><strong>Color Code:</strong> ${booking.color_code || 'N/A'}</p>
                 <p><strong>Type:</strong> <span class="badge badge-${booking.color_type === 'premium' ? 'warning' : 'secondary'}">${booking.color_type === 'premium' ? 'Premium' : 'Standard'}</span></p>
-                <p><strong>Color Price:</strong> <span class="text-primary">₱${parseFloat(booking.color_price || 0).toFixed(2)}</span></p>
+                <p><strong>Color Price:</strong> <span class="text-primary">₱${(() => {
+                    // Use inventory price if color_price is 0, null, or not set
+                    const colorPrice = parseFloat(booking.color_price) || 0;
+                    const inventoryPrice = parseFloat(booking.inventory_price_per_meter) || 0;
+                    const finalPrice = colorPrice > 0 ? colorPrice : inventoryPrice;
+                    // Debug log (can be removed later)
+                    if (finalPrice === 0) {
+                        console.log('Color Price Debug - All prices are 0:', {
+                            color_price: booking.color_price,
+                            inventory_price_per_meter: booking.inventory_price_per_meter,
+                            selected_color_id: booking.selected_color_id
+                        });
+                    }
+                    return finalPrice.toFixed(2);
+                })()}</span></p>
             </div>
         </div>
         ` : ''}
         
         <div class="alert alert-info">
             <i class="fas fa-info-circle mr-2"></i>
-            <strong>Purpose:</strong> Review booking details before approval. After approval, you can examine the item and calculate the total payment.
+            <strong>Purpose:</strong> Review booking details before acceptance. After acceptance, status will change based on service option (For Drop-off for Delivery, For Pick-Up for Pickup/Both).
         </div>
     `;
     
     document.querySelector('#reviewBookingModal .modal-body').innerHTML = reviewHtml;
     
     // Check if booking is completed
+    // delivered_and_paid status is always considered completed (payment received)
+    // completed status with paid payment is also completed
     const status = (booking.status || '').toLowerCase();
     const paymentStatus = (booking.payment_status || '').toLowerCase();
-    const completedStatuses = ['completed', 'delivered_and_paid'];
     const paidStatuses = ['paid', 'paid_full_cash', 'paid_on_delivery_cod'];
     const isCompleted = (
-        completedStatuses.indexOf(status) !== -1 && 
-        paidStatuses.indexOf(paymentStatus) !== -1
+        status === 'delivered_and_paid' || 
+        (status === 'completed' && paidStatuses.indexOf(paymentStatus) !== -1) ||
+        (status === 'paid' && paidStatuses.indexOf(paymentStatus) !== -1)
     );
     
     // Add action buttons
@@ -2085,8 +3063,8 @@ function displayReviewBookingDetails(booking) {
     footer.innerHTML = `
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         ${!isCompleted && status === 'pending' ? `
-        <button type="button" class="btn btn-success" onclick="approveBookingAfterReview(${booking.id})">
-            <i class="fas fa-check-circle mr-1"></i> Approve Booking
+        <button type="button" class="btn btn-success" onclick="proceedWithAcceptBooking(${booking.id})">
+            <i class="fas fa-check-circle mr-1"></i> Accept Booking
         </button>
         ` : ''}
     `;
@@ -2676,14 +3654,25 @@ function loadProgressHistory(bookingId) {
 function getStatusBadgeClass(status) {
     const statusClasses = {
         'pending': 'warning',
-        'approved': 'success',
-        'in_queue': 'info',
+        'for_dropoff': 'warning',
+        'for_pickup': 'info',
+        'picked_up': 'primary',
+        'to_inspect': 'warning',
+        'for_inspect': 'warning',
+        'for_inspection': 'warning',
+        'inspect_completed': 'success',
+        'inspection_completed_waiting_approval': 'info',
+        'preview_receipt_sent': 'info',
+        'for_repair': 'info',
         'under_repair': 'primary',
+        'repair_completed': 'success',
+        'repair_completed_ready_to_deliver': 'success',
         'for_quality_check': 'info',
         'ready_for_pickup': 'success',
         'out_for_delivery': 'primary',
         'completed': 'success',
         'delivered_and_paid': 'success',
+        'paid': 'success',
         'cancelled': 'danger'
     };
     return statusClasses[status] || 'secondary';
@@ -3038,6 +4027,9 @@ window.generateReceipt = function(bookingId) {
             if (data.success && data.booking) {
                 const booking = data.booking;
                 
+                // Store booking data globally for calculation functions
+                window.currentBookingData = booking;
+                
                 // Populate booking info
                 document.getElementById('receipt_booking_id_display').textContent = 'Booking #' + booking.id;
                 document.getElementById('receipt_customer_name').textContent = booking.customer_name || 'N/A';
@@ -3381,16 +4373,38 @@ function calculateReceiptTotal() {
     const pricePerMeter = parseFloat(priceEl.value) || 0;
     const laborFee = parseFloat(laborEl.value) || 0;
     
+    // Get color price from booking data
+    let colorPrice = 0;
+    if (window.currentBookingData) {
+        const booking = window.currentBookingData;
+        const bookingColorPrice = parseFloat(booking.color_price) || 0;
+        const inventoryPrice = parseFloat(booking.inventory_price_per_meter) || 0;
+        colorPrice = bookingColorPrice > 0 ? bookingColorPrice : inventoryPrice;
+    }
+    
     const leatherCost = meters * pricePerMeter;
-    const grandTotal = leatherCost + laborFee;
+    const grandTotal = leatherCost + colorPrice + laborFee;
     
     const leatherCostDisplay = document.getElementById('leather_cost_display');
+    const colorPriceDisplay = document.getElementById('color_price_display');
+    const colorPriceRow = document.getElementById('color_price_row');
     const laborFeeDisplay = document.getElementById('labor_fee_display');
     const grandTotalDisplay = document.getElementById('grand_total_display');
     
     if (leatherCostDisplay) {
         leatherCostDisplay.textContent = '₱' + leatherCost.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
+    
+    // Show/hide color price row based on whether color price exists
+    if (colorPriceRow && colorPriceDisplay) {
+        if (colorPrice > 0) {
+            colorPriceRow.style.display = '';
+            colorPriceDisplay.textContent = '₱' + colorPrice.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else {
+            colorPriceRow.style.display = 'none';
+        }
+    }
+    
     if (laborFeeDisplay) {
         laborFeeDisplay.textContent = '₱' + laborFee.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
@@ -3488,7 +4502,10 @@ function sendReceiptToCustomer() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
+                cache: 'no-cache',
+                credentials: 'same-origin',
                 body: JSON.stringify({ booking_id: formData.booking_id })
             });
         } else {
@@ -4918,7 +5935,6 @@ function getStatusBadgeClass(status) {
     switch(status) {
         case 'pending': return 'badge-warning';
         case 'confirmed': return 'badge-info';
-        case 'in_progress': return 'badge-primary';
         case 'completed': return 'badge-success';
         case 'delivered_and_paid': return 'badge-success';
         case 'cancelled': return 'badge-danger';
@@ -5019,8 +6035,6 @@ function submitBookingStatusForm(event) {
             
             const statusMessages = {
                 'pending': 'Booking status updated to "Pending".',
-                'approved': 'Booking status updated to "Approved". Customer will be notified.',
-                'in_queue': 'Booking status updated to "In Queue". Customer will be notified.',
                 'under_repair': 'Booking status updated to "Under Repair". Customer can track progress.',
                 'for_quality_check': 'Booking status updated to "For Quality Check".',
                 'ready_for_pickup': 'Booking status updated to "Ready for Pickup". Customer will be notified.',
@@ -5167,9 +6181,19 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
     // Status mapping for badges
     const statusConfig = {
         'pending': {class: 'badge-warning', text: 'Pending'},
-        'approved': {class: 'badge-success', text: 'Approved'},
-        'in_queue': {class: 'badge-info', text: 'In Queue'},
+        'for_dropoff': {class: 'badge-warning', text: 'For Drop-off'},
+        'for_pickup': {class: 'badge-info', text: 'For Pickup'},
+        'picked_up': {class: 'badge-primary', text: 'Picked Up'},
+        'to_inspect': {class: 'badge-warning', text: 'To Inspect'},
+        'for_inspect': {class: 'badge-warning', text: 'For Inspect'},
+        'for_inspection': {class: 'badge-warning', text: 'For Inspection'},
+        'inspect_completed': {class: 'badge-success', text: 'Inspect Completed'},
+        'inspection_completed_waiting_approval': {class: 'badge-info', text: 'Inspection Completed - Waiting for Approval'},
+        'preview_receipt_sent': {class: 'badge-info', text: 'Preview Receipt Sent'},
+        'for_repair': {class: 'badge-info', text: 'For Repair'},
         'under_repair': {class: 'badge-primary', text: 'Under Repair'},
+        'repair_completed': {class: 'badge-success', text: 'Repair Completed'},
+        'repair_completed_ready_to_deliver': {class: 'badge-success', text: 'Repair Completed - Ready to Deliver'},
         'for_quality_check': {class: 'badge-info', text: 'For Quality Check'},
         'ready_for_pickup': {class: 'badge-success', text: 'Ready for Pickup'},
         'out_for_delivery': {class: 'badge-warning', text: 'Out for Delivery'},
@@ -5181,24 +6205,71 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
     const config = statusConfig[newStatus] || {class: 'badge-secondary', text: newStatus};
     
     // Find the row with this booking ID - check all tables
+    // First try to find by data-booking-id attribute
+    let targetRow = document.querySelector(`tr[data-booking-id="${bookingId}"]`);
+    
+    // If not found, try to find by button data-booking-id
+    if (!targetRow) {
+        const button = document.querySelector(`button[data-booking-id="${bookingId}"]`);
+        if (button) {
+            targetRow = button.closest('tr');
+        }
+    }
+    
+    // If still not found, search all rows for booking ID in onclick or text
+    if (!targetRow) {
     const allRows = document.querySelectorAll('table tbody tr');
     allRows.forEach(function(row) {
         // Check if this row contains the booking ID
-        // Look for button with booking ID in onclick attribute
-        const buttons = row.querySelectorAll('button[onclick]');
+            // Look for button with booking ID in onclick attribute or data attribute
+            const buttons = row.querySelectorAll('button[onclick], button[data-booking-id]');
         let rowBookingId = null;
         
         for (let btn of buttons) {
+                const dataId = btn.getAttribute('data-booking-id');
+                if (dataId == bookingId) {
+                    rowBookingId = bookingId;
+                    break;
+                }
+                
             const onclick = btn.getAttribute('onclick') || '';
             if (onclick.includes('updateStatus(' + bookingId) || 
                 onclick.includes('acceptReservation(' + bookingId) ||
-                onclick.includes('viewDetails(' + bookingId)) {
+                    onclick.includes('viewDetails(' + bookingId) ||
+                    onclick.includes('acceptBooking(' + bookingId) ||
+                    onclick.includes('proceedWithAcceptBooking(' + bookingId)) {
                 rowBookingId = bookingId;
                 break;
             }
         }
         
         if (rowBookingId == bookingId) {
+                targetRow = row;
+            }
+        });
+    }
+    
+    if (targetRow) {
+        // Get service option from the row (look for service option badge in service option column)
+        let serviceOption = 'pickup'; // default
+        const cells = targetRow.querySelectorAll('td');
+            // Service option is typically in the column with badges containing service option text
+            cells.forEach(function(cell) {
+                const badges = cell.querySelectorAll('.badge');
+                badges.forEach(function(badge) {
+                    const badgeText = badge.textContent.toLowerCase().trim();
+                    // Check for service option keywords (case-insensitive)
+                    if (badgeText.includes('pickup') && !badgeText.includes('delivery') && !badgeText.includes('both')) {
+                        serviceOption = 'pickup';
+                    } else if (badgeText.includes('delivery') && !badgeText.includes('both')) {
+                        serviceOption = 'delivery';
+                    } else if (badgeText.includes('both')) {
+                        serviceOption = 'both';
+                    } else if (badgeText.includes('walk-in') || badgeText.includes('walk in')) {
+                        serviceOption = 'walk_in';
+                    }
+                });
+            });
             // Admin table structure:
             // Column 1: Booking # (index 0)
             // Column 2: Customer (index 1)
@@ -5211,11 +6282,11 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
             // Column 9: Actions (index 8)
             
             // Find status cell using data attribute (most reliable)
-            let statusCell = row.querySelector('td.status-cell[data-booking-status]');
+        let statusCell = targetRow.querySelector('td.status-cell[data-booking-status]');
             
             // Fallback: find by badge with status keywords (but skip amount column)
             if (!statusCell) {
-                const cells = row.querySelectorAll('td');
+            const cells = targetRow.querySelectorAll('td');
                 for (let i = 0; i < cells.length; i++) {
                     const cell = cells[i];
                     const cellText = cell.textContent;
@@ -5248,7 +6319,7 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
             // Final fallback: use nth-child(6) - the STATUS column (6th column in admin table)
             // DO NOT use nth-child(5) as that's the Amount column!
             if (!statusCell) {
-                statusCell = row.querySelector('td:nth-child(6)');
+            statusCell = targetRow.querySelector('td:nth-child(6)');
             }
             
             if (statusCell) {
@@ -5257,34 +6328,48 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
                 if (cellText.includes('₱') || cellText.match(/^₱?\s*\d+[.,]\d{2}$/)) {
                     // This is the amount column, not status! Use column 6 instead
                     // Don't log warning - this is expected behavior
-                    statusCell = row.querySelector('td:nth-child(6)');
+                statusCell = targetRow.querySelector('td:nth-child(6)');
+            }
+                
+                // Determine status text based on service option for completed/delivered_and_paid statuses
+                let statusText = config.text;
+                if (newStatus === 'completed' && (newPaymentStatus === 'paid' || newPaymentStatus === 'paid_full_cash' || newPaymentStatus === 'paid_on_delivery_cod')) {
+                    // If service option is delivery or both, show "Delivered/Paid"
+                    if (serviceOption === 'delivery' || serviceOption === 'both') {
+                        statusText = 'Delivered/Paid';
+                    } else {
+                        statusText = 'Completed & Paid';
+                    }
+                } else if (newStatus === 'delivered_and_paid') {
+                    // Always show "Delivered/Paid" for delivered_and_paid status
+                    statusText = 'Delivered/Paid';
                 }
                 
                 // Update the status cell and data attribute
-                statusCell.innerHTML = `<span class="badge ${config.class}" style="font-weight: 600;">${config.text}</span>`;
+            statusCell.innerHTML = `<span class="badge ${config.class}" style="font-weight: 600;">${statusText}</span>`;
                 statusCell.setAttribute('data-booking-status', newStatus);
-                // console.log('Status updated in admin view:', bookingId, 'to', newStatus, 'in status cell');
+            console.log('Status updated in admin view:', bookingId, 'to', newStatus, 'in status cell');
             } else {
-                console.error('Status cell not found for booking:', bookingId, 'Row:', row);
+            console.error('Status cell not found for booking:', bookingId, 'Row:', targetRow);
             }
             
             // Update payment status if provided (always update, even if null, to ensure it's visible)
             if (newPaymentStatus !== undefined && newPaymentStatus !== null) {
                 // Payment column is typically the 7th column (index 6)
                 // Table structure: Booking #, Customer, Service, Category, Amount, Status, Payment, Date, Actions
-                let paymentCell = row.querySelector('td:nth-child(7)');
+            let paymentCell = targetRow.querySelector('td:nth-child(7)');
                 
                 // Try to find by data attribute or payment-status-text class
                 if (!paymentCell) {
-                    paymentCell = row.querySelector('td[data-payment-status]');
+                paymentCell = targetRow.querySelector('td[data-payment-status]');
                 }
                 if (!paymentCell) {
-                    paymentCell = row.querySelector('td .payment-status-text')?.closest('td');
+                paymentCell = targetRow.querySelector('td .payment-status-text')?.closest('td');
                 }
                 
                 // Try to find by payment keywords in text
                 if (!paymentCell) {
-                    const cells = row.querySelectorAll('td');
+                const cells = targetRow.querySelectorAll('td');
                     for (let i = 0; i < cells.length; i++) {
                         const cell = cells[i];
                         const cellText = cell.textContent.toLowerCase().trim();
@@ -5308,7 +6393,7 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
                 
                 // Final fallback: use nth-child(7) - the Payment column
                 if (!paymentCell) {
-                    paymentCell = row.querySelector('td:nth-child(7)');
+                paymentCell = targetRow.querySelector('td:nth-child(7)');
                 }
                 
                 if (paymentCell) {
@@ -5321,16 +6406,16 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
                     paymentCell.style.visibility = 'visible';
                     paymentCell.style.display = '';
                     paymentCell.style.opacity = '1';
-                    // console.log('Payment status updated in admin view:', bookingId, 'to', paymentText, 'in cell index:', Array.from(row.querySelectorAll('td')).indexOf(paymentCell));
+                console.log('Payment status updated in admin view:', bookingId, 'to', paymentText, 'in cell index:', Array.from(targetRow.querySelectorAll('td')).indexOf(paymentCell));
                 } else {
-                    console.error('Payment cell not found for booking:', bookingId, 'Row cells:', row.querySelectorAll('td').length);
+                console.error('Payment cell not found for booking:', bookingId, 'Row cells:', targetRow.querySelectorAll('td').length);
                     // Try to find by table header matching
-                    const headers = row.closest('table')?.querySelectorAll('thead th');
+                const headers = targetRow.closest('table')?.querySelectorAll('thead th');
                     if (headers) {
                         for (let i = 0; i < headers.length; i++) {
                             const headerText = headers[i].textContent.toLowerCase();
                             if (headerText.includes('payment') || headerText.includes('pay')) {
-                                const cells = row.querySelectorAll('td');
+                                const cells = targetRow.querySelectorAll('td');
                                 if (cells[i]) {
                                     paymentCell = cells[i];
                                     const paymentText = getPaymentStatusText(newPaymentStatus);
@@ -5349,7 +6434,7 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
             
             // If status changed to approved, remove approve/reject buttons
             if (newStatus === 'approved') {
-                const actionCell = row.querySelector('td:last-child');
+            const actionCell = targetRow.querySelector('td:last-child');
                 if (actionCell) {
                     const viewBtn = actionCell.querySelector('button[onclick*="viewDetails"]');
                     const editBtn = actionCell.querySelector('button[onclick*="updateStatus"]');
@@ -5370,8 +6455,9 @@ function updateBookingRowStatus(bookingId, newStatus, bookingNumber, newPaymentS
                     actionCell.innerHTML = newActionHtml;
                 }
             }
+    } else {
+        console.warn('updateBookingRowStatus: Row not found for booking ID:', bookingId);
         }
-    });
 }
 
 // Approve compliance
@@ -5577,27 +6663,35 @@ function confirmAcceptReservation() {
 // Duplicate rejectReservation function removed - defined at top of script
 
 // Show alert message
-function showAlert(type, message) {
+// Global showAlert function
+window.showAlert = function(type, message) {
+    // Try to find a card body, otherwise use body
+    const cardBody = document.querySelector('.card-body') || document.body;
+    
     const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;">
             ${message}
-            <button type="button" class="close" data-dismiss="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
     `;
     
-    // Insert at the top of the card body
-    const cardBody = document.querySelector('.card-body');
-    cardBody.insertAdjacentHTML('afterbegin', alertHtml);
+    // Insert alert
+    cardBody.insertAdjacentHTML('beforeend', alertHtml);
     
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
-        const alert = cardBody.querySelector('.alert');
+        const alert = cardBody.querySelector('.alert:last-child');
         if (alert) {
             alert.remove();
         }
     }, 5000);
+};
+
+// Also define as regular function for backward compatibility
+function showAlert(type, message) {
+    return window.showAlert(type, message);
 }
 
 // Open send preview modal
@@ -5933,25 +7027,202 @@ window.handleDelete = function(bookingId, event) {
     }
 };
 
-// Enhanced Generate Receipt Handler
+// Mark Item as Received (for_dropoff → for_inspect)
+window.markItemReceived = function(bookingId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    const button = event ? event.target.closest('button') : document.querySelector(`button[onclick*="markItemReceived(${bookingId}"]`);
+    
+    if (!confirm('Mark this item as received? Customer has brought the item to the shop. Status will change to "For Inspect".')) {
+        return;
+    }
+    
+    try {
+        setButtonLoading(button, true);
+        
+        const formData = new URLSearchParams();
+        formData.append('booking_id', bookingId);
+        
+        fetch('<?php echo BASE_URL; ?>admin/markItemReceived', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            setButtonLoading(button, false);
+            
+            if (data.success) {
+                showAlert('success', data.message || 'Item marked as received successfully.');
+                updateBookingRowStatus(bookingId, data.new_status || 'for_inspect', null, null);
+                setTimeout(() => location.reload(), 1500);
+        } else {
+                alert(data.message || 'Failed to mark item as received. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error marking item as received:', error);
+            setButtonLoading(button, false);
+            alert('Error marking item as received. Please try again.');
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        setButtonLoading(button, false);
+        alert('Error marking item as received. Please try again.');
+    }
+};
+
+// Mark as Out for Delivery (repair_completed_ready_to_deliver → out_for_delivery)
+window.markOutForDelivery = function(bookingId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    const button = event ? event.target.closest('button') : document.querySelector(`button[onclick*="markOutForDelivery(${bookingId}"]`);
+    
+    if (!confirm('Mark as out for delivery? Item is being delivered to customer. Status will change to "On Delivery".')) {
+        return;
+        }
+        
+    try {
+        setButtonLoading(button, true);
+        
+        const formData = new URLSearchParams();
+        formData.append('booking_id', bookingId);
+        
+        fetch('<?php echo BASE_URL; ?>admin/markOutForDelivery', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            setButtonLoading(button, false);
+            
+            if (data.success) {
+                showAlert('success', data.message || 'Booking marked as out for delivery successfully.');
+                updateBookingRowStatus(bookingId, data.new_status || 'out_for_delivery', null, null);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                alert(data.message || 'Failed to mark as out for delivery. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error marking as out for delivery:', error);
+            setButtonLoading(button, false);
+            alert('Error marking as out for delivery. Please try again.');
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        setButtonLoading(button, false);
+        alert('Error marking as out for delivery. Please try again.');
+    }
+};
+
+// Reset Booking to Pending Status
+window.resetToPending = function(bookingId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    const button = event ? event.target.closest('button') : document.querySelector(`.reset-btn[data-booking-id="${bookingId}"]`);
+    
+    if (!confirm('Are you sure you want to reset this booking back to Pending status? This will reset the booking status and payment status to unpaid.')) {
+        return;
+    }
+    
+    try {
+        setButtonLoading(button, true);
+        
+        // Update status to pending via API
+        const formData = new URLSearchParams();
+        formData.append('booking_id', bookingId);
+        formData.append('status', 'pending');
+        formData.append('payment_status', 'unpaid');
+        formData.append('notify_customer', '0'); // Don't notify customer when resetting
+        
+        fetch('<?php echo BASE_URL; ?>admin/updateBookingStatus', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+        })
+        .then(response => {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                return response.text().then(text => {
+                    console.error('Non-JSON response:', text);
+                    throw new Error('Server returned non-JSON response');
+                });
+            }
+        })
+        .then(data => {
+            setButtonLoading(button, false);
+            
+            if (data.success) {
+                showAlert('success', 'Booking has been reset to Pending status successfully.');
+                
+                // Update the table row status immediately
+                updateBookingRowStatus(bookingId, 'pending', null, 'unpaid');
+                
+                // Reload page after a short delay to refresh the table
+                setTimeout(() => {
+                    location.reload();
+        }, 1500);
+            } else {
+                alert(data.message || 'Failed to reset booking to pending. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error resetting booking to pending:', error);
+            setButtonLoading(button, false);
+            alert('Error resetting booking. Please try again.');
+        });
+    } catch (error) {
+        console.error('Error resetting booking:', error);
+        setButtonLoading(button, false);
+        alert('Error resetting booking. Please try again.');
+    }
+};
+
+// Enhanced Generate Receipt Handler - Shows Official Receipt Preview Modal
 window.handleGenerateReceipt = function(bookingId) {
     const button = document.querySelector(`.receipt-btn[data-booking-id="${bookingId}"]`);
     
     try {
         setButtonLoading(button, true);
         
-        // Call the original generateReceipt function
-        if (typeof generateReceipt === 'function') {
-            generateReceipt(bookingId);
-        } else {
-            setButtonLoading(button, false);
-            alert('Generate receipt function not found. Please refresh the page.');
-        }
+        // Store booking ID for later use
+        window.currentReceiptBookingId = bookingId;
         
-        // Reset button after a delay
-        setTimeout(() => {
-            setButtonLoading(button, false);
-        }, 1500);
+        // Fetch receipt preview data
+        fetch(`<?php echo BASE_URL; ?>admin/getReceiptPreview/${bookingId}`)
+            .then(response => response.json())
+            .then(data => {
+                setButtonLoading(button, false);
+                
+                if (data.success && data.receipt) {
+                    // Display receipt in modal
+                    displayOfficialReceiptPreview(data.receipt);
+                    $('#officialReceiptModal').modal('show');
+                } else {
+                    alert(data.message || 'Error loading receipt data. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching receipt preview:', error);
+                setButtonLoading(button, false);
+                alert('Error loading receipt. Please try again.');
+            });
     } catch (error) {
         console.error('Error generating receipt:', error);
         setButtonLoading(button, false);
@@ -5959,24 +7230,262 @@ window.handleGenerateReceipt = function(bookingId) {
     }
 };
 
+// Display Official Receipt Preview in Modal
+function displayOfficialReceiptPreview(receipt) {
+    const r = receipt;
+    const content = `
+        <div class="receipt-preview-container" style="background: white; padding: 30px; font-family: Arial, sans-serif;">
+            <!-- Business Header -->
+            <div class="text-center mb-4" style="border-bottom: 3px solid #2c3e50; padding-bottom: 20px;">
+                <h1 style="color: #2c3e50; font-size: 2.5rem; margin-bottom: 10px; font-weight: 700;">UpholCare</h1>
+                <h3 style="color: #4e73df; font-size: 1.5rem; margin-bottom: 15px;">Upholstery & Furniture Repair Services</h3>
+                <p style="color: #6c757d; margin: 5px 0;">Address: Business Address</p>
+                <p style="color: #6c757d; margin: 5px 0;">Email: business@email.com</p>
+                <p style="color: #6c757d; margin: 5px 0;">Phone: Business Number</p>
+                <p style="color: #6c757d; margin: 5px 0;">TIN: TIN Number | Business Permit: Permit Number</p>
+                <h2 style="color: #28a745; font-weight: 700; margin-top: 15px; text-transform: uppercase;">OFFICIAL RECEIPT</h2>
+                <p style="font-size: 1.1rem; font-weight: 600; margin-top: 10px;"><strong>OR NO.:</strong> ${r.receiptNumber}</p>
+                <p style="font-size: 1rem;"><strong>Date Issued:</strong> ${r.dateIssued}</p>
+            </div>
+            
+            <!-- Customer Details -->
+            <div class="mb-4" style="border-bottom: 2px solid #e3e6f0; padding-bottom: 15px;">
+                <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;">Customer Details</h4>
+                <p><strong>Customer Name:</strong> ${r.customer.name}</p>
+                <p><strong>Email:</strong> ${r.customer.email}</p>
+                <p><strong>Phone:</strong> ${r.customer.phone}</p>
+                <p><strong>Delivery Address:</strong> ${r.customer.address}</p>
+            </div>
+            
+            <!-- Booking/Job Details -->
+            <div class="mb-4" style="border-bottom: 2px solid #e3e6f0; padding-bottom: 15px;">
+                <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;">Booking / Job Details</h4>
+                <p><strong>Booking No.:</strong> ${r.booking.bookingNumber || '#' + r.booking.id}</p>
+                <p><strong>Service:</strong> ${r.booking.serviceName}</p>
+                <p><strong>Category:</strong> ${r.booking.categoryName}</p>
+                <p><strong>Service Option:</strong> ${r.booking.serviceOption}</p>
+                <p><strong>Completion Date:</strong> ${r.booking.completionDate}</p>
+                <p><strong>Date Delivered:</strong> ${r.booking.deliveryDate}</p>
+                <p><strong>Inspected By:</strong> ${r.booking.inspectedBy}</p>
+            </div>
+            
+            <!-- Item Details -->
+            <div class="mb-4" style="border-bottom: 2px solid #e3e6f0; padding-bottom: 15px;">
+                <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;">Item Details</h4>
+                <p><strong>Item Name:</strong> ${r.item.name}</p>
+                <p><strong>Issue / Damage:</strong> ${r.item.issue}</p>
+                <p><strong>Material Used:</strong> ${r.item.materialUsed}</p>
+                <p><strong>Measurement:</strong> ${r.item.measurement}</p>
+                <p><strong>Quantity:</strong> ${r.item.quantity}</p>
+            </div>
+            
+            <!-- Payment Breakdown -->
+            <div class="mb-4" style="border-bottom: 2px solid #e3e6f0; padding-bottom: 15px;">
+                <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;">Payment Breakdown</h4>
+                <table class="table table-bordered" style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #4e73df; color: white;">
+                        <tr>
+                            <th style="padding: 10px; text-align: left;">Description</th>
+                            <th style="padding: 10px; text-align: right;">Amount (₱)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${r.payment.laborFee > 0 ? `<tr><td>Labor Fee</td><td style="text-align: right;">₱${parseFloat(r.payment.laborFee).toFixed(2)}</td></tr>` : ''}
+                        ${r.payment.fabricCost > 0 ? `<tr><td>Fabric Material Cost</td><td style="text-align: right;">₱${parseFloat(r.payment.fabricCost).toFixed(2)}</td></tr>` : ''}
+                        ${r.payment.foamCost > 0 ? `<tr><td>Foam / Additional Materials</td><td style="text-align: right;">₱${parseFloat(r.payment.foamCost).toFixed(2)}</td></tr>` : ''}
+                        ${r.payment.miscMaterialsCost > 0 ? `<tr><td>Miscellaneous Materials</td><td style="text-align: right;">₱${parseFloat(r.payment.miscMaterialsCost).toFixed(2)}</td></tr>` : ''}
+                        ${r.payment.pickupFee > 0 ? `<tr><td>Pickup / Delivery Charge</td><td style="text-align: right;">₱${parseFloat(r.payment.pickupFee + r.payment.deliveryFee + r.payment.gasFee + r.payment.travelFee).toFixed(2)}</td></tr>` : ''}
+                        <tr style="background: #f8f9fc;">
+                            <td><strong>Subtotal</strong></td>
+                            <td style="text-align: right;"><strong>₱${parseFloat(r.payment.subtotal + r.payment.totalAdditionalFees).toFixed(2)}</strong></td>
+                        </tr>
+                        ${r.payment.discount > 0 ? `<tr><td>Discount (if any)</td><td style="text-align: right;">-₱${parseFloat(r.payment.discount).toFixed(2)}</td></tr>` : ''}
+                        <tr style="background: #28a745; color: white; font-size: 1.2rem; font-weight: 700;">
+                            <td><strong>TOTAL AMOUNT PAID</strong></td>
+                            <td style="text-align: right;"><strong>₱${parseFloat(r.payment.totalPaid).toFixed(2)}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="mt-3"><strong>Mode of Payment:</strong> ${r.payment.mode}</p>
+                ${r.payment.referenceNumber ? `<p><strong>Transaction ID:</strong> ${r.payment.referenceNumber}</p>` : ''}
+            </div>
+            
+            <!-- Remarks -->
+            <div class="mb-4" style="border-bottom: 2px solid #e3e6f0; padding-bottom: 15px;">
+                <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;">Remarks</h4>
+                <p>"Item was fully repaired, inspected, delivered and paid in full."</p>
+                <p>"Thank you for choosing UpholCare."</p>
+            </div>
+            
+            <!-- Signatures -->
+            <div class="mb-4">
+                <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;">Signatures Section</h4>
+                <div class="row">
+                    <div class="col-md-6 text-center" style="border-right: 1px solid #e3e6f0;">
+                        <p><strong>Prepared By (Admin Signature):</strong></p>
+                        <div style="border-top: 2px solid #2c3e50; margin-top: 50px; padding-top: 5px;">
+                            ${r.admin.name}
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <p><strong>Received By (Customer Signature):</strong></p>
+                        <div style="border-top: 2px solid #2c3e50; margin-top: 50px; padding-top: 5px;">
+                            ${r.customer.name}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('officialReceiptContent').innerHTML = content;
+}
+
+// Print Official Receipt
+function printOfficialReceipt() {
+    const printContent = document.getElementById('officialReceiptContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Official Receipt</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    @media print {
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>${printContent}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+    }, 250);
+}
+
+// Email Official Receipt
+function emailOfficialReceipt() {
+    const bookingId = window.currentReceiptBookingId;
+    if (!bookingId) {
+        alert('Error: Booking ID not found');
+        return;
+    }
+    
+    const btn = document.getElementById('emailReceiptBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+    
+    fetch(`<?php echo BASE_URL; ?>admin/emailOfficialReceipt/${bookingId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (data.success) {
+            alert('Receipt sent successfully to customer email!');
+        } else {
+            alert(data.message || 'Error sending receipt email');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending email:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alert('Error sending receipt email. Please try again.');
+    });
+}
+
+// Download Official Receipt PDF
+function downloadOfficialReceipt() {
+    const bookingId = window.currentReceiptBookingId;
+    if (!bookingId) {
+        alert('Error: Booking ID not found');
+        return;
+    }
+    
+    window.location.href = `<?php echo BASE_URL; ?>admin/downloadOfficialReceiptPDF/${bookingId}`;
+}
+
+// Issue Official Receipt (Save to database and mark as issued)
+function issueOfficialReceipt() {
+    const bookingId = window.currentReceiptBookingId;
+    if (!bookingId) {
+        alert('Error: Booking ID not found');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to issue this official receipt? This will save it to the database and mark the booking as receipt issued.')) {
+        return;
+    }
+    
+    const btn = document.getElementById('issueReceiptBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Issuing...';
+    
+    fetch(`<?php echo BASE_URL; ?>admin/issueOfficialReceipt/${bookingId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (data.success) {
+            alert('Official receipt issued successfully!');
+            $('#officialReceiptModal').modal('hide');
+            // Reload page to update booking status
+            location.reload();
+        } else {
+            alert(data.message || 'Error issuing receipt');
+        }
+    })
+    .catch(error => {
+        console.error('Error issuing receipt:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alert('Error issuing receipt. Please try again.');
+    });
+}
+
 // Quick Status Update Handler (for workflow actions)
-window.handleQuickStatusUpdate = function(bookingId, newStatus, event) {
+window.handleQuickStatusUpdate = async function(bookingId, newStatus, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
     
     const statusMessages = {
+        'for_pickup': 'Mark booking for pickup? Status will change to "For Pickup".',
         'picked_up': 'Mark booking as picked up? Status will change to "Picked Up / For Inspection".',
+        'to_inspect': 'Move booking to inspection stage? Status will change to "To Inspect". You will then see the Preview Receipt button.',
+        'for_repair': 'Move booking to repair stage? Status will change to "For Repair".',
         'approved': 'Approve quotation and start repair? Status will change to "Approved / Ready for Repair".',
+        'under_repair': 'Start repair work? Status will change to "Under Repair".',
         'in_progress': 'Start repair work? Status will change to "In Progress".',
-        'completed': 'Mark booking as completed? Status will change to "Completed".',
+        'repair_completed': 'Mark repair as completed? Status will change to "Repair Completed".',
+        'repair_completed_ready_to_deliver': 'Mark as ready to deliver? Status will change to "Ready to Deliver".',
+        'out_for_delivery': 'Mark as out for delivery? Status will change to "On Delivery".',
+        'delivered_and_paid': 'Mark as delivered and paid? Status will change to "Delivered/Paid".',
+        'completed': 'Mark booking as completed and paid? Status will change to "Completed/Paid".',
         'closed': 'Close this booking? Status will change to "Closed".'
     };
     
     const message = statusMessages[newStatus] || `Update status to "${newStatus}"?`;
     
-    if (!confirm(message)) {
+    // Use async confirm
+    const confirmed = await confirm(message);
+    if (!confirmed) {
         return;
     }
     
@@ -6004,6 +7513,11 @@ window.handleQuickStatusUpdate = function(bookingId, newStatus, event) {
     formData.append('status', newStatus);
     formData.append('notify_customer', '1');
     
+    // For completed status (Pickup flow), also update payment status to paid
+    if (newStatus === 'completed') {
+        formData.append('payment_status', 'paid');
+    }
+    
     fetch('<?php echo BASE_URL; ?>admin/updateBookingStatus', {
         method: 'POST',
         headers: {
@@ -6011,22 +7525,465 @@ window.handleQuickStatusUpdate = function(bookingId, newStatus, event) {
         },
         body: formData.toString()
     })
-    .then(response => response.json())
+    .then(response => {
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // If not JSON, get text to see what the error is
+            return response.text().then(text => {
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned non-JSON response: ' + text.substring(0, 200));
+            });
+        }
+    })
     .then(data => {
         if (data.success) {
-            alert('Status updated successfully!');
-            location.reload();
+            const successMessages = {
+                'to_inspect': 'Status updated to "To Inspect". Preview Receipt button is now available.',
+                'for_repair': 'Status updated to "For Repair".',
+                'for_pickup': 'Status updated to "For Pickup".',
+                'picked_up': 'Status updated to "Picked Up".',
+                'under_repair': 'Status updated to "Under Repair".',
+                'repair_completed': 'Status updated to "Repair Completed".',
+                'repair_completed_ready_to_deliver': 'Status updated to "Ready to Deliver".',
+                'out_for_delivery': 'Status updated to "On Delivery".',
+                'delivered_and_paid': 'Status updated to "Delivered/Paid".',
+                'completed': 'Status updated to "Completed/Paid".',
+                'closed': 'Status updated to "Closed".'
+            };
+            const successMessage = successMessages[newStatus] || 'Status updated successfully!';
+            showAlert('success', successMessage);
+            
+            // Reload page to show updated status and buttons
+            // For 'to_inspect', this will show the Preview Receipt button
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
-            alert('Error: ' + (data.message || 'Failed to update status'));
+            showAlert('danger', 'Error: ' + (data.message || 'Failed to update status'));
             if (button) setButtonLoading(button, false);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while updating status. Please try again.');
+        console.error('Error updating status:', error);
+        showAlert('danger', 'An error occurred while updating status. Please try again.');
         if (button) setButtonLoading(button, false);
     });
 };
+
+// Accept Booking function - First shows booking details, then accepts
+// Make it globally accessible
+window.acceptBooking = function(bookingId) {
+    console.log("Opening booking details for acceptance:", bookingId);
+    
+    if (!bookingId) {
+        alert('Error: Invalid booking ID');
+        return;
+    }
+    
+    // First, open booking details modal
+    if (typeof handleViewDetails === 'function') {
+        handleViewDetails(bookingId);
+        
+        // Store booking ID for acceptance after viewing
+        window.pendingAcceptBookingId = bookingId;
+        
+        // Add accept button to modal or show confirmation after modal opens
+        setTimeout(() => {
+            addAcceptButtonToModal(bookingId);
+        }, 500);
+    } else if (typeof viewDetails === 'function') {
+        viewDetails(bookingId);
+        window.pendingAcceptBookingId = bookingId;
+        setTimeout(() => {
+            addAcceptButtonToModal(bookingId);
+        }, 500);
+    } else {
+        // Fallback: directly accept if view details not available
+        proceedWithAcceptBooking(bookingId);
+    }
+};
+
+// Add accept button to booking details modal
+function addAcceptButtonToModal(bookingId) {
+    const modal = document.getElementById('bookingDetailsModal');
+    if (!modal) return;
+    
+    // Check if accept button already exists
+    let acceptBtn = modal.querySelector('.accept-booking-btn');
+    if (acceptBtn) return; // Already added
+    
+    // Find modal footer or body
+    const modalFooter = modal.querySelector('.modal-footer');
+    const modalBody = modal.querySelector('.modal-body');
+    
+    if (modalFooter) {
+        // Add accept button to footer
+        acceptBtn = document.createElement('button');
+        acceptBtn.type = 'button';
+        acceptBtn.className = 'btn btn-success accept-booking-btn';
+        acceptBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Accept Booking';
+        acceptBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            proceedWithAcceptBooking(bookingId);
+        };
+        
+        // Insert before close button if exists, otherwise append
+        const closeBtn = modalFooter.querySelector('button[data-dismiss="modal"]');
+        if (closeBtn) {
+            modalFooter.insertBefore(acceptBtn, closeBtn);
+        } else {
+            modalFooter.appendChild(acceptBtn);
+        }
+    } else if (modalBody) {
+        // Add accept button at bottom of body
+        acceptBtn = document.createElement('div');
+        acceptBtn.className = 'text-center mt-3';
+        acceptBtn.innerHTML = '<button type="button" class="btn btn-success accept-booking-btn" onclick="proceedWithAcceptBooking(' + bookingId + ')"><i class="fas fa-check-circle mr-2"></i>Accept Booking</button>';
+        modalBody.appendChild(acceptBtn);
+    }
+}
+
+// Proceed with accepting the booking
+// Make it globally accessible
+window.proceedWithAcceptBooking = function(bookingId) {
+    console.log("Proceeding with acceptance:", bookingId);
+    
+    if (!bookingId) {
+        alert('Error: Invalid booking ID');
+        return;
+    }
+    
+    // FIX #1: Close ALL modals first to prevent aria-hidden conflicts
+    // Make sure no other modal is visible before showing confirmation
+    if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+        jQuery('.modal').modal('hide');
+    } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        // Close all Bootstrap 5 modals
+        document.querySelectorAll('.modal.show').forEach(modalEl => {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        });
+    }
+    
+    const closeModalAndShowConfirm = function() {
+        // Get service option from booking row or fetch it
+        let serviceOption = null;
+        
+        // Try to get from table row first
+        const bookingRow = document.querySelector(`tr[data-booking-id="${bookingId}"]`) || 
+                          document.querySelector(`button[data-booking-id="${bookingId}"]`)?.closest('tr');
+        
+        if (bookingRow) {
+            // Try to find service option in the row - check all cells for service option badges
+            const cells = bookingRow.querySelectorAll('td');
+            cells.forEach(function(cell) {
+                const badges = cell.querySelectorAll('.badge');
+                badges.forEach(function(badge) {
+                    const badgeText = badge.textContent.toLowerCase().trim();
+                    // Check for service option keywords (case-insensitive)
+                    if (badgeText.includes('delivery') && !badgeText.includes('both') && !badgeText.includes('pickup')) {
+                        serviceOption = 'delivery';
+                    } else if (badgeText.includes('pickup') && !badgeText.includes('both') && !badgeText.includes('delivery')) {
+                        serviceOption = 'pickup';
+                    } else if (badgeText.includes('both')) {
+                        serviceOption = 'both';
+                    } else if (badgeText.includes('walk-in') || badgeText.includes('walk in')) {
+                        serviceOption = 'walk_in';
+                    }
+                });
+            });
+        }
+        
+        // If not found in row, try to get from modal if it's still open
+        if (!serviceOption) {
+            const modal = document.getElementById('reviewBookingModal') || document.getElementById('bookingDetailsModal');
+            if (modal) {
+                const modalBody = modal.querySelector('.modal-body');
+                if (modalBody) {
+                    const serviceText = modalBody.textContent.toLowerCase();
+                    if (serviceText.includes('delivery service') && !serviceText.includes('both')) {
+                        serviceOption = 'delivery';
+                    } else if (serviceText.includes('pick up') && !serviceText.includes('both')) {
+                        serviceOption = 'pickup';
+                    } else if (serviceText.includes('both')) {
+                        serviceOption = 'both';
+                    } else if (serviceText.includes('walk-in') || serviceText.includes('walk in')) {
+                        serviceOption = 'walk_in';
+                    }
+                }
+            }
+        }
+        
+        // If still not found, fetch booking details from server
+        if (!serviceOption) {
+            fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.booking) {
+                        const fetchedServiceOption = (data.booking.service_option || '').toLowerCase().trim();
+                        showConfirmationWithServiceOption(fetchedServiceOption);
+                    } else {
+                        // Fallback to default
+                        showConfirmationWithServiceOption(null);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching booking details:', error);
+                    // Fallback to default
+                    showConfirmationWithServiceOption(null);
+                });
+            return; // Exit early, confirmation will be shown after fetch
+        }
+        
+        // Service option found, show confirmation
+        showConfirmationWithServiceOption(serviceOption);
+    };
+    
+    // Helper function to show confirmation with service option using custom modal
+    function showConfirmationWithServiceOption(serviceOption) {
+        // Determine status message based on service option
+        let statusMessage = 'For Pick-Up'; // Default for pickup/both
+        if (serviceOption === 'delivery') {
+            statusMessage = 'For Drop-off';
+        } else if (serviceOption === 'pickup' || serviceOption === 'both') {
+            statusMessage = 'For Pick-Up';
+        } else if (serviceOption === 'walk_in') {
+            statusMessage = 'Approved';
+        }
+        
+        // Show custom confirmation modal
+        const confirmMessage = `Are you sure you want to accept this booking? The status will change to "${statusMessage}".`;
+        const modal = document.getElementById('acceptBookingConfirmModal');
+        const messageEl = document.getElementById('acceptBookingConfirmMessage');
+        const confirmBtn = document.getElementById('acceptBookingConfirmBtn');
+        const cancelBtn = document.getElementById('acceptBookingCancelBtn');
+        
+        if (!modal || !messageEl || !confirmBtn || !cancelBtn) {
+            // Fallback to native confirm if modal elements not found
+            if (confirm(confirmMessage)) {
+                executeAcceptBooking(bookingId);
+            }
+            return;
+        }
+        
+        // Set message
+        messageEl.textContent = confirmMessage;
+        
+        // Remove any existing event listeners by cloning and replacing buttons
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Show modal
+        if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+            jQuery('#acceptBookingConfirmModal').modal('show');
+        } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        } else {
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            document.body.classList.add('modal-open');
+        }
+        
+        // Set up event handlers
+        newConfirmBtn.onclick = function() {
+            // Hide modal
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#acceptBookingConfirmModal').modal('hide');
+            } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) bsModal.hide();
+            } else {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                document.body.classList.remove('modal-open');
+            }
+            // Execute acceptance
+            executeAcceptBooking(bookingId);
+        };
+        
+        newCancelBtn.onclick = function() {
+            // Hide modal
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#acceptBookingConfirmModal').modal('hide');
+            } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) bsModal.hide();
+            } else {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                document.body.classList.remove('modal-open');
+            }
+        };
+    }
+    
+    // FIX #2: Wait for all modals to completely close, then show confirmation
+    // This ensures no focus trapping and no aria-hidden conflicts
+    setTimeout(function() {
+        // Double-check: Remove focus from any elements in hidden modals
+        document.querySelectorAll('.modal:not(.show)').forEach(modal => {
+            const focusedElement = modal.querySelector(':focus');
+            if (focusedElement) {
+                focusedElement.blur();
+            }
+            // Ensure aria-hidden is properly set for hidden modals
+            if (!modal.classList.contains('show')) {
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        });
+        
+        // Now show confirmation
+        closeModalAndShowConfirm();
+    }, 300);
+};
+
+// Execute the actual booking acceptance
+function executeAcceptBooking(bookingId) {
+    
+    // Find the original accept button and disable it
+    const button = document.querySelector(`.approve-btn[data-booking-id="${bookingId}"]`);
+    if (button) {
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
+        
+        // Re-enable button after 5 seconds if request fails
+        setTimeout(() => {
+            if (button.disabled) {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
+        }, 5000);
+    }
+    
+    // Send POST request with JSON
+    fetch("<?php echo rtrim(BASE_URL, '/'); ?>/admin/acceptBooking", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify({ booking_id: bookingId })
+    })
+    .then(response => {
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned non-JSON response');
+            });
+        }
+    })
+    .then(data => {
+        console.log("Server response:", data);
+        
+        if (data.success) {
+            // Show success message with new status
+            // Map status codes to display text
+            const statusTextMap = {
+                'for_dropoff': 'For Drop-off',
+                'for_pickup': 'For Pick-Up',
+                'approved': 'Approved',
+                'pending': 'Pending'
+            };
+            const statusText = statusTextMap[data.new_status] || data.new_status || 'For Pick-Up';
+            const message = data.message || `Booking accepted successfully. Status changed to "${statusText}".`;
+            
+            // Update the row status immediately WITHOUT reloading page
+            if (data.new_status) {
+                updateBookingRowStatus(bookingId, data.new_status, null, null);
+            }
+            
+            // Re-enable the accept button if it was disabled
+            const acceptButton = document.querySelector(`.approve-btn[data-booking-id="${bookingId}"]`);
+            if (acceptButton) {
+                acceptButton.disabled = false;
+                // Remove the accept button since booking is now accepted
+                acceptButton.style.display = 'none';
+            }
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: "success",
+                    title: "Booking Accepted",
+                    text: message
+                }).then(() => {
+                    // DO NOT reload page - status is already updated in UI
+                    // The updateBookingRowStatus function already updated the table
+                });
+            } else {
+                alert(message);
+                // DO NOT reload page - status is already updated in UI
+            }
+        } else {
+            // Show error message
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.message || "Failed to accept booking"
+                });
+            } else {
+                alert("Error: " + (data.message || "Failed to accept booking"));
+            }
+            
+            // Re-enable button on error
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-check-circle"></i> Accept';
+            }
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong. Please try again."
+            });
+        } else {
+            alert("Error: Something went wrong. Please try again.");
+        }
+        
+        // Re-enable button on error
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-check-circle"></i> Accept';
+        }
+    });
+}
+
+// Mark as Completed with service option logic
+function markAsCompleted(bookingId, serviceOption) {
+    let nextStatus = "";
+    
+    if (serviceOption === "Delivery") {
+        nextStatus = "repair_completed";
+    } else if (serviceOption === "Pickup") {
+        nextStatus = "repair_completed";
+    } else {
+        // Default to repair_completed
+        nextStatus = "repair_completed";
+    }
+    
+    // Use the existing handleQuickStatusUpdate function
+    if (typeof handleQuickStatusUpdate === 'function') {
+        handleQuickStatusUpdate(bookingId, nextStatus);
+    } else {
+        console.error('handleQuickStatusUpdate function not found');
+        alert('Error: Status update function not available. Please refresh the page.');
+    }
+}
 
 // Confirm Payment Handler
 window.handleConfirmPayment = function(bookingId, event) {
@@ -6673,7 +8630,6 @@ function openRecordMeasurements(bookingId) {
                 if (booking.measurement_height) document.getElementById('measurement_height').value = booking.measurement_height;
                 if (booking.measurement_width) document.getElementById('measurement_width').value = booking.measurement_width;
                 if (booking.measurement_thickness) document.getElementById('measurement_thickness').value = booking.measurement_thickness;
-                if (booking.measurement_custom) document.getElementById('measurement_custom').value = booking.measurement_custom;
                 if (booking.measurement_notes) document.getElementById('measurement_notes').value = booking.measurement_notes;
             }
         })
@@ -6728,7 +8684,6 @@ function openRecordDamages(bookingId) {
                 const booking = data.booking;
                 // Populate form if damages exist
                 if (booking.damage_description) document.getElementById('damage_description').value = booking.damage_description;
-                if (booking.damage_location) document.getElementById('damage_location').value = booking.damage_location;
                 if (booking.damage_severity) document.getElementById('damage_severity').value = booking.damage_severity;
             }
         })
@@ -6843,27 +8798,1594 @@ function openComputeTotal(bookingId) {
 
 // Send Preview Receipt to Customer
 // This sends the receipt and updates status to "for_repair"
+// IMPORTANT: After status is "to_inspect", this function sends preview receipt and moves to "for_repair"
+// Status will NOT revert back to "approved" or "pending" - it moves forward to "for_repair"
 function sendPreviewReceipt(bookingId) {
     if (!confirm('Send preview receipt to customer? This will update status to "For Repair" and notify them of the total amount.')) {
         return;
     }
     
-    // First, ensure receipt data is saved
-    if (typeof saveReceipt === 'function') {
-        // Save receipt first, then send
-        saveReceipt().then(() => {
-            // After saving, send to customer (this updates status to "for_repair")
-            sendReceiptToCustomer();
-        }).catch(() => {
-            alert('Please complete the receipt form first (Compute Total) before sending.');
+    // Check if receipt form exists and has data
+    const receiptForm = document.getElementById('receiptForm');
+    if (!receiptForm) {
+        // If receipt modal is not open, open it first
+        if (typeof openComputeTotal === 'function') {
+            openComputeTotal(bookingId);
+            showAlert('info', 'Please complete the receipt form (Compute Total) first, then click "Send Preview Receipt" again.');
+            return;
+        } else {
+            alert('Please open the receipt form (Compute Total) first before sending preview receipt.');
+            return;
+        }
+    }
+    
+    // Get receipt data
+    const formData = {
+        booking_id: document.getElementById('receipt_booking_id')?.value || bookingId,
+        leather_quality: document.getElementById('leather_quality')?.value || '',
+        leather_color_id: document.getElementById('leather_color_id')?.value || '',
+        number_of_meters: document.getElementById('number_of_meters')?.value || '',
+        price_per_meter: document.getElementById('price_per_meter')?.value || '',
+        labor_fee: document.getElementById('labor_fee')?.value || ''
+    };
+    
+    // Validate that we have the booking ID
+    if (!formData.booking_id) {
+        showAlert('warning', 'Booking ID is required. Please open the receipt form first.');
+        return;
+    }
+    
+    // Show loading state
+    showAlert('info', 'Saving receipt and sending to customer...');
+    
+    // First save the receipt, then send to customer
+    fetch(`<?php echo BASE_URL; ?>admin/saveReceipt`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Now send to customer (this will update status to "for_repair")
+            return fetch(`<?php echo BASE_URL; ?>admin/sendReceiptToCustomer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                body: JSON.stringify({ booking_id: formData.booking_id })
+            });
+        } else {
+            throw new Error(data.message || 'Failed to save receipt');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message || 'Preview receipt sent to customer successfully! Status updated to "For Repair".');
+            setTimeout(() => {
+                if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                    jQuery('#receiptModal').modal('hide');
+                }
+                // Reload page to show updated status (should now be "for_repair", NOT "approved" or "pending")
+                window.location.reload();
+            }, 1500);
+        } else {
+            showAlert('warning', 'Receipt saved but failed to send: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error sending preview receipt:', error);
+        showAlert('danger', 'Error sending preview receipt. Please try again.');
+    });
+}
+
+// ============================================
+// COMPLETE INSPECTION WORKFLOW (COMBINED MODAL)
+// ============================================
+
+// Open Complete Inspection Modal (Combined: Measurements + Damages + Materials + Receipt)
+window.openCompleteInspection = function(bookingId) {
+    // Set booking IDs for all forms
+    document.getElementById('combined_measurements_booking_id').value = bookingId;
+    document.getElementById('combined_damages_booking_id').value = bookingId;
+    document.getElementById('combined_materials_booking_id').value = bookingId;
+    document.getElementById('combined_receipt_booking_id').value = bookingId;
+    
+    // Load booking details
+    fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.booking) {
+                const booking = data.booking;
+                
+                // Load Measurements
+                if (booking.measurement_height) document.getElementById('combined_measurement_height').value = booking.measurement_height;
+                if (booking.measurement_width) document.getElementById('combined_measurement_width').value = booking.measurement_width;
+                if (booking.measurement_thickness) document.getElementById('combined_measurement_thickness').value = booking.measurement_thickness;
+                if (booking.measurement_notes) document.getElementById('combined_measurement_notes').value = booking.measurement_notes;
+                
+                // Load Damages
+                if (booking.damage_description) document.getElementById('combined_damage_description').value = booking.damage_description;
+                if (booking.damage_severity) document.getElementById('combined_damage_severity').value = booking.damage_severity;
+                // Load damage types checkboxes if stored
+                
+                // Load Materials - No material details fields to load
+                
+                // Store booking data for preview receipt (since booking info section was removed)
+                window.currentBookingData = booking;
+                
+                // Setup receipt form (similar to handleGenerateReceipt)
+                const qualitySelect = document.getElementById('combined_leather_quality');
+                const colorSelect = document.getElementById('combined_leather_color_id');
+                
+                // Set quality from booking
+                if (booking.inventory_type) {
+                    qualitySelect.value = booking.inventory_type;
+                } else {
+                    qualitySelect.value = 'standard'; // Default
+                }
+                
+                // Load colors for receipt
+                loadCombinedLeatherColors(booking.store_location_id || null, booking, booking.selected_color_id);
+                
+                // Load existing receipt data
+                if (booking.number_of_meters) document.getElementById('combined_number_of_meters').value = booking.number_of_meters;
+                if (booking.price_per_meter) document.getElementById('combined_price_per_meter').value = booking.price_per_meter;
+                if (booking.labor_fee) document.getElementById('combined_labor_fee').value = booking.labor_fee;
+                if (booking.repair_days) document.getElementById('combined_repair_days').value = booking.repair_days;
+                
+                // Calculate totals
+                setTimeout(() => {
+                    calculateCombinedTotal();
+                    checkInspectionCompletion();
+                }, 200);
+                
+                // Add event listeners to receipt inputs for real-time completion check
+                const receiptInputs = ['combined_number_of_meters', 'combined_price_per_meter', 'combined_labor_fee'];
+                receiptInputs.forEach(inputId => {
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        input.addEventListener('input', () => {
+                            calculateCombinedTotal();
+                            checkInspectionCompletion();
+                        });
+                        input.addEventListener('change', () => {
+                            calculateCombinedTotal();
+                            checkInspectionCompletion();
+                        });
+                    }
+                });
+                
+                // Add event listeners to measurements inputs
+                const measurementInputs = ['combined_measurement_height', 'combined_measurement_width'];
+                measurementInputs.forEach(inputId => {
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        input.addEventListener('input', checkInspectionCompletion);
+                        input.addEventListener('change', checkInspectionCompletion);
+                    }
+                });
+                
+                // Add event listeners to damages inputs
+                const damageInput = document.getElementById('combined_damage_description');
+                if (damageInput) {
+                    damageInput.addEventListener('input', checkInspectionCompletion);
+                    damageInput.addEventListener('change', checkInspectionCompletion);
+                }
+                
+                // Add event listeners to materials inputs - No material details fields to listen to
+            }
+        })
+        .catch(error => {
+            console.error('Error loading booking details:', error);
+            showAlert('warning', 'Could not load all booking details. You can still fill in the forms.');
+        });
+    
+    // Show modal
+    if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+        jQuery('#completeInspectionModal').modal('show');
+        
+        // Check completion when switching to receipt tab
+        jQuery('#receipt-tab').on('shown.bs.tab', function() {
+            checkInspectionCompletion();
         });
     } else {
-        // If saveReceipt doesn't exist, try to send directly
-        if (typeof sendReceiptToCustomer === 'function') {
-            sendReceiptToCustomer();
-        } else {
-            alert('Send receipt function not available. Please complete the receipt form first.');
+        const modalEl = document.getElementById('completeInspectionModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            new bootstrap.Modal(modalEl).show();
         }
+    }
+    
+    // Initial check
+    setTimeout(() => {
+        checkInspectionCompletion();
+    }, 300);
+}
+
+// Check if all inspection data is complete
+function checkInspectionCompletion() {
+    // Safety check - ensure modal is open
+    const summaryEl = document.getElementById('inspectionWorkflowSummary');
+    if (!summaryEl) return; // Modal not open yet
+    
+    // Check Measurements
+    const heightEl = document.getElementById('combined_measurement_height');
+    const widthEl = document.getElementById('combined_measurement_width');
+    const hasMeasurements = heightEl && widthEl && heightEl.value && widthEl.value;
+    
+    // Check Damages
+    const damageDescEl = document.getElementById('combined_damage_description');
+    const hasDamages = damageDescEl && damageDescEl.value.trim() !== '';
+    
+    // Check Materials - No required fields, always considered complete
+    const hasMaterials = true;
+    
+    // Check Receipt (Compute Total)
+    const receiptMetersEl = document.getElementById('combined_number_of_meters');
+    const receiptPriceEl = document.getElementById('combined_price_per_meter');
+    const receiptLaborEl = document.getElementById('combined_labor_fee');
+    const hasReceipt = receiptMetersEl && receiptPriceEl && receiptLaborEl && 
+                      receiptMetersEl.value && receiptPriceEl.value && receiptLaborEl.value;
+    
+    // Update status badges
+    const measurementsStatusEl = document.getElementById('workflowMeasurementsStatus');
+    if (measurementsStatusEl) {
+        if (hasMeasurements) {
+            measurementsStatusEl.innerHTML = '<i class="fas fa-check"></i> Complete';
+            measurementsStatusEl.className = 'badge badge-success badge-pill';
+        } else {
+            measurementsStatusEl.innerHTML = '<i class="fas fa-times"></i> Pending';
+            measurementsStatusEl.className = 'badge badge-warning badge-pill';
+        }
+    }
+    
+    const damagesStatusEl = document.getElementById('workflowDamagesStatus');
+    if (damagesStatusEl) {
+        if (hasDamages) {
+            damagesStatusEl.innerHTML = '<i class="fas fa-check"></i> Complete';
+            damagesStatusEl.className = 'badge badge-success badge-pill';
+        } else {
+            damagesStatusEl.innerHTML = '<i class="fas fa-times"></i> Pending';
+            damagesStatusEl.className = 'badge badge-warning badge-pill';
+        }
+    }
+    
+    const materialsStatusEl = document.getElementById('workflowMaterialsStatus');
+    if (materialsStatusEl) {
+        if (hasMaterials) {
+            materialsStatusEl.innerHTML = '<i class="fas fa-check"></i> Complete';
+            materialsStatusEl.className = 'badge badge-success badge-pill';
+        } else {
+            materialsStatusEl.innerHTML = '<i class="fas fa-times"></i> Pending';
+            materialsStatusEl.className = 'badge badge-warning badge-pill';
+        }
+    }
+    
+    const receiptStatusEl = document.getElementById('workflowReceiptStatus');
+    if (receiptStatusEl) {
+        if (hasReceipt) {
+            receiptStatusEl.innerHTML = '<i class="fas fa-check"></i> Complete';
+            receiptStatusEl.className = 'badge badge-success badge-pill';
+        } else {
+            receiptStatusEl.innerHTML = '<i class="fas fa-times"></i> Pending';
+            receiptStatusEl.className = 'badge badge-warning badge-pill';
+        }
+    }
+    
+    // Show workflow summary if all are complete
+    if (hasMeasurements && hasDamages && hasMaterials && hasReceipt) {
+        summaryEl.style.display = 'block';
+    } else {
+        summaryEl.style.display = 'none';
+    }
+}
+
+// Save Combined Measurements
+function saveCombinedMeasurements() {
+    const formData = new FormData(document.getElementById('combinedMeasurementsForm'));
+    const bookingId = formData.get('booking_id');
+    
+    fetch('<?php echo BASE_URL; ?>admin/saveMeasurements', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Measurements saved successfully!');
+            checkInspectionCompletion();
+        } else {
+            showAlert('danger', data.message || 'Failed to save measurements');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while saving measurements');
+    });
+}
+
+// Save Combined Damages
+function saveCombinedDamages() {
+    const form = document.getElementById('combinedDamagesForm');
+    const formData = new FormData(form);
+    const bookingId = formData.get('booking_id');
+    
+    fetch('<?php echo BASE_URL; ?>admin/saveDamages', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Damage record saved successfully!');
+            checkInspectionCompletion();
+        } else {
+            showAlert('danger', data.message || 'Failed to save damage record');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while saving damage record');
+    });
+}
+
+// Save Combined Materials
+function saveCombinedMaterials() {
+    const form = document.getElementById('combinedMaterialsForm');
+    const formData = new FormData(form);
+    const bookingId = formData.get('booking_id');
+    
+    fetch('<?php echo BASE_URL; ?>admin/saveMaterials', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Materials saved successfully!');
+            checkInspectionCompletion();
+        } else {
+            showAlert('danger', data.message || 'Failed to save materials');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while saving materials');
+    });
+}
+
+// Save Combined Receipt
+function saveCombinedReceipt() {
+    const form = document.getElementById('combinedReceiptForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return Promise.reject('Form validation failed');
+    }
+    
+    // Additional validation for repair_days
+    const repairDays = document.getElementById('combined_repair_days');
+    if (!repairDays || !repairDays.value || parseInt(repairDays.value) <= 0) {
+        showAlert('danger', 'Please enter the allotted repair days (must be greater than 0).');
+        if (repairDays) repairDays.focus();
+        return Promise.reject('Repair days validation failed');
+    }
+    
+    const formData = {
+        booking_id: document.getElementById('combined_receipt_booking_id').value,
+        leather_quality: document.getElementById('combined_leather_quality').value,
+        leather_color_id: document.getElementById('combined_leather_color_id').value,
+        number_of_meters: document.getElementById('combined_number_of_meters').value,
+        price_per_meter: document.getElementById('combined_price_per_meter').value,
+        labor_fee: document.getElementById('combined_labor_fee').value,
+        repair_days: repairDays.value
+    };
+    
+    return fetch(`<?php echo BASE_URL; ?>admin/saveReceipt`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Receipt saved successfully!');
+            calculateCombinedTotal();
+            checkInspectionCompletion();
+            return data;
+        } else {
+            showAlert('danger', data.message || 'Failed to save receipt.');
+            throw new Error(data.message || 'Failed to save receipt');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving receipt:', error);
+        showAlert('danger', 'Error saving receipt. Please try again.');
+        throw error;
+    });
+}
+
+// Calculate Combined Total
+function calculateCombinedTotal() {
+    const meters = parseFloat(document.getElementById('combined_number_of_meters').value) || 0;
+    const pricePerMeter = parseFloat(document.getElementById('combined_price_per_meter').value) || 0;
+    const laborFee = parseFloat(document.getElementById('combined_labor_fee').value) || 0;
+    const includeVAT = document.getElementById('include_vat_checkbox')?.checked || false;
+    
+    // Get color price from booking data
+    let colorPrice = 0;
+    if (window.currentBookingData) {
+        const booking = window.currentBookingData;
+        const bookingColorPrice = parseFloat(booking.color_price) || 0;
+        const inventoryPrice = parseFloat(booking.inventory_price_per_meter) || 0;
+        colorPrice = bookingColorPrice > 0 ? bookingColorPrice : inventoryPrice;
+    }
+    
+    // Material subtotal
+    const materialSubtotal = meters * pricePerMeter;
+    
+    // Foam subtotal (set to 0 since removed from materials tab)
+    const foamSubtotal = 0;
+    
+    // Accessories subtotal (set to 0 since removed from materials tab)
+    const accessoriesSubtotal = 0;
+    
+    // Labor subtotal
+    const laborSubtotal = laborFee;
+    
+    // Subtotal before VAT (include color price)
+    const subtotalBeforeVAT = materialSubtotal + foamSubtotal + accessoriesSubtotal + laborSubtotal + colorPrice;
+    
+    // VAT
+    const vat = includeVAT ? subtotalBeforeVAT * 0.12 : 0;
+    
+    // Grand Total
+    const grandTotal = subtotalBeforeVAT + vat;
+    
+    // Update displays
+    document.getElementById('combined_leather_cost_display').textContent = '₱' + materialSubtotal.toFixed(2);
+    
+    // Show/hide color price row based on whether color price exists
+    const colorPriceDisplay = document.getElementById('combined_color_price_display');
+    const colorPriceRow = document.getElementById('combined_color_price_row');
+    if (colorPriceRow && colorPriceDisplay) {
+        if (colorPrice > 0) {
+            colorPriceRow.style.display = '';
+            colorPriceDisplay.textContent = '₱' + colorPrice.toFixed(2);
+        } else {
+            colorPriceRow.style.display = 'none';
+        }
+    }
+    
+    document.getElementById('combined_labor_fee_display').textContent = '₱' + laborSubtotal.toFixed(2);
+    document.getElementById('combined_grand_total_display').textContent = '₱' + grandTotal.toFixed(2);
+    
+    // Check completion after calculation
+    checkInspectionCompletion();
+}
+
+// Load Combined Leather Colors (for combined modal)
+function loadCombinedLeatherColors(storeLocationId, booking, selectedColorId) {
+    const colorSelect = document.getElementById('combined_leather_color_id');
+    const qualitySelect = document.getElementById('combined_leather_quality');
+    
+    if (!qualitySelect || !qualitySelect.value) {
+        colorSelect.innerHTML = '<option value="">Select quality first...</option>';
+        colorSelect.disabled = true;
+        return;
+    }
+    
+    const selectedQuality = qualitySelect.value;
+    colorSelect.innerHTML = '<option value="">Loading colors...</option>';
+    colorSelect.disabled = true;
+    
+    const url = storeLocationId 
+        ? `<?php echo BASE_URL; ?>admin/getInventory?store_location_id=${storeLocationId}`
+        : `<?php echo BASE_URL; ?>admin/getInventory`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                // Filter colors by selected quality
+                const filteredColors = data.data.filter(item => {
+                    let itemQuality = (item.type || item.fabric_type || item.leather_type || 'standard').toString().toLowerCase().trim();
+                    if (itemQuality === 'standard' || itemQuality === 'std' || itemQuality === '') {
+                        itemQuality = 'standard';
+                    } else if (itemQuality === 'premium' || itemQuality === 'prem') {
+                        itemQuality = 'premium';
+                    }
+                    const normalizedSelectedQuality = selectedQuality.toLowerCase().trim();
+                    return itemQuality === normalizedSelectedQuality;
+                });
+                
+                colorSelect.innerHTML = '<option value="">Select Leather/Color</option>';
+                
+                if (filteredColors.length === 0) {
+                    colorSelect.innerHTML = '<option value="">No colors available for ' + selectedQuality + ' quality</option>';
+                } else {
+                    filteredColors.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        
+                        let price = 0;
+                        if (selectedQuality === 'premium') {
+                            price = parseFloat(item.price_per_meter || 0);
+                            const premiumPrice = parseFloat(item.premium_price || 0);
+                            if (premiumPrice > 0) {
+                                price = price + premiumPrice;
+                            }
+                        } else {
+                            price = parseFloat(item.price_per_meter || 0);
+                        }
+                        
+                        option.textContent = `${item.name} (${item.code || 'N/A'}) - ₱${price.toFixed(2)}/meter`;
+                        option.dataset.pricePerMeter = price;
+                        colorSelect.appendChild(option);
+                    });
+                }
+                
+                colorSelect.disabled = true;
+                
+                // Pre-select customer's color
+                if (selectedColorId) {
+                    colorSelect.value = selectedColorId;
+                    const selectedOption = colorSelect.options[colorSelect.selectedIndex];
+                    if (selectedOption && selectedOption.dataset.pricePerMeter) {
+                        const priceFromInventory = parseFloat(selectedOption.dataset.pricePerMeter);
+                        const priceInput = document.getElementById('combined_price_per_meter');
+                        if (priceInput && !priceInput.value) {
+                            priceInput.value = priceFromInventory.toFixed(2);
+                            calculateCombinedTotal();
+                        }
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading colors:', error);
+            colorSelect.innerHTML = '<option value="">Error loading colors</option>';
+        });
+}
+
+// Add event listeners for receipt calculation
+document.addEventListener('DOMContentLoaded', function() {
+    const receiptInputs = ['combined_number_of_meters', 'combined_price_per_meter', 'combined_labor_fee'];
+    receiptInputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', calculateCombinedTotal);
+        }
+    });
+});
+
+// Navigate to Next Tab
+function navigateToNextTab() {
+    const tabs = ['measurements-tab', 'damages-tab', 'materials-tab', 'receipt-tab'];
+    const currentTab = document.querySelector('#inspectionTabs .nav-link.active');
+    
+    if (!currentTab) {
+        console.error('No active tab found');
+        showAlert('warning', 'Could not determine current tab. Please refresh the page.');
+        return;
+    }
+    
+    const currentIndex = tabs.indexOf(currentTab.id);
+    
+    if (currentIndex === -1) {
+        console.error('Current tab not found in tabs array. Current tab ID:', currentTab.id);
+        showAlert('warning', 'Could not determine current tab position. Please refresh the page.');
+        return;
+    }
+    
+    // If on receipt tab (last tab), open preview receipt modal
+    if (currentIndex >= tabs.length - 1) {
+        // Validate receipt form first
+        const receiptForm = document.getElementById('combinedReceiptForm');
+        if (!receiptForm.checkValidity()) {
+            receiptForm.reportValidity();
+            showAlert('warning', 'Please complete all required fields in the receipt form.');
+            return;
+        }
+        
+        // Additional validation for repair_days
+        const repairDays = document.getElementById('combined_repair_days');
+        if (!repairDays || !repairDays.value || parseInt(repairDays.value) <= 0) {
+            showAlert('danger', 'Please enter the allotted repair days (must be greater than 0).');
+            if (repairDays) repairDays.focus();
+            return;
+        }
+        
+        // First save the receipt data
+        const savePromise = saveCombinedReceipt();
+        if (savePromise && typeof savePromise.then === 'function') {
+            savePromise.then(() => {
+                // Then open preview receipt modal
+                populatePreviewReceipt();
+                if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                    jQuery('#previewReceiptModal').modal('show');
+                } else {
+                    const modalEl = document.getElementById('previewReceiptModal');
+                    if (modalEl && typeof bootstrap !== 'undefined') {
+                        new bootstrap.Modal(modalEl).show();
+                    }
+                }
+            }).catch(error => {
+                console.error('Error saving receipt:', error);
+                showAlert('warning', 'Please complete all required fields before previewing receipt.');
+            });
+        } else {
+            // If saveCombinedReceipt doesn't return a promise, just open the modal
+            populatePreviewReceipt();
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#previewReceiptModal').modal('show');
+            } else {
+                const modalEl = document.getElementById('previewReceiptModal');
+                if (modalEl && typeof bootstrap !== 'undefined') {
+                    new bootstrap.Modal(modalEl).show();
+                }
+            }
+        }
+        return;
+    }
+    
+    console.log('Navigating from tab', currentIndex, 'to tab', currentIndex + 1);
+    
+    // Save current tab data before moving to next tab
+    const savePromises = [];
+    
+    if (currentIndex === 0) {
+        // Save Measurements
+        const form = document.getElementById('combinedMeasurementsForm');
+        if (form) {
+            const formData = new FormData(form);
+            savePromises.push(
+                fetch('<?php echo BASE_URL; ?>admin/saveMeasurements', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+            );
+        }
+    } else if (currentIndex === 1) {
+        // Save Damages
+        const form = document.getElementById('combinedDamagesForm');
+        if (form) {
+            const formData = new FormData(form);
+            savePromises.push(
+                fetch('<?php echo BASE_URL; ?>admin/saveDamages', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+            );
+        }
+    } else if (currentIndex === 2) {
+        // Save Materials
+        const form = document.getElementById('combinedMaterialsForm');
+        if (form) {
+            const formData = new FormData(form);
+            savePromises.push(
+                fetch('<?php echo BASE_URL; ?>admin/saveMaterials', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+            );
+        }
+    }
+    
+    // Function to navigate to next tab
+    const navigateToTab = () => {
+        const nextTabId = tabs[currentIndex + 1];
+        const nextPanelId = nextTabId.replace('-tab', '-panel');
+        
+        // Find the tab link element
+        const nextTabLink = document.getElementById(nextTabId);
+        
+        if (!nextTabLink) {
+            console.error('Next tab element not found:', nextTabId);
+            showAlert('warning', 'Could not navigate to next tab. Please try again.');
+            return;
+        }
+        
+        // Remove active from all tabs and panes first
+        document.querySelectorAll('#inspectionTabs .nav-link').forEach(link => {
+            link.classList.remove('active');
+            link.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('#completeInspectionModal .tab-pane').forEach(pane => {
+            pane.classList.remove('show', 'active');
+        });
+        
+        // Activate the next tab link
+        nextTabLink.classList.add('active');
+        nextTabLink.setAttribute('aria-selected', 'true');
+        
+        // Activate the corresponding panel
+        const nextPanel = document.getElementById(nextPanelId);
+        if (nextPanel) {
+            nextPanel.classList.add('show', 'active');
+        }
+        
+        // Try jQuery Bootstrap tab method for proper event handling
+        if (typeof jQuery !== 'undefined' && jQuery.fn.tab) {
+            try {
+                jQuery(nextTabLink).tab('show');
+            } catch (e) {
+                console.warn('jQuery tab method failed, using direct method:', e);
+            }
+        }
+        
+        // Check completion after switching tabs
+        setTimeout(() => {
+            checkInspectionCompletion();
+        }, 200);
+    };
+    
+    // If there's data to save, wait for it; otherwise navigate immediately
+    if (savePromises.length > 0) {
+        Promise.all(savePromises)
+            .then(results => {
+                // Check if any save failed
+                const hasError = results.some(result => !result || !result.success);
+                if (hasError) {
+                    showAlert('warning', 'Some data could not be saved. Please check your inputs.');
+                    return;
+                }
+                navigateToTab();
+            })
+            .catch(error => {
+                console.error('Error saving data:', error);
+                showAlert('warning', 'Could not save data. Please try again.');
+            });
+    } else {
+        // No data to save, navigate immediately
+        navigateToTab();
+    }
+}
+
+// Populate Preview Receipt Modal - Make it globally accessible
+window.populatePreviewReceipt = function() {
+    // Get booking ID from stored data or form
+    const bookingId = window.currentBookingData?.id || 
+                      document.getElementById('combined_receipt_booking_id')?.value || 
+                      (window.currentBookingData && window.currentBookingData.booking_id) || 
+                      '';
+    
+    // Get booking data from stored variable or fetch if not available
+    let bookingData = window.currentBookingData || {};
+    
+    // If booking data doesn't have all needed fields, fetch it
+    if (!bookingData.id && !bookingData.grand_total && bookingId) {
+        // Fetch booking details if not available
+        fetch(`<?php echo BASE_URL; ?>admin/getBookingDetails/${bookingId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.booking) {
+                    window.currentBookingData = data.booking;
+                    populatePreviewReceiptWithData(data.booking);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching booking details:', error);
+            });
+        return; // Exit early, will be called again after fetch
+    }
+    
+    populatePreviewReceiptWithData(bookingData);
+}
+
+// Helper function to populate preview receipt with booking data
+window.populatePreviewReceiptWithData = function(bookingData) {
+    // Check if preview receipt modal exists
+    const previewModal = document.getElementById('previewReceiptModal');
+    if (!previewModal) {
+        console.error('Preview receipt modal not found');
+        return;
+    }
+    
+    // Check if status is inspect_completed or later - hide Measurements and Damage Findings
+    const bookingStatus = (bookingData.status || '').toLowerCase().trim();
+    const statusesToHideSections = [
+        'inspect_completed',
+        'inspection_completed_waiting_approval',
+        'preview_receipt_sent',
+        'under_repair',
+        'for_repair',
+        'repair_completed',
+        'repair_completed_ready_to_deliver',
+        'out_for_delivery',
+        'completed',
+        'delivered_and_paid',
+        'paid'
+    ];
+    const shouldHideSections = statusesToHideSections.includes(bookingStatus);
+    
+    const measurementsSection = document.getElementById('preview_measurements_section');
+    const damageFindingsSection = document.getElementById('preview_damage_findings_section');
+    if (measurementsSection) {
+        measurementsSection.style.display = shouldHideSections ? 'none' : 'block';
+    }
+    if (damageFindingsSection) {
+        damageFindingsSection.style.display = shouldHideSections ? 'none' : 'block';
+    }
+    
+    const bookingId = bookingData.id || bookingData.booking_id || '';
+    
+    // Booking Information - check if elements exist before setting
+    const previewBookingId = document.getElementById('preview_booking_id');
+    const previewCustomerName = document.getElementById('preview_customer_name');
+    const previewServiceName = document.getElementById('preview_service_name');
+    const previewInspectionDate = document.getElementById('preview_inspection_date');
+    
+    if (previewBookingId) previewBookingId.textContent = 'Booking #' + bookingId;
+    if (previewCustomerName) previewCustomerName.textContent = bookingData.customer_name || '-';
+    if (previewServiceName) previewServiceName.textContent = bookingData.service_name || '-';
+    
+    // Use inspection date from booking if available, otherwise use current date
+    const inspectionDate = bookingData.inspection_date || 
+                          bookingData.quotation_sent_at || 
+                          bookingData.updated_at || 
+                          new Date().toISOString();
+    if (previewInspectionDate) previewInspectionDate.textContent = new Date(inspectionDate).toLocaleDateString();
+    
+    // Check if preview receipt was already sent (status is inspect_completed or later)
+    // Once receipt is sent, it becomes final and all later statuses should show the saved receipt
+    // If so, use stored data from database; otherwise, use form inputs
+    // Note: bookingStatus is already declared earlier in this function, so we reuse it
+    const statusesWithSavedReceipt = [
+        'inspect_completed',
+        'inspection_completed_waiting_approval',
+        'preview_receipt_sent',
+        'under_repair',
+        'for_repair',
+        'repair_completed',
+        'repair_completed_ready_to_deliver',
+        'out_for_delivery',
+        'completed',
+        'delivered_and_paid',
+        'paid'
+    ];
+    const isPreviewReceiptSent = statusesWithSavedReceipt.includes(bookingStatus);
+    
+    // Measurements - use stored data if preview receipt was sent, otherwise use form inputs
+    // For saved receipts, always use database values (even if empty/null, show what was saved)
+    let height = null;
+    let width = null;
+    let thickness = null;
+    let measurementNotes = null;
+    
+    if (isPreviewReceiptSent) {
+        // Use stored data from database - this is what was sent to customer
+        // Check multiple possible field names
+        height = bookingData.measurement_height !== undefined && bookingData.measurement_height !== null ? 
+                 bookingData.measurement_height : (bookingData.height !== undefined ? bookingData.height : null);
+        width = bookingData.measurement_width !== undefined && bookingData.measurement_width !== null ? 
+                bookingData.measurement_width : (bookingData.width !== undefined ? bookingData.width : null);
+        thickness = bookingData.measurement_thickness !== undefined && bookingData.measurement_thickness !== null ? 
+                    bookingData.measurement_thickness : (bookingData.thickness !== undefined ? bookingData.thickness : null);
+        measurementNotes = bookingData.measurement_notes !== undefined && bookingData.measurement_notes !== null ? 
+                          bookingData.measurement_notes : (bookingData.notes !== undefined ? bookingData.notes : null);
+        
+        // Log for debugging - show all measurement-related fields
+        console.log('Loading measurements from saved receipt:', { 
+            measurement_height: bookingData.measurement_height,
+            measurement_width: bookingData.measurement_width,
+            measurement_thickness: bookingData.measurement_thickness,
+            measurement_notes: bookingData.measurement_notes,
+            height: bookingData.height,
+            width: bookingData.width,
+            thickness: bookingData.thickness,
+            notes: bookingData.notes,
+            finalHeight: height,
+            finalWidth: width,
+            finalThickness: thickness,
+            finalNotes: measurementNotes
+        });
+    } else {
+        // Use form inputs (when creating new receipt)
+        height = document.getElementById('combined_measurement_height')?.value || null;
+        width = document.getElementById('combined_measurement_width')?.value || null;
+        thickness = document.getElementById('combined_measurement_thickness')?.value || null;
+        measurementNotes = document.getElementById('combined_measurement_notes')?.value || null;
+    }
+    
+    // Display measurements - show value if it exists, even if 0
+    const previewHeight = document.getElementById('preview_height');
+    const previewWidth = document.getElementById('preview_width');
+    const previewThickness = document.getElementById('preview_thickness');
+    const previewMeasurementNotes = document.getElementById('preview_measurement_notes');
+    
+    // Format measurements - show value if it exists (including 0), otherwise show '-'
+    if (previewHeight) {
+        if (height !== null && height !== undefined && height !== '') {
+            previewHeight.textContent = parseFloat(height) + ' cm';
+    } else {
+            previewHeight.textContent = '-';
+        }
+    }
+    if (previewWidth) {
+        if (width !== null && width !== undefined && width !== '') {
+            previewWidth.textContent = parseFloat(width) + ' cm';
+        } else {
+            previewWidth.textContent = '-';
+        }
+    }
+    if (previewThickness) {
+        if (thickness !== null && thickness !== undefined && thickness !== '') {
+            previewThickness.textContent = parseFloat(thickness) + ' cm';
+        } else {
+            previewThickness.textContent = '-';
+        }
+    }
+    if (previewMeasurementNotes) {
+        previewMeasurementNotes.textContent = (measurementNotes && measurementNotes.trim() !== '') ? measurementNotes : '-';
+    }
+    
+    // Damages - use stored data if preview receipt was sent, otherwise use form inputs
+    let damageTypes = null;
+    let damageSeverity = null;
+    let damageDescription = null;
+    
+    if (isPreviewReceiptSent) {
+        // Use stored data from database - this is what was sent to customer
+        // Check multiple possible field names
+        damageTypes = bookingData.damage_types !== undefined && bookingData.damage_types !== null && bookingData.damage_types !== '' ? 
+                     bookingData.damage_types : (bookingData.damage_type !== undefined && bookingData.damage_type !== null && bookingData.damage_type !== '' ? 
+                     bookingData.damage_type : null);
+        damageSeverity = bookingData.damage_severity !== undefined && bookingData.damage_severity !== null && bookingData.damage_severity !== '' ? 
+                        bookingData.damage_severity : null;
+        damageDescription = bookingData.damage_description !== undefined && bookingData.damage_description !== null && bookingData.damage_description !== '' ? 
+                           bookingData.damage_description : (bookingData.description !== undefined && bookingData.description !== null && bookingData.description !== '' ? 
+                           bookingData.description : null);
+        
+        // Log for debugging - show all damage-related fields
+        console.log('Loading damages from saved receipt:', { 
+            damage_types: bookingData.damage_types,
+            damage_type: bookingData.damage_type,
+            damage_severity: bookingData.damage_severity,
+            damage_description: bookingData.damage_description,
+            description: bookingData.description,
+            finalDamageTypes: damageTypes,
+            finalDamageSeverity: damageSeverity,
+            finalDamageDescription: damageDescription
+        });
+    } else {
+        // Use form inputs (when creating new receipt)
+        const checkedDamageTypes = Array.from(document.querySelectorAll('#combinedDamagesForm input[name="damage_types[]"]:checked'))
+            .map(cb => cb.nextElementSibling.textContent);
+        damageTypes = checkedDamageTypes.length > 0 ? checkedDamageTypes.join(', ') : null;
+        damageSeverity = document.getElementById('combined_damage_severity')?.selectedIndex >= 0 ? 
+                         document.getElementById('combined_damage_severity').options[document.getElementById('combined_damage_severity').selectedIndex].text : null;
+        damageDescription = document.getElementById('combined_damage_description')?.value || null;
+    }
+    
+    // Display damages - show value if it exists, otherwise show default
+    const previewDamageTypes = document.getElementById('preview_damage_types');
+    const previewDamageSeverity = document.getElementById('preview_damage_severity');
+    const previewDamageDescription = document.getElementById('preview_damage_description');
+    
+    if (previewDamageTypes) {
+        // Convert damage type values to human-readable labels if needed
+        let displayDamageTypes = damageTypes;
+        if (damageTypes && damageTypes.trim() !== '' && damageTypes !== 'None') {
+            // Map values to labels
+            const damageTypeMap = {
+                'tears': 'Tears / Rips',
+                'foam_damage': 'Foam Condition (Worn/Compressed)',
+                'broken_frames': 'Broken Frames / Springs',
+                'stains': 'Stains / Dirt',
+                'odor': 'Odor Issues',
+                'other': 'Other'
+            };
+            
+            // If it's a comma-separated string of values, convert to labels
+            const typesArray = damageTypes.split(',').map(t => t.trim());
+            const labels = typesArray.map(type => {
+                // Check if it's already a label (contains spaces or special chars)
+                if (type.includes(' ') || type.includes('/')) {
+                    return type; // Already a label
+                }
+                // Otherwise, map value to label
+                return damageTypeMap[type.toLowerCase()] || type;
+            });
+            displayDamageTypes = labels.join(', ');
+        }
+        previewDamageTypes.textContent = (displayDamageTypes && displayDamageTypes.trim() !== '') ? displayDamageTypes : 'None';
+    }
+    if (previewDamageSeverity) {
+        previewDamageSeverity.textContent = (damageSeverity && damageSeverity.trim() !== '') ? damageSeverity : '-';
+    }
+    if (previewDamageDescription) {
+        previewDamageDescription.textContent = (damageDescription && damageDescription.trim() !== '') ? damageDescription : '-';
+    }
+    
+    // Materials - use stored data if preview receipt was sent, otherwise use form inputs
+    const qualityType = isPreviewReceiptSent ? (bookingData.color_type || bookingData.inventory_type || '-') : 
+                       (document.getElementById('combined_leather_quality')?.selectedIndex > 0 ? 
+                        document.getElementById('combined_leather_quality').options[document.getElementById('combined_leather_quality').selectedIndex].value : '-');
+    const qualityText = qualityType !== '-' ? (qualityType.charAt(0).toUpperCase() + qualityType.slice(1)) : '-';
+    document.getElementById('preview_leather_quality').textContent = qualityText;
+        document.getElementById('preview_fabric_type').textContent = qualityText;
+    
+    // Get color name and code - format: "blue (INV-003) - P200.00/meter"
+    let colorDisplay = '-';
+    if (isPreviewReceiptSent) {
+        const colorName = bookingData.color_name || '-';
+        const colorCode = bookingData.color_code || '';
+        const pricePerMeter = parseFloat(bookingData.price_per_meter || bookingData.fabric_cost_per_meter || bookingData.inventory_price_per_meter || 0);
+        
+        if (colorName !== '-') {
+            if (colorCode) {
+                colorDisplay = `${colorName} (${colorCode}) - ₱${pricePerMeter.toFixed(2)}/meter`;
+            } else {
+                colorDisplay = `${colorName} - ₱${pricePerMeter.toFixed(2)}/meter`;
+            }
+        }
+    } else {
+    const colorSelect = document.getElementById('combined_leather_color_id');
+    if (colorSelect && colorSelect.selectedIndex > 0) {
+            const selectedOption = colorSelect.options[colorSelect.selectedIndex];
+            const colorName = selectedOption.text || '-';
+            const colorCode = selectedOption.dataset.code || '';
+            const pricePerMeter = parseFloat(document.getElementById('combined_price_per_meter')?.value || 0);
+            
+            if (colorName !== '-') {
+                if (colorCode) {
+                    colorDisplay = `${colorName} (${colorCode}) - ₱${pricePerMeter.toFixed(2)}/meter`;
+    } else {
+                    colorDisplay = `${colorName} - ₱${pricePerMeter.toFixed(2)}/meter`;
+                }
+            }
+        }
+    }
+    document.getElementById('preview_leather_color').textContent = colorDisplay;
+    
+    // Get material details - use stored data if preview receipt was sent, otherwise use form inputs
+    let meters = '0';
+    let pricePerMeter = '0';
+    let materialCost = 0;
+    
+    if (isPreviewReceiptSent) {
+        // Use stored data from database - this is what was sent to customer
+        meters = bookingData.number_of_meters || bookingData.meters || bookingData.yards || '0';
+        pricePerMeter = bookingData.price_per_meter || bookingData.fabric_cost_per_meter || bookingData.inventory_price_per_meter || '0';
+        materialCost = parseFloat(bookingData.fabric_total || bookingData.fabric_cost || bookingData.material_cost || 0);
+        
+        // Log for debugging
+        console.log('Loading materials from saved receipt:', { 
+            meters, 
+            pricePerMeter, 
+            materialCost,
+            fabric_total: bookingData.fabric_total,
+            fabric_cost: bookingData.fabric_cost,
+            number_of_meters: bookingData.number_of_meters
+        });
+    } else {
+        // Use form inputs (when creating new receipt)
+        meters = document.getElementById('combined_number_of_meters')?.value || '0';
+        pricePerMeter = document.getElementById('combined_price_per_meter')?.value || '0';
+        materialCost = parseFloat(meters) * parseFloat(pricePerMeter);
+    }
+    
+    // Display materials
+    const previewMaterialMeters = document.getElementById('preview_material_meters');
+    const previewPricePerMeter = document.getElementById('preview_price_per_meter');
+    const previewMaterialCost = document.getElementById('preview_material_cost');
+    
+    if (previewMaterialMeters) previewMaterialMeters.textContent = meters || '0';
+    if (previewPricePerMeter) previewPricePerMeter.textContent = '₱' + parseFloat(pricePerMeter || 0).toFixed(2);
+    if (previewMaterialCost) previewMaterialCost.textContent = '₱' + materialCost.toFixed(2);
+    
+    // Foam replacement (set to default since removed from materials tab)
+    document.getElementById('preview_foam_replacement').textContent = 'No foam replacement';
+    document.getElementById('preview_foam_cost').textContent = '';
+    const foamCost = 0;
+    
+    // Accessories (set to default since removed from materials tab)
+    document.getElementById('preview_accessories').textContent = 'None';
+    document.getElementById('preview_accessories_cost').textContent = '';
+    const accessoriesCost = 0;
+    
+    // Get color price from booking data
+    let colorPrice = 0;
+    if (window.currentBookingData) {
+        const booking = window.currentBookingData;
+        const bookingColorPrice = parseFloat(booking.color_price) || 0;
+        const inventoryPrice = parseFloat(booking.inventory_price_per_meter) || 0;
+        colorPrice = bookingColorPrice > 0 ? bookingColorPrice : inventoryPrice;
+    }
+    
+    // Calculation Summary
+    // Check if preview receipt was already sent (status is inspect_completed or inspection_completed_waiting_approval)
+    // If so, use the stored grand_total from the database (the exact amount sent to customer)
+    // Note: bookingStatus and isPreviewReceiptSent are already declared above, reusing them here
+    
+    let grandTotal = 0;
+    let subtotalBeforeVAT = 0;
+    let vat = 0;
+    
+    if (isPreviewReceiptSent && bookingData) {
+        // Use the stored grand_total or total_amount that was sent to the customer
+        grandTotal = parseFloat(bookingData.grand_total || bookingData.total_amount || 0);
+        
+        // Calculate subtotal and VAT for display purposes (if VAT was included)
+        const includeVAT = document.getElementById('include_vat_checkbox')?.checked || false;
+        if (includeVAT && grandTotal > 0) {
+            // If VAT was included, calculate backwards to get subtotal
+            subtotalBeforeVAT = grandTotal / 1.12;
+            vat = grandTotal - subtotalBeforeVAT;
+        } else {
+            subtotalBeforeVAT = grandTotal;
+            vat = 0;
+        }
+        
+        // Get individual components from stored booking data for display
+        // Use the exact values that were saved when receipt was sent
+        const materialSubtotal = parseFloat(bookingData.fabric_total || bookingData.fabric_cost || materialCost || 0);
+        
+        // Get color price - check multiple possible field names
+        let colorPriceSubtotal = 0;
+        if (bookingData.color_price) {
+            colorPriceSubtotal = parseFloat(bookingData.color_price);
+        } else if (colorPrice > 0) {
+            colorPriceSubtotal = colorPrice;
+        } else {
+            // Try to get from inventory price if available
+            const inventoryPrice = parseFloat(bookingData.inventory_price_per_meter || bookingData.price_per_meter || 0);
+            if (inventoryPrice > 0) {
+                colorPriceSubtotal = inventoryPrice;
+            }
+        }
+        
+        const foamSubtotal = parseFloat(bookingData.foam_cost || foamCost || 0);
+        const accessoriesSubtotal = accessoriesCost; // Usually 0
+        
+        // Get labor fee - check multiple possible field names (case insensitive)
+        let laborSubtotal = 0;
+        if (bookingData.labor_fee) {
+            laborSubtotal = parseFloat(bookingData.labor_fee);
+        } else if (bookingData.Labor_fee) { // Handle capital L variant
+            laborSubtotal = parseFloat(bookingData.Labor_fee);
+        } else if (bookingData.labor_fee_subtotal) {
+            laborSubtotal = parseFloat(bookingData.labor_fee_subtotal);
+        } else {
+            laborSubtotal = parseFloat(document.getElementById('combined_labor_fee')?.value || 0);
+        }
+        
+        // Update display with stored values
+        document.getElementById('preview_material_subtotal').textContent = '₱' + materialSubtotal.toFixed(2);
+        
+        // Show/hide color price row based on whether color price exists
+        if (colorPriceSubtotal > 0) {
+            document.getElementById('preview_color_price_subtotal').textContent = '₱' + colorPriceSubtotal.toFixed(2);
+            document.getElementById('preview_color_price_row').style.display = '';
+        } else {
+            document.getElementById('preview_color_price_row').style.display = 'none';
+        }
+        
+        if (foamSubtotal > 0) {
+            document.getElementById('preview_foam_subtotal').textContent = '₱' + foamSubtotal.toFixed(2);
+            document.getElementById('preview_foam_row').style.display = '';
+        } else {
+            document.getElementById('preview_foam_row').style.display = 'none';
+        }
+        
+        if (accessoriesSubtotal > 0) {
+            document.getElementById('preview_accessories_subtotal').textContent = '₱' + accessoriesSubtotal.toFixed(2);
+            document.getElementById('preview_accessories_row').style.display = '';
+        } else {
+            document.getElementById('preview_accessories_row').style.display = 'none';
+        }
+        
+        document.getElementById('preview_labor_subtotal').textContent = '₱' + laborSubtotal.toFixed(2);
+        document.getElementById('preview_subtotal_before_vat').textContent = '₱' + subtotalBeforeVAT.toFixed(2);
+        
+        if (vat > 0) {
+            document.getElementById('preview_vat_amount').textContent = '₱' + vat.toFixed(2);
+            document.getElementById('preview_vat_row').style.display = '';
+        } else {
+            document.getElementById('preview_vat_row').style.display = 'none';
+        }
+        
+        document.getElementById('preview_final_total').textContent = '₱' + grandTotal.toFixed(2);
+        return; // Exit early, we've populated everything from stored data
+    }
+    
+    // Normal calculation (when preview receipt hasn't been sent yet)
+    const materialSubtotal = materialCost;
+    const colorPriceSubtotal = colorPrice;
+    const foamSubtotal = foamCost;
+    const accessoriesSubtotal = accessoriesCost;
+    const laborSubtotal = parseFloat(document.getElementById('combined_labor_fee')?.value || 0);
+    subtotalBeforeVAT = materialSubtotal + colorPriceSubtotal + foamSubtotal + accessoriesSubtotal + laborSubtotal;
+    const includeVAT = document.getElementById('include_vat_checkbox')?.checked || false;
+    vat = includeVAT ? subtotalBeforeVAT * 0.12 : 0;
+    grandTotal = subtotalBeforeVAT + vat;
+    
+    document.getElementById('preview_material_subtotal').textContent = '₱' + materialSubtotal.toFixed(2);
+    
+    // Show/hide color price row based on whether color price exists
+    if (colorPriceSubtotal > 0) {
+        document.getElementById('preview_color_price_subtotal').textContent = '₱' + colorPriceSubtotal.toFixed(2);
+        document.getElementById('preview_color_price_row').style.display = '';
+    } else {
+        document.getElementById('preview_color_price_row').style.display = 'none';
+    }
+    
+    if (foamSubtotal > 0) {
+        document.getElementById('preview_foam_subtotal').textContent = '₱' + foamSubtotal.toFixed(2);
+        document.getElementById('preview_foam_row').style.display = '';
+    } else {
+        document.getElementById('preview_foam_row').style.display = 'none';
+    }
+    
+    if (accessoriesSubtotal > 0) {
+        document.getElementById('preview_accessories_subtotal').textContent = '₱' + accessoriesSubtotal.toFixed(2);
+        document.getElementById('preview_accessories_row').style.display = '';
+    } else {
+        document.getElementById('preview_accessories_row').style.display = 'none';
+    }
+    
+    document.getElementById('preview_labor_subtotal').textContent = '₱' + laborSubtotal.toFixed(2);
+    document.getElementById('preview_subtotal_before_vat').textContent = '₱' + subtotalBeforeVAT.toFixed(2);
+    
+    if (vat > 0) {
+        document.getElementById('preview_vat_amount').textContent = '₱' + vat.toFixed(2);
+        document.getElementById('preview_vat_row').style.display = '';
+    } else {
+        document.getElementById('preview_vat_row').style.display = 'none';
+    }
+    
+    document.getElementById('preview_final_total').textContent = '₱' + grandTotal.toFixed(2);
+}
+
+// Edit Inspection from Preview (go back to inspection modal)
+function editInspectionFromPreview() {
+    // Close preview receipt modal
+    if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+        jQuery('#previewReceiptModal').modal('hide');
+    } else {
+        const modalEl = document.getElementById('previewReceiptModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
+    }
+    
+    // The inspection modal should still be open, just switch to first tab
+    const firstTab = document.getElementById('measurements-tab');
+    if (firstTab && typeof jQuery !== 'undefined' && jQuery.fn.tab) {
+        jQuery(firstTab).tab('show');
+    } else {
+        firstTab.click();
+    }
+}
+
+// Send Receipt from Preview Modal
+async function sendReceiptFromPreview() {
+    const confirmed = await confirm('Send receipt to customer? This will update status to "For Repair" and notify them of the total amount.');
+    if (!confirmed) {
+        return;
+    }
+    
+    const bookingId = document.getElementById('combined_receipt_booking_id').value;
+    
+    // Validate form fields before sending
+    const repairDays = document.getElementById('combined_repair_days').value;
+    if (!repairDays || parseInt(repairDays) <= 0) {
+        showAlert('danger', 'Please enter the allotted repair days (must be greater than 0).');
+        document.getElementById('combined_repair_days').focus();
+        return;
+    }
+    
+    // Validate other required fields
+    const numberOfMeters = document.getElementById('combined_number_of_meters').value;
+    const pricePerMeter = document.getElementById('combined_price_per_meter').value;
+    const laborFee = document.getElementById('combined_labor_fee').value;
+    
+    if (!numberOfMeters || parseFloat(numberOfMeters) <= 0) {
+        showAlert('danger', 'Please enter the number of meters.');
+        document.getElementById('combined_number_of_meters').focus();
+        return;
+    }
+    
+    if (!pricePerMeter || parseFloat(pricePerMeter) <= 0) {
+        showAlert('danger', 'Please enter the price per meter.');
+        document.getElementById('combined_price_per_meter').focus();
+        return;
+    }
+    
+    if (!laborFee || parseFloat(laborFee) <= 0) {
+        showAlert('danger', 'Please enter the labor fee.');
+        document.getElementById('combined_labor_fee').focus();
+        return;
+    }
+    
+    // CRITICAL: Save ALL data (measurements, damages, materials/receipt) before sending
+    // This ensures the exact preview receipt data is stored in the database
+    
+    // Show loading state
+    const sendBtn = document.getElementById('previewSendReceiptBtn');
+    const originalText = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving all data...';
+    
+    console.log('Saving all inspection data before sending receipt...');
+    
+    // Step 1: Save Measurements
+    const measurementsFormData = new FormData(document.getElementById('combinedMeasurementsForm'));
+    const saveMeasurementsPromise = fetch('<?php echo BASE_URL; ?>admin/saveMeasurements', {
+        method: 'POST',
+        body: measurementsFormData
+    }).then(response => response.json());
+    
+    // Step 2: Save Damages
+    const damagesFormData = new FormData(document.getElementById('combinedDamagesForm'));
+    const saveDamagesPromise = fetch('<?php echo BASE_URL; ?>admin/saveDamages', {
+        method: 'POST',
+        body: damagesFormData
+    }).then(response => response.json());
+    
+    // Step 3: Save Receipt (Materials + Totals)
+    const receiptFormData = {
+        booking_id: bookingId,
+        leather_quality: document.getElementById('combined_leather_quality').value,
+        leather_color_id: document.getElementById('combined_leather_color_id').value,
+        number_of_meters: numberOfMeters,
+        price_per_meter: pricePerMeter,
+        labor_fee: laborFee,
+        repair_days: repairDays
+    };
+    const saveReceiptPromise = fetch(`<?php echo BASE_URL; ?>admin/saveReceipt`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        redirect: 'error',
+        body: JSON.stringify(receiptFormData)
+    }).then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.message || `Failed to save receipt: ${response.status}`);
+            });
+        }
+        return response.json();
+    });
+    
+    // Save all data in parallel, then send receipt
+    Promise.all([saveMeasurementsPromise, saveDamagesPromise, saveReceiptPromise])
+    .then(results => {
+        console.log('All data saved:', results);
+        
+        // Check if all saves were successful
+        const allSuccess = results.every(result => result.success !== false);
+        if (!allSuccess) {
+            const errors = results.filter(r => !r.success).map(r => r.message || 'Unknown error');
+            throw new Error('Failed to save some data: ' + errors.join(', '));
+        }
+        
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        
+        // Now send to customer (this will update status to "inspect_completed")
+            // Use URLSearchParams with application/x-www-form-urlencoded for better PHP compatibility
+            // Ensure URL doesn't have double slashes
+            let baseUrl = '<?php echo rtrim(BASE_URL, '/'); ?>';
+            let sendUrl = `${baseUrl}/admin/sendReceiptToCustomer`;
+            const params = new URLSearchParams();
+            params.append('booking_id', bookingId);
+            
+            console.log('Sending receipt to customer:', sendUrl, { booking_id: bookingId });
+            console.log('Request method will be POST');
+            console.log('Request body:', params.toString());
+            
+            // Create the request with all necessary options
+            const requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                cache: 'no-store',
+                credentials: 'same-origin',
+                redirect: 'error', // Prevent redirects that convert POST to GET
+                body: params.toString()
+            };
+            
+            console.log('Request options:', {
+                method: requestOptions.method,
+                url: sendUrl,
+                headers: requestOptions.headers,
+                body: requestOptions.body
+            });
+            
+            return fetch(sendUrl, requestOptions);
+    })
+    .then(response => {
+        console.log('Response status:', response.status, response.statusText);
+        console.log('Response type:', response.type);
+        console.log('Response redirected:', response.redirected);
+        console.log('Response URL:', response.url);
+        
+        // Handle redirect responses (shouldn't happen with redirect: 'manual', but check anyway)
+        if (response.type === 'opaqueredirect' || response.status === 301 || response.status === 302) {
+            throw new Error('Request was redirected. This may indicate a routing or authentication issue.');
+        }
+        
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            // Try to parse error response
+            return response.text().then(text => {
+                console.error('Error response text:', text);
+                try {
+                    const errData = JSON.parse(text);
+                    console.error('Error response from server:', errData);
+                    throw new Error(errData.message || `Server error: ${response.status}`);
+                } catch (parseError) {
+                    console.error('Failed to parse error response:', parseError);
+                    throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${text.substring(0, 200)}`);
+                }
+            });
+        }
+        
+        // Parse successful response
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (parseError) {
+                console.error('Failed to parse success response:', parseError);
+                console.error('Response text:', text);
+                throw new Error('Invalid JSON response from server');
+            }
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message || 'Receipt sent to customer successfully! Status updated to "For Repair".');
+            
+            // Close both modals
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#previewReceiptModal').modal('hide');
+                jQuery('#completeInspectionModal').modal('hide');
+            }
+            
+            // Reload page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Failed to send receipt');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending receipt:', error);
+        showAlert('danger', 'Error sending receipt: ' + error.message);
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalText;
+    });
+}
+
+// Send Combined Preview Receipt
+function sendCombinedPreviewReceipt() {
+    if (!confirm('Send preview receipt to customer? This will update status to "For Repair" and notify them of the total amount.')) {
+        return;
+    }
+    
+    const bookingId = document.getElementById('combined_receipt_booking_id').value;
+    
+    // First save the receipt
+    const formData = {
+        booking_id: bookingId,
+        leather_quality: document.getElementById('combined_leather_quality').value,
+        leather_color_id: document.getElementById('combined_leather_color_id').value,
+        number_of_meters: document.getElementById('combined_number_of_meters').value,
+        price_per_meter: document.getElementById('combined_price_per_meter').value,
+        labor_fee: document.getElementById('combined_labor_fee').value,
+        repair_days: document.getElementById('combined_repair_days').value
+    };
+    
+    showAlert('info', 'Saving receipt and sending to customer...');
+    
+    fetch(`<?php echo BASE_URL; ?>admin/saveReceipt`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Now send to customer
+            return fetch(`<?php echo BASE_URL; ?>admin/sendReceiptToCustomer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                body: JSON.stringify({ booking_id: bookingId })
+            });
+        } else {
+            throw new Error(data.message || 'Failed to save receipt');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message || 'Preview receipt sent to customer successfully! Status updated to "For Repair".');
+            setTimeout(() => {
+                if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                    jQuery('#completeInspectionModal').modal('hide');
+                }
+                window.location.reload();
+            }, 1500);
+        } else {
+            showAlert('warning', 'Receipt saved but failed to send: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error sending preview receipt:', error);
+        showAlert('danger', 'Error sending preview receipt. Please try again.');
+    });
+}
+</script>
+
+<script>
+// Archive Booking
+function handleArchive(bookingId, event) {
+    if (event) event.stopPropagation();
+    
+    if (confirm('Are you sure you want to archive this booking? It will be moved to the Archived Bookings list.')) {
+        // Show loading state
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        fetch('<?php echo BASE_URL; ?>admin/archiveBooking/' + bookingId, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', 'Booking archived successfully');
+                // Remove row from table
+                const row = btn.closest('tr');
+                if (row) {
+                    row.remove();
+                    // Update counts if needed (reload is safer)
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                showAlert('danger', data.message || 'Failed to archive booking');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred');
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        });
     }
 }
 </script>

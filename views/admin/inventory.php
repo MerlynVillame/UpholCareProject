@@ -14,7 +14,7 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Leather Inventory Management</h1>
-    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#addInventoryModal">
+    <a href="#" class="btn btn-sm btn-primary-admin shadow-sm" data-toggle="modal" data-target="#addInventoryModal" style="display: inline-block !important; visibility: visible !important; opacity: 1 !important; z-index: 10 !important;">
         <i class="fas fa-plus"></i> Add Leather Stock
     </a>
 </div>
@@ -26,7 +26,7 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Colors</div>
+                        <div class="text-xs font-weight-bold text-primary-admin text-uppercase mb-1">Total Colors</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalColors">0</div>
                     </div>
                     <div class="col-auto">
@@ -102,7 +102,7 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
 <!-- Inventory Table -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Inventory List</h6>
+        <h6 class="m-0 font-weight-bold text-primary-admin">Inventory List</h6>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -153,8 +153,8 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
                     <div class="form-group">
                         <label for="colorPicker">Color Preview</label>
                         <div class="input-group">
-                            <input type="color" class="form-control" id="colorPicker" name="color" value="#8B4513" style="height: 40px;">
-                            <input type="text" class="form-control" id="colorHex" name="color_hex" value="#8B4513" placeholder="#8B4513" readonly style="background-color: #f8f9fa;">
+                            <input type="color" class="form-control" id="colorPicker" name="color" value="#1F4E79" style="height: 40px;">
+                            <input type="text" class="form-control" id="colorHex" name="color_hex" value="#1F4E79" placeholder="#1F4E79" readonly style="background-color: #f8f9fa;">
                         </div>
                     </div>
                     <div class="form-group">
@@ -181,7 +181,7 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" style="pointer-events: auto !important; cursor: pointer !important;">
                     Cancel
                 </button>
-                <button type="button" class="btn btn-primary" id="submitInventoryBtn" onclick="event.preventDefault(); submitInventoryForm(); return false;" style="pointer-events: auto !important; cursor: pointer !important; min-width: 120px;">
+                <button type="button" class="btn btn-primary-admin" id="submitInventoryBtn" onclick="event.preventDefault(); submitInventoryForm(); return false;" style="pointer-events: auto !important; cursor: pointer !important; min-width: 120px;">
                     <i class="fas fa-plus mr-1"></i> Add Item
                 </button>
             </div>
@@ -191,8 +191,62 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
 
 <style>
 /* ============================================
-   MODAL CLICKABILITY FIX - SIMPLIFIED & EFFECTIVE
+   MODAL BRIGHTNESS FIX - ENSURE MODAL IS BRIGHT WHITE
    ============================================ */
+
+/* Fix Modal Backdrop - Make it fully transparent (like Official Receipt modal) */
+body .modal-backdrop,
+body .modal-backdrop.show,
+.modal-backdrop,
+.modal-backdrop.show,
+.modal-backdrop.fade,
+.modal-backdrop.fade.show {
+    opacity: 0 !important; /* Fully transparent - no dark overlay */
+    background-color: transparent !important;
+    background: transparent !important;
+    z-index: 1040 !important;
+    filter: none !important;
+    pointer-events: none !important; /* Allow clicks through transparent backdrop */
+}
+
+/* FIX A - Remove stray modal-backdrop when modal is closed */
+body:not(.modal-open) .modal-backdrop,
+.modal:not(.show) ~ .modal-backdrop,
+.modal-backdrop:not(.show) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Fix Modal - Ensure it's bright white */
+.modal {
+    z-index: 1050 !important;
+    opacity: 1 !important; /* ensure modal is not transparent */
+}
+
+.modal.show {
+    z-index: 1050 !important;
+    opacity: 1 !important; /* ensure modal is not transparent */
+    display: block !important;
+}
+
+/* Fix Modal Content - Bright white background - HIGHEST SPECIFICITY */
+body .modal.fade.show .modal-dialog .modal-content,
+body .modal.show .modal-dialog .modal-content,
+.modal.fade.show .modal-content,
+.modal.show .modal-content,
+#addInventoryModal .modal-content,
+#addInventoryModal.fade.show .modal-content,
+#addInventoryModal.show .modal-content,
+.modal-content {
+    background-color: #ffffff !important; /* bright white */
+    background: #ffffff !important; /* bright white */
+    opacity: 1 !important; /* ensure not transparent */
+    backdrop-filter: none !important; /* remove any backdrop filter */
+    -webkit-backdrop-filter: none !important;
+    color: #212529 !important; /* ensure text is visible */
+    filter: none !important;
+}
 
 /* Ensure modal is always on top */
 #addInventoryModal {
@@ -203,21 +257,31 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
 #addInventoryModal.show {
     display: block !important;
     z-index: 1055 !important;
+    opacity: 1 !important;
 }
 
-/* Backdrop - MUST NOT block clicks - Made lighter */
-.modal-backdrop {
-    z-index: 1050 !important;
-    pointer-events: none !important;
-    background-color: rgba(0, 0, 0, 0.2) !important;
+/* Modal Header - Bright white */
+#addInventoryModal .modal-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    opacity: 1 !important;
 }
 
-.modal-backdrop.show {
-    z-index: 1050 !important;
-    pointer-events: none !important;
+/* Modal Body - Bright white */
+#addInventoryModal .modal-body {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    color: #212529 !important;
 }
 
-/* Modal dialog and content - MUST be clickable */
+/* Modal Footer - Light gray background */
+#addInventoryModal .modal-footer {
+    background-color: #f8f9fa !important;
+    border-top: 1px solid #dee2e6 !important;
+    opacity: 1 !important;
+}
+
+/* Modal dialog and content - MUST be clickable and bright */
 #addInventoryModal .modal-dialog {
     z-index: 1056 !important;
     position: relative !important;
@@ -226,6 +290,7 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
     max-height: 90vh !important;
     display: flex !important;
     flex-direction: column !important;
+    opacity: 1 !important;
 }
 
 #addInventoryModal .modal-content {
@@ -233,10 +298,36 @@ require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php';
     flex-direction: column !important;
     max-height: 90vh !important;
     overflow: hidden !important;
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    color: #212529 !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
 #addInventoryModal .modal-body {
     overflow-y: auto !important;
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    color: #212529 !important;
+}
+
+/* Ensure all form elements are visible */
+#addInventoryModal .form-control,
+#addInventoryModal .form-group,
+#addInventoryModal label,
+#addInventoryModal input,
+#addInventoryModal select,
+#addInventoryModal textarea {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+#addInventoryModal .form-control:focus {
+    background-color: #ffffff !important;
+    border-color: #4e73df !important;
+    color: #212529 !important;
+}
     flex: 1 1 auto !important;
     max-height: calc(90vh - 200px) !important;
 }
@@ -382,6 +473,26 @@ body.modal-open {
     padding-right: 0 !important;
 }
 
+/* Ensure "Add Leather Stock" button is always visible and not blocked */
+.d-sm-flex .btn-primary[data-target="#addInventoryModal"],
+a[data-target="#addInventoryModal"],
+.btn[data-target="#addInventoryModal"] {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 100 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Ensure button is visible even when backdrop exists */
+body.modal-open .btn-primary[data-target="#addInventoryModal"],
+body.modal-open a[data-target="#addInventoryModal"] {
+    z-index: 2000 !important;
+    position: relative !important;
+}
+
 /* Ensure no container clips the modal */
 body.modal-open .container-fluid,
 body.modal-open .container,
@@ -421,8 +532,9 @@ function renderInventoryTable(data) {
 
     console.log('Rendering', data.length, 'inventory items');
     tableBody.innerHTML = data.map(item => {
-        const statusClass = item.status === 'in-stock' ? 'badge-success' : 
-                           item.status === 'low-stock' ? 'badge-warning' : 'badge-danger';
+        // Changed from badge-{color} to text-{color} for text-only display
+        const statusClass = item.status === 'in-stock' ? 'text-success' : 
+                           item.status === 'low-stock' ? 'text-warning' : 'text-danger';
         const statusText = item.status === 'in-stock' ? 'In Stock' : 
                           item.status === 'low-stock' ? 'Low Stock' : 'Out of Stock';
         
@@ -456,7 +568,7 @@ function renderInventoryTable(data) {
                     </strong>
                 </td>
                 <td>${parseFloat(item.quantity || 0).toFixed(2)} rolls</td>
-                <td><span class="badge ${statusClass}">${statusText}</span></td>
+                <td><span class="${statusClass}" style="font-weight: 600;">${statusText}</span></td>
                 <td>${item.lastUpdated || 'N/A'}</td>
                 <td>
                     <button class="btn btn-sm btn-info" title="Edit" onclick="editInventoryItem(${item.id})">
@@ -755,8 +867,8 @@ function submitInventoryForm() {
             
             // Reset form
             form.reset();
-            document.getElementById('colorPicker').value = '#8B4513';
-            document.getElementById('colorHex').value = '#8B4513';
+            document.getElementById('colorPicker').value = '#1F4E79';
+            document.getElementById('colorHex').value = '#1F4E79';
             
             // Close modal
             if (typeof jQuery !== 'undefined') {
@@ -833,7 +945,7 @@ function editInventoryItem(itemId) {
     
     // Populate form with item data
     document.getElementById('colorName').value = item.name || '';
-    const colorHex = item.color || item.color_hex || '#8B4513';
+    const colorHex = item.color || item.color_hex || '#1F4E79';
     document.getElementById('colorPicker').value = colorHex;
     document.getElementById('colorHex').value = colorHex;
     // Set leather type - normalize to lowercase for comparison
@@ -1001,8 +1113,8 @@ function updateInventoryItem(itemId) {
             
             // Reset form and button
             form.reset();
-            document.getElementById('colorPicker').value = '#8B4513';
-            document.getElementById('colorHex').value = '#8B4513';
+            document.getElementById('colorPicker').value = '#1F4E79';
+            document.getElementById('colorHex').value = '#1F4E79';
             submitBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Add Item';
             submitBtn.onclick = function() { submitInventoryForm(); };
             document.querySelector('#addInventoryModal .modal-title').textContent = 'Add Leather Stock';
@@ -1156,13 +1268,20 @@ if (typeof jQuery !== 'undefined') {
     });
     
     jQuery('#addInventoryModal').on('hidden.bs.modal', function() {
+        // FIX B - Force Bootstrap to clean up the modal on close
+        jQuery('body').removeClass('modal-open');
+        jQuery('.modal-backdrop').remove();
+        jQuery(this).removeClass('show');
+        jQuery(this).css('display', 'none');
+        jQuery(this).attr('aria-hidden', 'true');
+        
         const form = document.getElementById('addInventoryForm');
         if (form) form.reset();
         
         const colorPicker = document.getElementById('colorPicker');
         const colorHex = document.getElementById('colorHex');
-        if (colorPicker) colorPicker.value = '#8B4513';
-        if (colorHex) colorHex.value = '#8B4513';
+        if (colorPicker) colorPicker.value = '#1F4E79';
+        if (colorHex) colorHex.value = '#1F4E79';
         
         const submitBtn = document.getElementById('submitInventoryBtn');
         if (submitBtn) {
@@ -1182,16 +1301,143 @@ if (typeof jQuery !== 'undefined') {
             logoutModal.style.removeProperty('z-index');
             logoutModal.style.removeProperty('opacity');
         }
+        
+        // Clean up brightness interval if exists
+        if (this.dataset.brightnessInterval) {
+            clearInterval(parseInt(this.dataset.brightnessInterval));
+            delete this.dataset.brightnessInterval;
+        }
     });
     
     // Fix modal when it's about to show
     jQuery('#addInventoryModal').on('show.bs.modal', function() {
+        // FIX C - Remove aria-hidden to prevent warning
+        jQuery(this).removeAttr('aria-hidden');
+        jQuery(this).attr('aria-hidden', 'false');
+        
         populateStoreDropdown();
         fixModalClickability();
     });
     
+    // Force modal brightness when it opens - Use setProperty with important flag
+    jQuery('#addInventoryModal').on('show.bs.modal', function() {
+        const modal = this;
+        const modalContent = modal.querySelector('.modal-content');
+        const modalHeader = modal.querySelector('.modal-header');
+        const modalBody = modal.querySelector('.modal-body');
+        const modalFooter = modal.querySelector('.modal-footer');
+        
+        // Force bright white background immediately with setProperty for maximum priority
+        if (modalContent) {
+            modalContent.style.setProperty('background-color', '#ffffff', 'important');
+            modalContent.style.setProperty('background', '#ffffff', 'important');
+            modalContent.style.setProperty('opacity', '1', 'important');
+            modalContent.style.setProperty('color', '#212529', 'important');
+        }
+        if (modalHeader) {
+            modalHeader.style.setProperty('background-color', '#ffffff', 'important');
+            modalHeader.style.setProperty('opacity', '1', 'important');
+        }
+        if (modalBody) {
+            modalBody.style.setProperty('background-color', '#ffffff', 'important');
+            modalBody.style.setProperty('opacity', '1', 'important');
+            modalBody.style.setProperty('color', '#212529', 'important');
+        }
+        if (modalFooter) {
+            modalFooter.style.setProperty('background-color', '#f8f9fa', 'important');
+            modalFooter.style.setProperty('opacity', '1', 'important');
+        }
+        
+        // Wait for backdrop to be created, then make it transparent
+        setTimeout(function() {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.setProperty('background-color', 'transparent', 'important');
+                backdrop.style.setProperty('opacity', '0', 'important');
+                backdrop.style.setProperty('pointer-events', 'none', 'important');
+            }
+        }, 10);
+    });
+    
     // Fix modal when it's shown
     jQuery('#addInventoryModal').on('shown.bs.modal', function() {
+        // Force brightness again after modal is fully shown
+        const modal = this;
+        const modalContent = modal.querySelector('.modal-content');
+        const modalHeader = modal.querySelector('.modal-header');
+        const modalBody = modal.querySelector('.modal-body');
+        const modalFooter = modal.querySelector('.modal-footer');
+        const backdrop = document.querySelector('.modal-backdrop');
+        
+        // Force bright white background
+        if (modalContent) {
+            modalContent.style.setProperty('background-color', '#ffffff', 'important');
+            modalContent.style.setProperty('opacity', '1', 'important');
+            modalContent.style.setProperty('color', '#212529', 'important');
+        }
+        if (modalHeader) {
+            modalHeader.style.setProperty('background-color', '#ffffff', 'important');
+            modalHeader.style.setProperty('opacity', '1', 'important');
+        }
+        if (modalBody) {
+            modalBody.style.setProperty('background-color', '#ffffff', 'important');
+            modalBody.style.setProperty('opacity', '1', 'important');
+            modalBody.style.setProperty('color', '#212529', 'important');
+        }
+        if (modalFooter) {
+            modalFooter.style.setProperty('background-color', '#f8f9fa', 'important');
+            modalFooter.style.setProperty('opacity', '1', 'important');
+        }
+        if (backdrop) {
+            backdrop.style.setProperty('background-color', 'transparent', 'important');
+            backdrop.style.setProperty('opacity', '0', 'important');
+            backdrop.style.setProperty('pointer-events', 'none', 'important');
+        }
+        
+        // Continuous monitoring to force brightness while modal is open
+        const brightnessInterval = setInterval(function() {
+            if (!modal.classList.contains('show')) {
+                clearInterval(brightnessInterval);
+                return;
+            }
+            
+            if (modalContent) {
+                modalContent.style.setProperty('background-color', '#ffffff', 'important');
+                modalContent.style.setProperty('background', '#ffffff', 'important');
+                modalContent.style.setProperty('opacity', '1', 'important');
+                modalContent.style.setProperty('color', '#212529', 'important');
+            }
+            if (modalHeader) {
+                modalHeader.style.setProperty('background-color', '#ffffff', 'important');
+                modalHeader.style.setProperty('opacity', '1', 'important');
+            }
+            if (modalBody) {
+                modalBody.style.setProperty('background-color', '#ffffff', 'important');
+                modalBody.style.setProperty('opacity', '1', 'important');
+                modalBody.style.setProperty('color', '#212529', 'important');
+            }
+            if (modalFooter) {
+                modalFooter.style.setProperty('background-color', '#f8f9fa', 'important');
+                modalFooter.style.setProperty('opacity', '1', 'important');
+            }
+            if (backdrop) {
+                backdrop.style.setProperty('background-color', 'transparent', 'important');
+                backdrop.style.setProperty('opacity', '0', 'important');
+                backdrop.style.setProperty('pointer-events', 'none', 'important');
+            }
+        }, 200);
+        
+        // Store interval for cleanup when modal closes
+        modal.dataset.brightnessInterval = brightnessInterval;
+        
+        // Cleanup interval when modal is hidden
+        jQuery(modal).on('hidden.bs.modal', function() {
+            if (modal.dataset.brightnessInterval) {
+                clearInterval(parseInt(modal.dataset.brightnessInterval));
+                delete modal.dataset.brightnessInterval;
+            }
+        });
+        
         fixModalClickability();
         
         // Additional fix after a short delay to ensure everything is applied
@@ -1405,6 +1651,64 @@ function loadInventoryFromDatabase() {
             modal.addEventListener('hidden.bs.modal', stopMonitoring);
         }
     }
+})();
+
+// FIX - Remove stuck backdrops on page load and after modal close
+(function() {
+    function cleanupStuckModals() {
+        // Remove any stuck modal backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(function(backdrop) {
+            backdrop.remove();
+        });
+        
+        // Remove modal-open class from body
+        document.body.classList.remove('modal-open');
+        
+        // Hide any modals that are stuck open (except the one that should be open)
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            // Only hide if it has 'show' class but shouldn't be visible
+            if (modal.classList.contains('show') && modal.style.display === 'none') {
+                modal.classList.remove('show');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        });
+    }
+    
+    // Clean up on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', cleanupStuckModals);
+    } else {
+        cleanupStuckModals();
+    }
+    
+    // Clean up when any modal is hidden
+    if (typeof jQuery !== 'undefined') {
+        jQuery(document).on('hidden.bs.modal', '.modal', function() {
+            jQuery('body').removeClass('modal-open');
+            jQuery('.modal-backdrop').remove();
+            jQuery(this).removeClass('show');
+            jQuery(this).css('display', 'none');
+            jQuery(this).attr('aria-hidden', 'true');
+        });
+    }
+    
+    // Also clean up when page becomes visible (in case modal was stuck)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            cleanupStuckModals();
+        }
+    });
+    
+    // Periodic cleanup check (every 2 seconds)
+    setInterval(function() {
+        // Only cleanup if no modal should be open
+        const openModals = document.querySelectorAll('.modal.show');
+        if (openModals.length === 0) {
+            cleanupStuckModals();
+        }
+    }, 2000);
 })();
 </script>
 

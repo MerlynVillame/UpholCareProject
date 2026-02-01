@@ -6,7 +6,7 @@
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Repair Items Management</h1>
     <div>
-        <a href="<?php echo BASE_URL; ?>admin/bookingNumbers" class="btn btn-sm btn-primary mr-2">
+        <a href="<?php echo BASE_URL; ?>admin/bookingNumbers" class="btn btn-sm btn-primary-admin mr-2">
             <i class="fas fa-ticket-alt mr-1"></i> Manage Booking Numbers
         </a>
         <a href="<?php echo BASE_URL; ?>admin/assignBookingNumber" class="btn btn-sm btn-success">
@@ -63,7 +63,7 @@
                                 <?php foreach ($repairItems as $item): ?>
                                     <tr>
                                         <td>
-                                            <span class="badge badge-info"><?php echo htmlspecialchars($item['booking_number']); ?></span>
+                                            <span class="text-primary-admin font-weight-bold"><?php echo htmlspecialchars($item['booking_number']); ?></span>
                                         </td>
                                         <td>
                                             <div>
@@ -82,7 +82,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge badge-secondary"><?php echo ucfirst($item['item_type']); ?></span>
+                                            <span class="text-secondary font-weight-bold"><?php echo ucfirst($item['item_type']); ?></span>
                                         </td>
                                         <td>
                                             <?php
@@ -95,22 +95,25 @@
                                                 default: $urgencyClass = 'badge-secondary';
                                             }
                                             ?>
-                                            <span class="badge <?php echo $urgencyClass; ?>"><?php echo ucfirst($item['urgency']); ?></span>
+                                            <span class="text-<?php echo str_replace('badge-', '', $urgencyClass); ?> font-weight-bold"><?php echo ucfirst($item['urgency']); ?></span>
                                         </td>
                                         <td>
                                             <?php
-                                            $statusClass = '';
-                                            switch($item['status']) {
-                                                case 'pending': $statusClass = 'badge-warning'; break;
-                                                case 'quoted': $statusClass = 'badge-info'; break;
-                                                case 'approved': $statusClass = 'badge-success'; break;
-                                                case 'in_progress': $statusClass = 'badge-primary'; break;
-                                                case 'completed': $statusClass = 'badge-success'; break;
-                                                case 'cancelled': $statusClass = 'badge-danger'; break;
-                                                default: $statusClass = 'badge-secondary';
-                                            }
+                                            $statusConfig = [
+                                                'pending' => ['color' => 'var(--uphol-orange)', 'text' => 'Pending'],
+                                                'quoted' => ['color' => 'var(--uphol-blue)', 'text' => 'Quoted'],
+                                                'approved' => ['color' => 'var(--uphol-green)', 'text' => 'Approved'],
+                                                'in_progress' => ['color' => 'var(--uphol-blue)', 'text' => 'In Progress'],
+                                                'completed' => ['color' => 'var(--uphol-green)', 'text' => 'Completed'],
+                                                'cancelled' => ['color' => '#6c757d', 'text' => 'Cancelled']
+                                            ];
+                                            $currStatus = strtolower($item['status']);
+                                            $config = $statusConfig[$currStatus] ?? ['color' => '#6c757d', 'text' => ucfirst($item['status'])];
                                             ?>
-                                            <span class="badge <?php echo $statusClass; ?>"><?php echo ucfirst($item['status']); ?></span>
+                                            <span style="color: <?php echo $config['color']; ?>; font-weight: bold;">
+                                                <i class="fas fa-circle mr-1" style="font-size: 0.6rem;"></i>
+                                                <?php echo $config['text']; ?>
+                                            </span>
                                         </td>
                                         <td>
                                             <small><?php echo date('M d, Y', strtotime($item['created_at'])); ?></small>
@@ -168,7 +171,7 @@
 <div class="modal fade" id="acceptRepairModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+            <div class="modal-header text-white" style="background-color: var(--uphol-green);">
                 <h5 class="modal-title">
                     <i class="fas fa-check-circle mr-2"></i>Accept Repair Request & Assign Booking Number
                 </h5>
@@ -486,7 +489,7 @@ function showAcceptConfirmationModal(message, bookingNumber) {
 <div class="modal fade" id="acceptConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="acceptConfirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1cc88a 0%, #17a673 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="acceptConfirmationModalLabel">
                     <i class="fas fa-check-circle mr-2"></i>Reservation Accepted Successfully!
                 </h5>

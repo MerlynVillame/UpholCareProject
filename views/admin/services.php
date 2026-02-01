@@ -1,3 +1,4 @@
+
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'header.php'; ?>
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'admin_sidebar.php'; ?>
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
@@ -5,40 +6,40 @@
 <style>
 /* Override Bootstrap primary colors with brown */
 .btn-primary {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: var(--uphol-blue);
+    border-color: var(--uphol-blue);
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: var(--uphol-navy);
+    border-color: var(--uphol-navy);
     color: white !important;
 }
 
 .btn-info {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: var(--uphol-blue);
+    border-color: var(--uphol-blue);
     color: white !important;
 }
 
 .btn-info:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: var(--uphol-navy);
+    border-color: var(--uphol-navy);
     color: white !important;
 }
 
 .text-primary {
-    color: #8B4513 !important;
+    color: #1F4E79 !important;
 }
 
 .card-header {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%);
     color: white;
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%);
     color: white;
 }
 
@@ -152,7 +153,7 @@ body.modal-open #logoutModal {
             </ol>
         </nav>
     </div>
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#serviceModal" onclick="openServiceModal()">
+    <button type="button" class="btn btn-primary-admin" data-toggle="modal" data-target="#serviceModal" onclick="openServiceModal()">
         <i class="fas fa-plus mr-2"></i>Add New Service
     </button>
 </div>
@@ -177,7 +178,7 @@ body.modal-open #logoutModal {
 
 <!-- Services Table -->
 <div class="card shadow mb-4">
-    <div class="card-header py-3" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+    <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold">All Services</h6>
     </div>
     <div class="card-body">
@@ -203,7 +204,7 @@ body.modal-open #logoutModal {
                             <td><strong><?php echo htmlspecialchars($service['service_name']); ?></strong></td>
                             <td>
                                 <?php if (!empty($service['category_name'])): ?>
-                                    <span class="badge badge-info"><?php echo htmlspecialchars($service['category_name']); ?></span>
+                                    <span class="text-info font-weight-bold"><?php echo htmlspecialchars($service['category_name']); ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">No Category</span>
                                 <?php endif; ?>
@@ -211,16 +212,17 @@ body.modal-open #logoutModal {
                             <td><?php echo htmlspecialchars($service['service_type'] ?? 'N/A'); ?></td>
                             <td>
                                 <?php if ($service['price']): ?>
-                                    <strong class="text-primary">₱<?php echo number_format($service['price'], 2); ?></strong>
+                                    <strong class="text-primary-admin">₱<?php echo number_format($service['price'], 2); ?></strong>
                                 <?php else: ?>
                                     <span class="text-muted">Not Set</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php
-                                $statusClass = $service['status'] === 'active' ? 'badge-success' : 'badge-secondary';
+                                $statusClass = $service['status'] === 'active' ? 'text-success' : 'text-secondary';
+                                $color = $service['status'] === 'active' ? 'var(--uphol-green)' : '#6c757d';
                                 ?>
-                                <span class="badge <?php echo $statusClass; ?>"><?php echo ucfirst($service['status']); ?></span>
+                                <span style="color: <?php echo $color; ?>; font-weight: bold;"><?php echo ucfirst($service['status']); ?></span>
                             </td>
                             <td><?php echo date('M d, Y', strtotime($service['created_at'])); ?></td>
                             <td>
@@ -253,7 +255,7 @@ body.modal-open #logoutModal {
 <div class="modal fade" id="serviceModal" tabindex="-1" role="dialog" aria-labelledby="serviceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+            <div class="modal-header">
                 <h5 class="modal-title" id="serviceModalLabel">
                     <i class="fas fa-tools mr-2"></i><span id="modalTitle">Add New Service</span>
                 </h5>
@@ -315,7 +317,7 @@ body.modal-open #logoutModal {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary-admin">
                         <i class="fas fa-save mr-1"></i><span id="submitBtnText">Create Service</span>
                     </button>
                 </div>

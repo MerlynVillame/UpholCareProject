@@ -1,14 +1,10 @@
 <!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important; background-color: #1a252f !important; opacity: 1 !important;">
+<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>customer/dashboard" style="height: 80px; background: #0d1117 !important; background-color: #0d1117 !important; opacity: 1 !important;">
-        <div class="sidebar-brand-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px; border-radius: 12px;">
-            <i class="fas fa-couch fa-lg" style="color: white;"></i>
-        </div>
-        <div class="sidebar-brand-text mx-2" style="font-weight: 700; font-size: 1.2rem; line-height: 1.3;">
-            <?php echo APP_NAME; ?><br>
-            <small style="font-size: 0.65rem; font-weight: 400; opacity: 1 !important; color: rgba(255, 255, 255, 0.9) !important;">Customer Portal</small>
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>customer/dashboard" style="height: 80px;">
+        <div class="sidebar-brand-icon" style="background: transparent; padding: 0; border-radius: 0;">
+            <img src="<?php echo BASE_URL; ?>assets/images/logo2.png" alt="UpholCare Logo" style="height: 50px; width: auto;">
         </div>
     </a>
 
@@ -105,7 +101,7 @@
 /* Sidebar border adjustments */
 .sidebar,
 #accordionSidebar {
-    border-right: 3px solid #4e73df;
+    border-right: 3px solid var(--uphol-orange);
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     position: fixed;
@@ -116,9 +112,6 @@
     overflow-x: hidden;
     z-index: 999;
     width: 14rem; /* Ensure sidebar has fixed width on desktop */
-    background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
-    opacity: 1 !important;
-    background-color: #1a252f !important;
 }
 
 /* Business mode - hide sidebar (only on profile page) */
@@ -193,8 +186,7 @@ body:not(.customer-profile) .sidebar {
 /* Override any transparent backgrounds - use solid colors */
 .sidebar,
 #accordionSidebar {
-    background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
-    background-color: #1a252f !important;
+    background-color: var(--uphol-navy) !important;
     opacity: 1 !important;
 }
 
@@ -731,7 +723,7 @@ body.sidebar-toggled .sticky-footer {
     }
     
     #sidebarToggleTop:hover {
-        color: #8B4513 !important;
+        color: #1F4E79 !important;
         background-color: rgba(139, 69, 19, 0.1) !important;
     }
     
@@ -741,7 +733,7 @@ body.sidebar-toggled .sticky-footer {
     }
     
     #sidebarToggleTop:focus {
-        outline: 2px solid #8B4513 !important;
+        outline: 2px solid #1F4E79 !important;
         outline-offset: 2px !important;
     }
     

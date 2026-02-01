@@ -19,9 +19,42 @@
 
     <style>
         .register-container {
-            background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+            background-image: url('<?php echo BASE_URL; ?>assets/images/1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #1F4E79;
             min-height: 100vh;
             padding: 2rem 0;
+            position: relative;
+        }
+
+        .register-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.5) 0%, rgba(22, 33, 62, 0.45) 50%, rgba(15, 52, 96, 0.5) 100%);
+            z-index: 0;
+        }
+
+        .register-container::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 0;
+        }
+
+        .register-container .container {
+            position: relative;
+            z-index: 1;
         }
         .card-register {
             border: none;
@@ -51,6 +84,12 @@
         }
         .password-toggle:focus {
             outline: none;
+        }
+
+        @media (max-width: 768px) {
+            .register-container {
+                background-attachment: scroll;
+            }
         }
     </style>
 </head>
@@ -96,8 +135,13 @@
                                         name="email" placeholder="Email Address *" required>
                                 </div>
                                 <div class="form-group">
-                                    <input type="text" class="form-control form-control-user" id="phone" 
-                                        name="phone" placeholder="Phone Number">
+                                    <input type="tel" class="form-control form-control-user" id="phone" 
+                                        name="phone" placeholder="Phone Number (11 digits)"
+                                        pattern="[0-9]{11}"
+                                        minlength="11"
+                                        maxlength="11"
+                                        title="Phone number must be exactly 11 digits">
+                                    <small class="form-text text-muted">Enter exactly 11 digits (e.g., 09123456789)</small>
                                 </div>
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
@@ -164,6 +208,42 @@
                 icon.classList.add('fa-eye');
             }
         }
+        
+        // Phone number validation
+        document.getElementById('phone').addEventListener('input', function(e) {
+            const phoneValue = e.target.value;
+            const phoneField = e.target;
+            
+            // Remove any non-digit characters
+            const cleanedValue = phoneValue.replace(/\D/g, '');
+            
+            // Update the field with cleaned value
+            if (cleanedValue !== phoneValue) {
+                phoneField.value = cleanedValue;
+            }
+            
+            // Check if it's exactly 11 digits
+            if (cleanedValue.length > 0 && cleanedValue.length !== 11) {
+                phoneField.setCustomValidity('Phone number must be exactly 11 digits');
+                phoneField.classList.add('is-invalid');
+            } else {
+                phoneField.setCustomValidity('');
+                phoneField.classList.remove('is-invalid');
+            }
+        });
+        
+        // Form submission validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const phoneField = document.getElementById('phone');
+            const phoneValue = phoneField.value.trim();
+            
+            if (phoneValue && phoneValue.length !== 11) {
+                e.preventDefault();
+                phoneField.setCustomValidity('Phone number must be exactly 11 digits');
+                phoneField.reportValidity();
+                return false;
+            }
+        });
     </script>
 
 </body>

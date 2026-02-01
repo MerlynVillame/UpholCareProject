@@ -38,8 +38,8 @@
         }
 
         .top-navbar {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             padding: 15px 30px;
             margin: 0;
             margin-bottom: 30px;
@@ -49,6 +49,7 @@
             z-index: 999;
             left: 0;
             right: 0;
+            color: white;
         }
 
         .top-navbar-content {
@@ -60,12 +61,12 @@
         .page-title {
             font-size: 24px;
             font-weight: 700;
-            color: #2c3e50;
+            color: white;
             margin: 0;
         }
 
         .page-subtitle {
-            color: #7f8c8d;
+            color: rgba(255, 255, 255, 0.8);
             font-size: 14px;
             margin: 5px 0 0 0;
         }
@@ -80,19 +81,20 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            color: #2c3e50;
+            color: white;
         }
 
         .user-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 18px;
+            border: 2px solid white;
         }
 
         .content-area {
@@ -124,7 +126,7 @@
         }
         
         .bg-primary-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%);
         }
         
         .bg-success-gradient {
@@ -302,7 +304,7 @@
                         </div>
                         <div>
                             <div style="font-weight: 600; font-size: 14px;"><?= htmlspecialchars($data['admin']['fullname'] ?? 'Admin') ?></div>
-                            <div style="font-size: 12px; color: #7f8c8d;">Super Admin</div>
+                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.8);">Super Admin</div>
                         </div>
                     </div>
                 </div>
@@ -526,7 +528,7 @@
                         <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
                     </div>
                     <div class="card-body">
-                        <a href="<?= BASE_URL ?>control-panel/adminRegistrations" class="btn btn-primary quick-action-btn">
+                        <a href="<?= BASE_URL ?>control-panel/adminRegistrations" class="btn btn-primary-admin quick-action-btn">
                             <i class="fas fa-user-check"></i> Manage Admin Registrations
                             <?php if (($data['stats']['pending_admin_registrations'] ?? 0) > 0): ?>
                                 <span class="badge bg-light text-dark"><?= $data['stats']['pending_admin_registrations'] ?></span>

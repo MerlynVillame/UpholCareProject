@@ -44,11 +44,24 @@ class Inventory extends Model {
                 $sql .= " AND store_location_id IS NULL";
             }
             
-            // Filter by fabric type if column exists
+            // Filter by fabric type or leather type if column exists
+            // Check for both fabric_type and leather_type columns
             $checkFabricTypeColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'fabric_type'");
-            if ($checkFabricTypeColumn->rowCount() > 0 && $fabricType) {
-                $sql .= " AND fabric_type = ?";
+            $checkLeatherTypeColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'leather_type'");
+            $hasFabricType = $checkFabricTypeColumn->rowCount() > 0;
+            $hasLeatherType = $checkLeatherTypeColumn->rowCount() > 0;
+            
+            if ($fabricType) {
+                // Normalize fabric type to lowercase for comparison
+                $fabricType = strtolower(trim($fabricType));
+                
+                if ($hasFabricType) {
+                    $sql .= " AND LOWER(fabric_type) = ?";
+                    $params[] = $fabricType;
+                } elseif ($hasLeatherType) {
+                    $sql .= " AND LOWER(leather_type) = ?";
                 $params[] = $fabricType;
+                }
             }
             
             $sql .= " ORDER BY color_name ASC";
@@ -141,6 +154,30 @@ class Inventory extends Model {
                 return [];
             }
             
+            // Check which price columns exist
+            $checkPricePerMeter = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'price_per_meter'");
+            $checkPricePerUnit = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'price_per_unit'");
+            $checkStandardPrice = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'standard_price'");
+            $hasPricePerMeter = $checkPricePerMeter->rowCount() > 0;
+            $hasPricePerUnit = $checkPricePerUnit->rowCount() > 0;
+            $hasStandardPrice = $checkStandardPrice->rowCount() > 0;
+            
+            // Build price selection based on available columns
+            $priceSelect = '';
+            if ($hasPricePerMeter && $hasPricePerUnit && $hasStandardPrice) {
+                $priceSelect = "COALESCE(NULLIF(i.price_per_meter, 0), NULLIF(i.price_per_unit, 0), NULLIF(i.standard_price, 0), 0) as display_price";
+            } elseif ($hasPricePerMeter && $hasPricePerUnit) {
+                $priceSelect = "COALESCE(NULLIF(i.price_per_meter, 0), NULLIF(i.price_per_unit, 0), 0) as display_price";
+            } elseif ($hasPricePerMeter) {
+                $priceSelect = "COALESCE(NULLIF(i.price_per_meter, 0), 0) as display_price";
+            } elseif ($hasPricePerUnit) {
+                $priceSelect = "COALESCE(NULLIF(i.price_per_unit, 0), 0) as display_price";
+            } elseif ($hasStandardPrice) {
+                $priceSelect = "COALESCE(NULLIF(i.standard_price, 0), 0) as display_price";
+            } else {
+                $priceSelect = "0 as display_price";
+            }
+            
             // Check if store_location_id column exists
             $checkColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'store_location_id'");
             $hasStoreLocationColumn = $checkColumn->rowCount() > 0;
@@ -151,12 +188,12 @@ class Inventory extends Model {
             
             // Build query based on what columns/tables exist
             if ($hasStoreLocationColumn && $hasStoreTable) {
-                $sql = "SELECT i.*, sl.store_name 
+                $sql = "SELECT i.*, {$priceSelect}, sl.store_name 
                         FROM {$this->table} i
                         LEFT JOIN store_locations sl ON i.store_location_id = sl.id";
             } else {
                 // If store_location_id column doesn't exist, just select from inventory
-                $sql = "SELECT i.*, NULL as store_name 
+                $sql = "SELECT i.*, {$priceSelect}, NULL as store_name 
                         FROM {$this->table} i";
             }
             

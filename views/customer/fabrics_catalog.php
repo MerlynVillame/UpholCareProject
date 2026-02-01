@@ -5,7 +5,7 @@
 <style>
 /* Enhanced Catalog Page Styles */
 .catalog-header {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     padding: 3rem 2rem;
     border-radius: 1rem;
     margin-bottom: 2rem;
@@ -62,7 +62,7 @@
 }
 
 .search-box input:focus {
-    border-color: #8B4513;
+    border-color: #1F4E79;
     outline: none;
     box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
 }
@@ -93,14 +93,14 @@
 }
 
 .filter-tag:hover {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     color: white;
-    border-color: #8B4513;
+    border-color: #1F4E79;
     transform: translateY(-2px);
 }
 
 .filter-tag.active {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     color: white;
     border-color: transparent;
     box-shadow: 0 4px 15px rgba(139, 69, 19, 0.4);
@@ -147,7 +147,7 @@
     left: 0;
     width: 100px;
     height: 3px;
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
 }
 
 .category-badge {
@@ -198,7 +198,7 @@
 .color-card:hover {
     box-shadow: 0 15px 40px rgba(139, 69, 19, 0.3);
     transform: translateY(-12px) scale(1.02);
-    border-color: #8B4513;
+    border-color: #1F4E79;
 }
 
 .color-card::before {
@@ -208,7 +208,7 @@
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     transform: scaleX(0);
     transition: transform 0.4s ease;
 }
@@ -253,7 +253,7 @@
 }
 
 .color-name i {
-    color: #8B4513;
+    color: #1F4E79;
     margin-right: 0.75rem;
     font-size: 1.25rem;
 }
@@ -292,7 +292,7 @@
 .price-amount {
     font-size: 2rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1.2;
@@ -317,7 +317,7 @@
 .stock-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #8B4513;
+    color: #1F4E79;
 }
 
 .fabric-badge {
@@ -429,18 +429,18 @@
 /* Override Bootstrap primary colors with brown */
 .btn-primary,
 .text-primary {
-    color: #8B4513 !important;
+    color: #1F4E79 !important;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    border-color: #1F4E79 !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
+    border-color: #4CAF50 !important;
     color: white !important;
 }
 </style>
@@ -494,9 +494,16 @@
         $currentFabricType = '';
         $fabricTypeCount = 0;
         
-        // Group colors by fabric type
-        $standardColors = array_filter($colors, function($c) { return ($c['fabric_type'] ?? 'standard') === 'standard'; });
-        $premiumColors = array_filter($colors, function($c) { return ($c['fabric_type'] ?? 'standard') === 'premium'; });
+        // Group colors by fabric type (check both fabric_type and leather_type columns)
+        // Also handle case-insensitivity (Premium vs premium)
+        $standardColors = array_filter($colors, function($c) { 
+            $type = strtolower($c['fabric_type'] ?? $c['leather_type'] ?? 'standard');
+            return $type === 'standard'; 
+        });
+        $premiumColors = array_filter($colors, function($c) { 
+            $type = strtolower($c['fabric_type'] ?? $c['leather_type'] ?? 'standard');
+            return $type === 'premium'; 
+        });
         
         // Display Standard Colors
         if (!empty($standardColors)): ?>
@@ -513,7 +520,8 @@
                 
                 <div class="row">
                     <?php foreach ($standardColors as $color): 
-                        $basePrice = floatval($color['price_per_unit'] ?? 0);
+                        // Get price from price_per_meter or price_per_unit (whichever exists)
+                        $basePrice = floatval($color['price_per_meter'] ?? $color['price_per_unit'] ?? $color['standard_price'] ?? 0);
                         $status = $color['status'] ?? 'in-stock';
                         $quantity = floatval($color['quantity'] ?? 0);
                         $storeName = $color['store_name'] ?? 'All Stores';
@@ -587,7 +595,8 @@
                 
                 <div class="row">
                     <?php foreach ($premiumColors as $color): 
-                        $basePrice = floatval($color['price_per_unit'] ?? 0);
+                        // Get price from display_price (calculated in model) or fallback to individual columns
+                        $basePrice = floatval($color['display_price'] ?? $color['price_per_meter'] ?? $color['price_per_unit'] ?? $color['standard_price'] ?? 0);
                         $premiumPrice = floatval($color['premium_price'] ?? 0);
                         $totalPrice = $basePrice + $premiumPrice;
                         $status = $color['status'] ?? 'in-stock';
@@ -771,6 +780,16 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>
+
+
+
+
+
+
+
+
+
+
 
 
 

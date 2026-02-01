@@ -1,12 +1,11 @@
 <!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%);">
+<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>admin/dashboard">
         <div class="sidebar-brand-icon">
-            <i class="fas fa-couch"></i>
+            <img src="<?php echo BASE_URL; ?>assets/images/logo2.png" alt="UpholCare Logo" style="height: 40px; width: auto;">
         </div>
-        <div class="sidebar-brand-text mx-3"><?php echo APP_NAME; ?></div>
     </a>
 
     <!-- Divider -->
@@ -34,6 +33,13 @@
             <span>All Bookings</span></a>
     </li>
 
+    <!-- Nav Item - Archived Bookings -->
+    <li class="nav-item">
+        <a class="nav-link" href="<?php echo BASE_URL; ?>admin/archivedBookings">
+            <i class="fas fa-fw fa-archive"></i>
+            <span>Archived Bookings</span></a>
+    </li>
+
     <!-- Nav Item - Inventory -->
     <li class="nav-item">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/inventory">
@@ -46,6 +52,13 @@
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/services">
             <i class="fas fa-fw fa-tools"></i>
             <span>Services</span></a>
+    </li>
+
+    <!-- Nav Item - Store Ratings -->
+    <li class="nav-item">
+        <a class="nav-link" href="<?php echo BASE_URL; ?>admin/storeRatings">
+            <i class="fas fa-fw fa-star"></i>
+            <span>Store Ratings</span></a>
     </li>
 
     <!-- Divider -->
@@ -84,7 +97,7 @@
     overflow-x: hidden;
     z-index: 999;
     width: 14rem; /* Standard SB Admin 2 sidebar width */
-    border-right: 3px solid #4e73df;
+    border-right: 3px solid var(--uphol-blue);
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     -webkit-overflow-scrolling: touch;

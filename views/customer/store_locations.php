@@ -235,7 +235,7 @@ let stores = []; // Global stores array
 
 // Helper function to get marker icon color based on rating
 function getMarkerIcon(rating) {
-    let color = '#8B4513'; // Default brown
+    let color = '#1F4E79'; // Default brown
     if (rating) {
         const ratingValue = parseFloat(rating);
         if (ratingValue >= 4.5) {
@@ -364,7 +364,7 @@ function getCurrentLocation(event) {
                         userMarker = L.marker([userLocation.lat, userLocation.lng], {
                             icon: L.divIcon({
                                 className: 'user-location-marker',
-                                html: '<div style="background-color: #8B4513; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                                html: '<div style="background-color: #1F4E79; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
                                 iconSize: [20, 20],
                                 iconAnchor: [10, 10]
                             })
@@ -1461,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     .store-card.border-info {
-        border-left-color: #8B4513;
+        border-left-color: #1F4E79;
     }
     
     /* Star rating styling */
@@ -1507,20 +1507,20 @@ document.addEventListener('DOMContentLoaded', function() {
     /* Override Bootstrap primary colors with brown */
     .btn-primary,
     .btn-info {
-        background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-        border-color: #8B4513 !important;
+        background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+        border-color: #1F4E79 !important;
         color: white !important;
     }
 
     .btn-primary:hover,
     .btn-info:hover {
-        background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-        border-color: #A0522D !important;
+        background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
+        border-color: #4CAF50 !important;
         color: white !important;
     }
 
     .text-primary {
-        color: #8B4513 !important;
+        color: #1F4E79 !important;
     }
 </style>
 

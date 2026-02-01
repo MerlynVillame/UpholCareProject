@@ -89,18 +89,46 @@
                 <li class="nav-item dropdown no-arrow">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="mr-2 d-none d-md-inline text-gray-600 small"><?php echo htmlspecialchars($user['name']); ?></span>
-                        <img class="img-profile rounded-circle"
-                            src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg">
+                        <span class="mr-2 d-none d-md-inline text-gray-600 small"><?php 
+                            // Get user from session first (most up-to-date), then fall back to $user from view
+                            $sessionUser = $_SESSION['user'] ?? null;
+                            $displayUser = $sessionUser ?: ($user ?? []);
+                            $displayName = $displayUser['fullname'] ?? $displayUser['name'] ?? 'User';
+                            echo htmlspecialchars($displayName); 
+                        ?></span>
+                        <img class="img-profile rounded-circle" id="topbarProfileImage"
+                            src="<?php 
+                                // Get user from session first (most up-to-date), then fall back to $user from view
+                                $sessionUser = $_SESSION['user'] ?? null;
+                                $displayUser = $sessionUser ?: ($user ?? []);
+                                
+                                // Get profile image from user data or use default
+                                $profileImage = $displayUser['profile_image'] ?? null;
+                                if ($profileImage && file_exists(ROOT . DS . $profileImage)) {
+                                    echo BASE_URL . $profileImage . '?t=' . time();
+                                } else {
+                                    echo BASE_URL . 'startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg';
+                                }
+                            ?>"
+                            alt="Profile"
+                            onerror="this.src='<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg'">
                     </a>
                     <!-- Dropdown - User Information -->
                     <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                         aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="<?php echo BASE_URL . ($user['role'] === 'admin' ? 'admin' : 'customer'); ?>/profile">
+                        <a class="dropdown-item" href="<?php 
+                            $sessionUser = $_SESSION['user'] ?? null;
+                            $displayUser = $sessionUser ?: ($user ?? []);
+                            $userRole = $displayUser['role'] ?? 'customer';
+                            echo BASE_URL . ($userRole === 'admin' ? 'admin' : 'customer'); ?>/profile">
                             <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                             Profile
                         </a>
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="<?php 
+                            $sessionUser = $_SESSION['user'] ?? null;
+                            $displayUser = $sessionUser ?: ($user ?? []);
+                            $userRole = $displayUser['role'] ?? 'customer';
+                            echo BASE_URL . ($userRole === 'admin' ? 'admin' : 'customer'); ?>/profile">
                             <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
                             Settings
                         </a>

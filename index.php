@@ -17,6 +17,7 @@ if (isset($_GET['ajax']) ||
 
 session_start();
 
+
 // Define constants
 define('ROOT', dirname(__FILE__));
 define('DS', DIRECTORY_SEPARATOR);
@@ -41,9 +42,17 @@ spl_autoload_register(function ($class) {
     }
 });
 
+
 // Include configuration
 require_once ROOT . DS . 'config' . DS . 'config.php';
 require_once ROOT . DS . 'config' . DS . 'database.php';
+
+// Preserve POST method through rewrite
+// When using mod_rewrite, POST data should be preserved, but ensure it's available
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty(file_get_contents('php://input'))) {
+    // This shouldn't happen, but log it if it does
+    error_log("WARNING: POST request detected but no POST data available. REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
+}
 
 // Get the URL
 $url = isset($_GET['url']) ? $_GET['url'] : '';
@@ -57,6 +66,7 @@ $controllerBase = !empty($url[0]) ? $url[0] : 'home';
 $controllerBase = str_replace('-', ' ', $controllerBase);
 $controllerBase = str_replace(' ', '', ucwords($controllerBase));
 $controllerName = $controllerBase . 'Controller';
+
 $method = isset($url[1]) && !empty($url[1]) ? $url[1] : 'index';
 $params = array_slice($url, 2);
 

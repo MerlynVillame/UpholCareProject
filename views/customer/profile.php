@@ -32,7 +32,15 @@ document.body.classList.add('customer-profile');
     <div class="card-body p-0">
         <!-- Cover Photo Section -->
         <div class="cover-photo-container" id="coverPhotoContainer">
-            <img src="<?php echo $coverImage; ?>" alt="Cover Photo" class="cover-photo" id="coverPhoto">
+            <img src="<?php 
+                // Get cover image from userDetails or user, with cache-busting (same as admin)
+                $coverPath = $userDetails['cover_image'] ?? $user['cover_image'] ?? null;
+                if ($coverPath && file_exists(ROOT . DS . $coverPath)) {
+                    echo BASE_URL . $coverPath . '?t=' . time();
+                } else {
+                    echo BASE_URL . 'assets/images/default-cover.svg';
+                }
+            ?>" alt="Cover Photo" class="cover-photo" id="coverPhoto">
             <div class="cover-photo-overlay">
                 <button type="button" class="btn btn-light btn-sm" id="changeCoverBtn">
                     <i class="fas fa-camera"></i> Change Cover Photo
@@ -49,7 +57,16 @@ document.body.classList.add('customer-profile');
             <div class="row">
                 <div class="col-md-3">
                     <div class="profile-image-container">
-                        <img src="<?php echo $profileImage; ?>" alt="Profile Image" class="profile-image" id="profileImage">
+                        <img src="<?php 
+                            // Get profile image from userDetails or user, with cache-busting (same as admin)
+                            $imgPath = $userDetails['profile_image'] ?? $user['profile_image'] ?? null;
+                            if ($imgPath && file_exists(ROOT . DS . $imgPath)) {
+                                echo BASE_URL . $imgPath . '?t=' . time();
+                            } else {
+                                echo BASE_URL . 'assets/images/default-avatar.svg';
+                            }
+                        ?>" alt="Profile Image" class="profile-image" id="profileImage" 
+                        onerror="this.onerror=null; this.src='<?php echo BASE_URL; ?>assets/images/default-avatar.svg'">
                         <button type="button" class="btn btn-primary btn-sm profile-image-btn" id="changeProfileBtn">
                             <i class="fas fa-camera"></i>
                         </button>
@@ -83,7 +100,7 @@ document.body.classList.add('customer-profile');
                 <h6 class="m-0 font-weight-bold text-primary">Profile Information</h6>
             </div>
             <div class="card-body">
-                <form method="POST" action="<?php echo BASE_URL; ?>customer/updateProfile">
+                <form method="POST" action="<?php echo BASE_URL; ?>customer/updateProfile" id="profileUpdateForm">
                     <div class="form-group">
                         <label for="fullname">Full Name</label>
                         <input type="text" class="form-control" id="fullname" name="fullname" value="<?php echo htmlspecialchars($userDetails['fullname'] ?? $user['fullname'] ?? $user['name'] ?? ''); ?>" required>
@@ -622,11 +639,24 @@ function uploadCoverPhoto(file) {
         if (data.success) {
             showAlert('success', 'Cover photo uploaded successfully!');
             // Update image src if server returned new path
-            if (data.files && data.files.cover_image) {
+                if (data.files && data.files.cover_image) {
                 const coverPhoto = document.getElementById('coverPhoto');
                 if (coverPhoto) {
-                    coverPhoto.src = '<?php echo BASE_URL; ?>' + data.files.cover_image + '?t=' + new Date().getTime();
+                    const newImageUrl = '<?php echo BASE_URL; ?>' + data.files.cover_image + '?t=' + new Date().getTime();
+                    coverPhoto.src = newImageUrl;
+                    coverPhoto.onerror = null; // Remove error handler to allow new image
+                    // Force reload after a short delay to ensure image is visible
+                    setTimeout(() => {
+                        coverPhoto.style.display = 'block';
+                        coverPhoto.style.visibility = 'visible';
+                        coverPhoto.style.opacity = '1';
+                    }, 100);
                 }
+            } else {
+                // Reload page to get updated image from server (same as admin)
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         } else {
             showAlert('danger', data.message || 'Failed to upload cover photo.');
@@ -689,8 +719,23 @@ function uploadProfilePhoto(file) {
             if (data.files && data.files.profile_image) {
                 const profileImage = document.getElementById('profileImage');
                 if (profileImage) {
-                    profileImage.src = '<?php echo BASE_URL; ?>' + data.files.profile_image + '?t=' + new Date().getTime();
+                    const newImageUrl = '<?php echo BASE_URL; ?>' + data.files.profile_image + '?t=' + new Date().getTime();
+                    profileImage.src = newImageUrl;
+                    profileImage.onerror = null; // Remove error handler to allow new image
+                    // Update topbar profile image
+                    updateTopbarProfileImage(newImageUrl);
+                    // Force reload after a short delay to ensure image is visible
+                    setTimeout(() => {
+                        profileImage.style.display = 'block';
+                        profileImage.style.visibility = 'visible';
+                        profileImage.style.opacity = '1';
+                    }, 100);
                 }
+            } else {
+                // Reload page to get updated image from server (same as admin)
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         } else {
             showAlert('danger', data.message || 'Failed to upload profile photo.');
@@ -724,6 +769,15 @@ function uploadProfilePhoto(file) {
     });
 }
 
+// Update topbar profile image (same as admin)
+function updateTopbarProfileImage(imageUrl) {
+    const topbarProfileImg = document.getElementById('topbarProfileImage');
+    if (topbarProfileImg) {
+        topbarProfileImg.src = imageUrl;
+        topbarProfileImg.onerror = null;
+    }
+}
+
 // Show Alert Function
 function showAlert(type, message) {
     // Remove existing alerts
@@ -750,6 +804,21 @@ function showAlert(type, message) {
         }
     }, 5000);
 }
+
+// Handle profile form submission - update display immediately
+document.addEventListener('DOMContentLoaded', function() {
+    const profileForm = document.getElementById('profileUpdateForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            // Form will submit normally and page will reload
+            // The session will be updated on the server side
+            // After reload, the topbar and profile page will show updated info
+        });
+    }
+    
+    // Update topbar profile image when profile image is uploaded
+    // This is already handled in uploadProfilePhoto function
+});
 
 </script>
 
@@ -862,12 +931,12 @@ function showAlert(type, message) {
 
 /* Default images fallback */
 #coverPhoto {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     min-height: 200px;
 }
 
 #profileImage {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     border: 4px solid #fff;
 }
 

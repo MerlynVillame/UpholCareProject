@@ -36,8 +36,18 @@ try {
     $testCustomer = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$testCustomer) {
+        // Check if column is 'name' or 'fullname'
+        $checkColumn = $db->query("SHOW COLUMNS FROM users LIKE 'fullname'");
+        $hasFullname = $checkColumn->rowCount() > 0;
+        
+        if ($hasFullname) {
+            $stmt = $db->prepare("INSERT INTO users (fullname, email, password, phone, role, created_at) 
+                                  VALUES (?, ?, ?, ?, 'customer', NOW())");
+        } else {
         $stmt = $db->prepare("INSERT INTO users (name, email, password, phone, role, created_at) 
                               VALUES (?, ?, ?, ?, 'customer', NOW())");
+        }
+        
         $stmt->execute([
             'Test Customer',
             $testCustomerEmail,

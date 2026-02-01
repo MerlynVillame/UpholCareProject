@@ -26,23 +26,23 @@
     color: white;
 }
 
-.category-vehicle { background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); }
+.category-vehicle { background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); }
 .category-bedding { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 .category-furniture { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 
 /* Override Bootstrap primary colors with brown */
 .btn-primary {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    border-color: #1F4E79 !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
+    border-color: #4CAF50 !important;
 }
 
 .text-primary {
-    color: #8B4513 !important;
+    color: #1F4E79 !important;
 }
 </style>
 

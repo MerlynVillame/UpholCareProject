@@ -404,10 +404,36 @@ class NotificationService {
                             " . ($pickupDate !== 'Not specified' ? "<p style='margin: 10px 0 0 0;'><strong>We will pick up your item on: {$pickupDate}</strong></p>" : "<p style='margin: 10px 0 0 0;'>We will contact you to schedule the pickup date.</p>") . "
                             <p style='margin: 10px 0 0 0;'>After we collect your item, we will perform a detailed inspection to determine the exact measurements, check for any damages, and identify the materials needed. Once the inspection is complete, we will send you a preview receipt with the total cost for your approval before we begin the repair work.</p>
                         </div>"
+                        : ($serviceOption === 'delivery'
+                            ? "<div class='ready-badge'>
+                                <p style='margin: 0;'><strong>🚚 Delivery Service Selected</strong></p>
+                                <p style='margin: 10px 0 0 0;'><strong>✅ Your reservation has been approved!</strong></p>
+                                <p style='margin: 10px 0 0 0;'><strong>📋 IMPORTANT: Please bring your item to the shop on your scheduled date for inspection.</strong></p>
+                                " . ($bookingDate !== 'Not specified' ? "<p style='margin: 10px 0 0 0;'><strong>📅 Scheduled Date to Bring Item: {$bookingDate}</strong></p>" : "<p style='margin: 10px 0 0 0;'><strong>📅 Please bring your item to the shop as soon as possible.</strong></p>") . "
+                                <p style='margin: 15px 0 0 0;'><strong>What happens when you bring your item:</strong></p>
+                                <ul style='margin: 10px 0; padding-left: 20px;'>
+                                    <li>Our team will inspect your item for damages</li>
+                                    <li>Take accurate measurements</li>
+                                    <li>Determine materials needed</li>
+                                    <li>Calculate labor cost and delivery fee</li>
+                                    <li>Provide estimated timeline for repair</li>
+                                </ul>
+                                <p style='margin: 15px 0 0 0;'><strong>After inspection:</strong></p>
+                                <ul style='margin: 10px 0; padding-left: 20px;'>
+                                    <li>You will receive a <strong>Preview Receipt</strong> (Inspection Result) with estimated cost</li>
+                                    <li>Review and approve the cost estimate</li>
+                                    <li>If approved, repair work will begin</li>
+                                    <li>If final cost changes after repair, you'll receive a <strong>Final Preview Receipt</strong></li>
+                                    <li>After repair completion, we will schedule delivery to your address</li>
+                                    <li>Payment can be made before or upon delivery</li>
+                                    <li>After payment, you'll receive the <strong>Official Receipt</strong></li>
+                                </ul>
+                                <p style='margin: 15px 0 0 0; color: #856404;'><strong>⚠️ Note: No pricing is available yet. Pricing will be determined after inspection when you bring your item to the shop.</strong></p>
+                            </div>"
                         : "<div class='ready-badge'>
                             <p style='margin: 0;'><strong>✅ Your reservation has been approved!</strong></p>
                             <p style='margin: 10px 0 0 0;'>Your booking status is now <strong>'Approved'</strong>. You can now track your repair progress.</p>
-                        </div>") . "
+                            </div>")) . "
                     
                     <div class='queue-number'>
                         Your Booking: {$bookingNumber}
@@ -441,7 +467,8 @@ class NotificationService {
                         </table>
                     </div>
                     
-                    <div class='pricing-details'>
+                    " . ($serviceOption !== 'delivery' 
+                        ? "<div class='pricing-details'>
                         <h3 style='margin-top: 0; color: #f39c12;'>💰 Pricing Breakdown (Receipt)</h3>
                         <div style='background: white; border: 2px solid #f39c12; border-radius: 8px; padding: 20px; margin: 15px 0;'>
                             <table class='table' style='margin: 0; background: white;'>
@@ -462,9 +489,36 @@ class NotificationService {
                                 </tfoot>
                             </table>
                         </div>
-                    </div>
+                        </div>"
+                        : "<div class='pricing-details' style='background: #fff3cd; border-left: 4px solid #f39c12; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                            <h3 style='margin-top: 0; color: #856404;'>💰 Pricing Information</h3>
+                            <p style='margin: 10px 0; color: #856404;'><strong>Pricing will be determined after you bring your item to the shop for inspection.</strong></p>
+                            <p style='margin: 10px 0; color: #856404;'>Once our team inspects your item, we will send you a <strong>Preview Receipt</strong> with the estimated cost breakdown including:</p>
+                            <ul style='margin: 10px 0; padding-left: 20px; color: #856404;'>
+                                <li>Labor fee</li>
+                                <li>Materials needed</li>
+                                <li>Delivery fee</li>
+                                <li>Any additional charges</li>
+                            </ul>
+                            <p style='margin: 10px 0; color: #856404;'><em>This is not a receipt yet. No payment is required at this time.</em></p>
+                        </div>") . "
                     
-                    <div style='background: #e7f3ff; border-left: 4px solid #007bff; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                    " . ($serviceOption === 'delivery'
+                        ? "<div style='background: #e7f3ff; border-left: 4px solid #007bff; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                            <p style='margin: 0; font-size: 1.1rem; color: #004085;'><strong>📞 What's Next?</strong></p>
+                            <ol style='margin: 10px 0 0 0; color: #004085; padding-left: 20px;'>
+                                <li><strong>Bring your item to the shop</strong> on your scheduled date ({$bookingDate})</li>
+                                <li>Our team will <strong>inspect your item</strong> and determine the repair requirements</li>
+                                <li>You will receive a <strong>Preview Receipt</strong> with estimated cost for approval</li>
+                                <li>After approval, repair work will begin</li>
+                                <li>We will schedule <strong>delivery</strong> to your address after repair completion</li>
+                                <li>Payment can be made <strong>before or upon delivery</strong></li>
+                                <li>After payment, you'll receive the <strong>Official Receipt</strong></li>
+                            </ol>
+                            <p style='margin: 15px 0 0 0; color: #004085;'><strong>📍 Shop Address:</strong> [Your Shop Address Here]</p>
+                            <p style='margin: 5px 0 0 0; color: #004085;'><strong>📞 Contact:</strong> [Your Contact Number]</p>
+                        </div>"
+                        : "<div style='background: #e7f3ff; border-left: 4px solid #007bff; padding: 20px; border-radius: 8px; margin: 20px 0;'>
                         <p style='margin: 0; font-size: 1.1rem; color: #004085;'><strong>📞 What's Next?</strong></p>
                         <ul style='margin: 10px 0 0 0; color: #004085;'>
                             <li>Your reservation is approved and ready for repair</li>
@@ -472,7 +526,7 @@ class NotificationService {
                             <li>We will notify you when your item is being processed</li>
                             <li>You will receive updates as your repair progresses</li>
                         </ul>
-                    </div>
+                        </div>") . "
                     
                     <div style='text-align: center; margin: 25px 0;'>
                         <a href='" . BASE_URL . "customer/bookings' class='btn'>View My Reservations</a>
@@ -863,8 +917,9 @@ class NotificationService {
     
     /**
      * Send email using PHPMailer (with fallback to mail() if PHPMailer not available)
+     * Public method to allow sending custom emails
      */
-    private function sendEmail($to, $subject, $message) {
+    public function sendEmail($to, $subject, $message) {
         // Check if email is disabled
         if (!EMAIL_ENABLED) {
             $this->logEmailAttempt($to, $subject, false, 'EMAIL_DISABLED');

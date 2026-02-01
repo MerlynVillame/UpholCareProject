@@ -12,7 +12,7 @@
     <div class="col-lg-8">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
+                <h6 class="m-0 font-weight-bold text-primary-admin">
                     <i class="fas fa-envelope mr-2"></i>Email Configuration
                 </h6>
             </div>
@@ -53,9 +53,9 @@
                             <label><strong>Email Status</strong></label>
                             <p>
                                 <?php if (EMAIL_ENABLED): ?>
-                                    <span class="badge badge-success">Enabled</span>
+                                    <span class="font-weight-bold" style="color: var(--uphol-green);">Enabled</span>
                                 <?php else: ?>
-                                    <span class="badge badge-danger">Disabled</span>
+                                    <span class="text-danger font-weight-bold">Disabled</span>
                                 <?php endif; ?>
                             </p>
                         </div>
@@ -65,9 +65,9 @@
                             <label><strong>Test Mode</strong></label>
                             <p>
                                 <?php if (EMAIL_TEST_MODE): ?>
-                                    <span class="badge badge-warning">Test Mode</span>
+                                    <span class="font-weight-bold" style="color: var(--uphol-orange);">Test Mode</span>
                                 <?php else: ?>
-                                    <span class="badge badge-info">Live Mode</span>
+                                    <span class="text-primary-admin font-weight-bold">Live Mode</span>
                                 <?php endif; ?>
                             </p>
                         </div>
@@ -86,7 +86,7 @@
                                 <label for="testEmail">Test Email Address</label>
                                 <input type="email" class="form-control" id="testEmail" placeholder="Enter email address to test" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary-admin">
                                 <i class="fas fa-paper-plane mr-1"></i> Send Test Email
                             </button>
                         </form>
@@ -99,7 +99,7 @@
     <div class="col-lg-4">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-info">
+                <h6 class="m-0 font-weight-bold text-primary-admin">
                     <i class="fas fa-info-circle mr-2"></i>Email Templates
                 </h6>
             </div>
@@ -110,7 +110,7 @@
                             <h6 class="mb-1">Reservation Approval</h6>
                             <small class="text-muted">Sent when admin accepts a reservation</small>
                         </div>
-                        <span class="badge badge-success badge-pill">Active</span>
+                        <span class="font-weight-bold" style="color: var(--uphol-green);">Active</span>
                     </div>
                     
                     <div class="list-group-item d-flex justify-content-between align-items-center">
@@ -118,7 +118,7 @@
                             <h6 class="mb-1">Reservation Rejection</h6>
                             <small class="text-muted">Sent when admin rejects a reservation</small>
                         </div>
-                        <span class="badge badge-success badge-pill">Active</span>
+                        <span class="font-weight-bold" style="color: var(--uphol-green);">Active</span>
                     </div>
                 </div>
                 
@@ -126,10 +126,10 @@
                 
                 <h6 class="font-weight-bold">Quick Actions</h6>
                 <div class="btn-group-vertical w-100" role="group">
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="viewEmailLogs()">
+                    <button type="button" class="btn btn-outline-primary-admin btn-sm" onclick="viewEmailLogs()">
                         <i class="fas fa-list mr-1"></i> View Email Logs
                     </button>
-                    <button type="button" class="btn btn-outline-info btn-sm" onclick="previewTemplates()">
+                    <button type="button" class="btn btn-outline-primary-admin btn-sm" onclick="previewTemplates()">
                         <i class="fas fa-eye mr-1"></i> Preview Templates
                     </button>
                 </div>
@@ -138,7 +138,7 @@
         
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-warning">
+                <h6 class="m-0 font-weight-bold text-primary-admin">
                     <i class="fas fa-exclamation-triangle mr-2"></i>Setup Instructions
                 </h6>
             </div>
@@ -158,7 +158,7 @@
                     <li>Test configuration</li>
                 </ol>
                 
-                <div class="alert alert-info small mt-3">
+                <div class="alert alert-info small mt-3" style="border-left: 5px solid var(--uphol-blue);">
                     <i class="fas fa-info-circle mr-1"></i>
                     <strong>Note:</strong> Email notifications are automatically sent when admins accept or reject reservations.
                 </div>
@@ -189,7 +189,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="refreshEmailLogs()">
+                <button type="button" class="btn btn-primary-admin" onclick="refreshEmailLogs()">
                     <i class="fas fa-sync mr-1"></i> Refresh
                 </button>
             </div>
@@ -255,15 +255,15 @@ function loadEmailLogs() {
             
             data.logs.forEach(log => {
                 const logData = JSON.parse(log);
-                const statusBadge = logData.success === 'YES' ? 
-                    '<span class="badge badge-success">Success</span>' : 
-                    '<span class="badge badge-danger">Failed</span>';
+                const statusText = logData.success === 'YES' ? 
+                    '<span class="text-success font-weight-bold">Success</span>' : 
+                    '<span class="text-danger font-weight-bold">Failed</span>';
                 
                 html += `<tr>
                     <td>${logData.timestamp}</td>
                     <td>${logData.to}</td>
                     <td>${logData.subject}</td>
-                    <td>${statusBadge}</td>
+                    <td>${statusText}</td>
                     <td><small>${logData.status || 'N/A'}</small></td>
                 </tr>`;
             });

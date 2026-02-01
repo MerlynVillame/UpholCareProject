@@ -83,7 +83,7 @@ foreach ($pendingApplicants as $applicant) {
         <h1 class="h3 mb-1 text-gray-800">Staff Applicants</h1>
         <p class="mb-0 text-muted"><?php echo date('F Y'); ?> - Applications Under Review</p>
     </div>
-    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#addApplicantModal">
+    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary-admin shadow-sm" data-toggle="modal" data-target="#addApplicantModal">
         <i class="fas fa-plus"></i> Add Staff
     </a>
 </div>
@@ -95,7 +95,7 @@ foreach ($pendingApplicants as $applicant) {
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Pending</div>
+                        <div class="text-xs font-weight-bold text-primary-admin text-uppercase mb-1">Total Pending</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $totalPending; ?></div>
                     </div>
                     <div class="col-auto">
@@ -185,7 +185,7 @@ foreach ($pendingApplicants as $applicant) {
 <!-- Applicants Table -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Applicants List</h6>
+        <h6 class="m-0 font-weight-bold text-primary-admin">Applicants List</h6>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -215,7 +215,7 @@ foreach ($pendingApplicants as $applicant) {
                             <td>#<?php echo $applicant['id']; ?></td>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #865f1c, #a67c30); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--uphol-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
                                         <?php echo strtoupper(substr($applicant['applicant_name'], 0, 1)); ?>
                                     </div>
                                     <strong><?php echo htmlspecialchars($applicant['applicant_name']); ?></strong>
@@ -240,7 +240,7 @@ foreach ($pendingApplicants as $applicant) {
                                 <?php 
                                 $badgeClass = ($applicant['documents_uploaded'] === $applicant['documents_total']) ? 'badge-success' : 'badge-warning';
                                 ?>
-                                <span class="badge <?php echo $badgeClass; ?>"><?php echo $applicant['status']; ?></span>
+                                <span class="font-weight-bold text-<?php echo str_replace('badge-', '', $badgeClass); ?>"><?php echo $applicant['status']; ?></span>
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-info" title="View" onclick="viewApplicant(<?php echo $applicant['id']; ?>)">
@@ -273,7 +273,7 @@ foreach ($pendingApplicants as $applicant) {
 <div class="modal fade" id="addApplicantModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: #865f1c; color: white; border: none;">
+            <div class="modal-header text-white" style="background: var(--uphol-navy); border: none;">
                 <h5 class="modal-title" style="color: white; font-weight: 600;">Add New Staff</h5>
                 <button type="button" class="close" style="color: white; opacity: 0.8;" data-dismiss="modal">
                     <span>&times;</span>
@@ -337,7 +337,7 @@ foreach ($pendingApplicants as $applicant) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" style="background-color: #865f1c; border-color: #865f1c;">Add Staff</button>
+                <button type="button" class="btn btn-primary-admin">Add Staff</button>
             </div>
         </div>
     </div>
@@ -442,7 +442,7 @@ function viewApplicant(id) {
     const modalBody = `
         <div class="row">
             <div class="col-md-3 text-center mb-3">
-                <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #865f1c, #a67c30); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 36px; margin: 0 auto;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--uphol-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 36px; margin: 0 auto;">
                     ${applicant.applicant_name.substring(0, 1).toUpperCase()}
                 </div>
                 <h5 class="mt-3 mb-0">${applicant.applicant_name}</h5>

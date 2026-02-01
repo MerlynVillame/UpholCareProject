@@ -5,6 +5,7 @@
 
 require_once ROOT . DS . 'core' . DS . 'Controller.php';
 require_once ROOT . DS . 'helpers' . DS . 'FeeCalculator.php';
+require_once ROOT . DS . 'core' . DS . 'AutoStatusUpdateService.php';
 
 class AdminController extends Controller {
     
@@ -21,6 +22,18 @@ class AdminController extends Controller {
      * Admin Dashboard
      */
     public function dashboard() {
+        // Run automatic status updates based on pickup_date
+        try {
+            $updateStats = AutoStatusUpdateService::run();
+            // Log update statistics for debugging
+            if ($updateStats['checked'] > 0 || $updateStats['updated'] > 0) {
+                error_log("AutoStatusUpdate in dashboard: Checked: {$updateStats['checked']}, Updated: {$updateStats['updated']}, Errors: {$updateStats['errors']}");
+            }
+        } catch (Exception $e) {
+            error_log("AutoStatusUpdate error in dashboard: " . $e->getMessage());
+            error_log("AutoStatusUpdate stack trace: " . $e->getTraceAsString());
+        }
+        
         // Get booking statistics
         $totalBookings = $this->bookingModel->getTotalBookings();
         $pendingBookings = $this->bookingModel->getBookingCountByStatus(null, 'pending');
@@ -54,6 +67,37 @@ class AdminController extends Controller {
         
         $this->view('admin/orders', $data);
     }
+
+
+
+    /**
+     * Archive Booking
+     */
+    public function archiveBooking($id) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($this->bookingModel->archive($id)) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to archive booking']);
+            }
+            exit;
+        }
+    }
+
+    /**
+     * Archived Bookings View
+     */
+    public function archivedBookings() {
+        $bookings = $this->bookingModel->getArchivedBookings();
+        
+        $data = [
+            'title' => 'Archived Bookings - ' . APP_NAME,
+            'user' => $this->currentUser(),
+            'bookings' => $bookings
+        ];
+        
+        $this->view('admin/archived_bookings', $data);
+    }
     
     /**
      * Reports
@@ -74,7 +118,8 @@ class AdminController extends Controller {
             $monthStart = sprintf('%04d-%02d-01', $selectedYear, $month);
             $monthEnd = sprintf('%04d-%02d-%d', $selectedYear, $month, date('t', strtotime($monthStart)));
             
-            // Get completed bookings for this month (status = completed AND payment_status = paid)
+            // Get completed/paid and delivered/paid bookings for this month
+            // Include both statuses: 'completed' (with paid status) and 'delivered_and_paid'
             // Use updated_at for completion date, fallback to created_at
             // Join with users and services tables to get customer name and service details
             $sql = "SELECT 
@@ -90,21 +135,25 @@ class AdminController extends Controller {
                                 '|Item:', COALESCE(b.item_description, 'N/A'),
                                 '|ItemType:', COALESCE(b.item_type, 'N/A'),
                                 '|ServiceType:', COALESCE(b.service_type, 'N/A'),
-                                '|Notes:', COALESCE(b.notes, 'N/A')
+                                '|Notes:', COALESCE(b.notes, 'N/A'),
+                                '|Status:', b.status
                             ) SEPARATOR ';;'
                         ) as booking_details
                     FROM bookings b
                     LEFT JOIN users u ON b.user_id = u.id
                     LEFT JOIN services s ON b.service_id = s.id
-                    WHERE b.status = 'completed' 
-                    AND b.payment_status IN ('paid', 'paid_full_cash', 'paid_on_delivery_cod')
+                    WHERE (
+                        (b.status = 'completed' AND b.payment_status IN ('paid', 'paid_full_cash', 'paid_on_delivery_cod'))
+                        OR b.status = 'delivered_and_paid'
+                    )
                     AND (
-                        (b.updated_at IS NOT NULL AND DATE(b.updated_at) BETWEEN ? AND ?)
-                        OR (b.updated_at IS NULL AND DATE(b.created_at) BETWEEN ? AND ?)
+                        (b.completion_date IS NOT NULL AND DATE(b.completion_date) BETWEEN ? AND ?)
+                        OR (b.completion_date IS NULL AND b.updated_at IS NOT NULL AND DATE(b.updated_at) BETWEEN ? AND ?)
+                        OR (b.completion_date IS NULL AND b.updated_at IS NULL AND DATE(b.created_at) BETWEEN ? AND ?)
                     )";
             
             $stmt = $db->prepare($sql);
-            $stmt->execute([$monthStart, $monthEnd, $monthStart, $monthEnd]);
+            $stmt->execute([$monthStart, $monthEnd, $monthStart, $monthEnd, $monthStart, $monthEnd]);
             $result = $stmt->fetch();
             
             $orders = (int)($result['orders'] ?? 0);
@@ -168,11 +217,13 @@ class AdminController extends Controller {
         $profits = array_map(function($d) { return $d['profit']; }, $monthlySalesData);
         $expenses = array_map(function($d) { return $d['expenses']; }, $monthlySalesData);
         
-        // Get available years from database (completed bookings only)
+        // Get available years from database (completed/paid and delivered/paid bookings only)
         $yearsSql = "SELECT DISTINCT YEAR(COALESCE(updated_at, created_at)) as year 
                      FROM bookings 
-                     WHERE status = 'completed' 
-                     AND payment_status IN ('paid', 'paid_full_cash', 'paid_on_delivery_cod')
+                     WHERE (
+                         (status = 'completed' AND payment_status IN ('paid', 'paid_full_cash', 'paid_on_delivery_cod'))
+                         OR status = 'delivered_and_paid'
+                     )
                      ORDER BY year DESC";
         $yearsStmt = $db->query($yearsSql);
         $availableYears = $yearsStmt->fetchAll(PDO::FETCH_COLUMN);
@@ -210,6 +261,195 @@ class AdminController extends Controller {
     }
     
     /**
+     * Store Ratings - View all customer ratings for admin's store only
+     */
+    public function storeRatings() {
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get admin's store location ID
+            $adminStoreLocationId = $this->getAdminStoreLocationId();
+            
+            // If no active store found, try to find any store (even if inactive) for debugging
+            if (!$adminStoreLocationId && isset($_SESSION['email'])) {
+                try {
+                    $db = Database::getInstance()->getConnection();
+                    $userEmail = $_SESSION['email'];
+                    
+                    // Try to find any store with this email (even if inactive)
+                    $debugStmt = $db->prepare("
+                        SELECT id, store_name, email, status 
+                        FROM store_locations 
+                        WHERE email = ? OR LOWER(email) = LOWER(?)
+                        LIMIT 1
+                    ");
+                    $debugStmt->execute([$userEmail, $userEmail]);
+                    $debugStore = $debugStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($debugStore) {
+                        error_log("Found store for admin but status is: " . $debugStore['status']);
+                        // If store exists but is inactive, we can still use it for ratings
+                        if ($debugStore['status'] !== 'active') {
+                            $adminStoreLocationId = intval($debugStore['id']);
+                            error_log("Using inactive store ID: " . $adminStoreLocationId);
+                        }
+                    }
+                } catch (Exception $e) {
+                    error_log("Error in debug store lookup: " . $e->getMessage());
+                }
+            }
+            
+            if (!$adminStoreLocationId) {
+                // If no store found, try to create one
+                $adminStoreLocationId = $this->createDefaultStoreLocationForAdmin();
+            }
+            
+            // Check if store_ratings table exists
+            $tableExists = false;
+            try {
+                $checkTableStmt = $db->query("
+                    SELECT COUNT(*) as table_exists 
+                    FROM information_schema.tables 
+                    WHERE table_schema = DATABASE() 
+                    AND table_name = 'store_ratings'
+                ");
+                $tableCheck = $checkTableStmt->fetch();
+                $tableExists = ($tableCheck && $tableCheck['table_exists'] > 0);
+            } catch (Exception $e) {
+                $tableExists = false;
+            }
+            
+            $ratings = [];
+            $adminStore = null;
+            
+            if ($tableExists && $adminStoreLocationId) {
+                // Get admin's store information
+                $storeStmt = $db->prepare("
+                    SELECT id, store_name, city, address, email 
+                    FROM store_locations 
+                    WHERE id = ? AND status = 'active'
+                    LIMIT 1
+                ");
+                $storeStmt->execute([$adminStoreLocationId]);
+                $adminStore = $storeStmt->fetch(PDO::FETCH_ASSOC);
+                
+                // If store found but query returned empty, try without status check
+                if (!$adminStore) {
+                    $storeStmt2 = $db->prepare("
+                        SELECT id, store_name, city, address, email 
+                        FROM store_locations 
+                        WHERE id = ?
+                        LIMIT 1
+                    ");
+                    $storeStmt2->execute([$adminStoreLocationId]);
+                    $adminStore = $storeStmt2->fetch(PDO::FETCH_ASSOC);
+                }
+                
+                // Get ratings for admin's store only
+                $stmt = $db->prepare("
+                    SELECT 
+                        sr.id,
+                        sr.store_id,
+                        sr.user_id,
+                        sr.rating,
+                        sr.review_text,
+                        sr.status,
+                        sr.created_at,
+                        sr.updated_at,
+                        u.fullname as customer_name,
+                        u.email as customer_email,
+                        u.phone as customer_phone,
+                        sl.store_name,
+                        sl.city,
+                        sl.address
+                    FROM store_ratings sr
+                    LEFT JOIN users u ON sr.user_id = u.id
+                    LEFT JOIN store_locations sl ON sr.store_id = sl.id
+                    WHERE sr.store_id = ?
+                    ORDER BY sr.created_at DESC
+                ");
+                $stmt->execute([$adminStoreLocationId]);
+                $ratings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Get ratings grouped by year for the chart (admin's store only)
+                $yearlyStmt = $db->prepare("
+                    SELECT 
+                        YEAR(sr.created_at) as year,
+                        COUNT(sr.id) as total_ratings,
+                        AVG(sr.rating) as average_rating,
+                        SUM(CASE WHEN sr.rating = 5 THEN 1 ELSE 0 END) as five_star,
+                        SUM(CASE WHEN sr.rating = 4 THEN 1 ELSE 0 END) as four_star,
+                        SUM(CASE WHEN sr.rating = 3 THEN 1 ELSE 0 END) as three_star,
+                        SUM(CASE WHEN sr.rating = 2 THEN 1 ELSE 0 END) as two_star,
+                        SUM(CASE WHEN sr.rating = 1 THEN 1 ELSE 0 END) as one_star
+                    FROM store_ratings sr
+                    WHERE sr.store_id = ? AND sr.status = 'active'
+                    GROUP BY YEAR(sr.created_at)
+                    ORDER BY year ASC
+                ");
+                $yearlyStmt->execute([$adminStoreLocationId]);
+                $yearlyData = $yearlyStmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                $yearlyData = [];
+            }
+            
+            // Calculate statistics
+            $totalRatings = count($ratings);
+            $averageRating = 0;
+            if ($totalRatings > 0) {
+                $sum = array_sum(array_column($ratings, 'rating'));
+                $averageRating = round($sum / $totalRatings, 1);
+            }
+            
+            // Count by rating value
+            $ratingCounts = [
+                5 => 0,
+                4 => 0,
+                3 => 0,
+                2 => 0,
+                1 => 0
+            ];
+            foreach ($ratings as $rating) {
+                $ratingValue = (int)$rating['rating'];
+                if (isset($ratingCounts[$ratingValue])) {
+                    $ratingCounts[$ratingValue]++;
+                }
+            }
+            
+            $data = [
+                'title' => 'Store Ratings - ' . APP_NAME,
+                'user' => $this->currentUser(),
+                'ratings' => $ratings,
+                'adminStore' => $adminStore,
+                'adminStoreLocationId' => $adminStoreLocationId,
+                'totalRatings' => $totalRatings,
+                'averageRating' => $averageRating,
+                'ratingCounts' => $ratingCounts,
+                'yearlyData' => $yearlyData ?? [],
+                'tableExists' => $tableExists
+            ];
+            
+            $this->view('admin/store_ratings', $data);
+        } catch (Exception $e) {
+            error_log("Error in storeRatings: " . $e->getMessage());
+            $data = [
+                'title' => 'Store Ratings - ' . APP_NAME,
+                'user' => $this->currentUser(),
+                'ratings' => [],
+                'adminStore' => null,
+                'adminStoreLocationId' => null,
+                'totalRatings' => 0,
+                'averageRating' => 0,
+                'ratingCounts' => [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0],
+                'yearlyData' => [],
+                'tableExists' => false,
+                'error' => $e->getMessage()
+            ];
+            $this->view('admin/store_ratings', $data);
+        }
+    }
+    
+    /**
      * Get admin's store location ID
      * Returns the store location ID associated with the current admin user
      */
@@ -223,8 +463,58 @@ class AdminController extends Controller {
         $userEmail = $_SESSION['email'];
         
         try {
-            // Method 1: Try linking via admin_registrations using user_id
-            $stmt = $db->prepare("
+            // Method 1: Check if store_locations has a user_id or admin_id column (direct relationship)
+            try {
+                $checkColumn = $db->query("SHOW COLUMNS FROM store_locations LIKE 'user_id'");
+                if ($checkColumn->rowCount() > 0) {
+                    $stmt = $db->prepare("
+                        SELECT id as store_location_id
+                        FROM store_locations
+                        WHERE user_id = ? AND status = 'active'
+                        LIMIT 1
+                    ");
+                    $stmt->execute([$userId]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($result && $result['store_location_id']) {
+                        return intval($result['store_location_id']);
+                    }
+                }
+                
+                $checkAdminColumn = $db->query("SHOW COLUMNS FROM store_locations LIKE 'admin_id'");
+                if ($checkAdminColumn->rowCount() > 0) {
+                    $stmt = $db->prepare("
+                        SELECT id as store_location_id
+                        FROM store_locations
+                        WHERE admin_id = ? AND status = 'active'
+                        LIMIT 1
+                    ");
+                    $stmt->execute([$userId]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($result && $result['store_location_id']) {
+                        return intval($result['store_location_id']);
+                    }
+                }
+            } catch (Exception $e) {
+                // Column doesn't exist, continue to other methods
+                error_log("Note: user_id/admin_id column not found in store_locations: " . $e->getMessage());
+            }
+            
+            // Method 2: Try direct email match in store_locations (most reliable)
+            $stmt2 = $db->prepare("
+                SELECT id as store_location_id
+                FROM store_locations
+                WHERE email = ? AND status = 'active'
+                LIMIT 1
+            ");
+            $stmt2->execute([$userEmail]);
+            $result2 = $stmt2->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result2 && $result2['store_location_id']) {
+                return intval($result2['store_location_id']);
+            }
+            
+            // Method 3: Try linking via admin_registrations using user_id
+            $stmt3 = $db->prepare("
                 SELECT sl.id as store_location_id
                 FROM store_locations sl
                 INNER JOIN admin_registrations ar ON (
@@ -238,15 +528,15 @@ class AdminController extends Controller {
                 WHERE u.id = ? AND u.email = ? AND sl.status = 'active'
                 LIMIT 1
             ");
-            $stmt->execute([$userId, $userEmail]);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt3->execute([$userId, $userEmail]);
+            $result3 = $stmt3->fetch(PDO::FETCH_ASSOC);
             
-            if ($result && $result['store_location_id']) {
-                return intval($result['store_location_id']);
+            if ($result3 && $result3['store_location_id']) {
+                return intval($result3['store_location_id']);
             }
             
-            // Method 2: Try linking via admin_registrations using email
-            $stmt2 = $db->prepare("
+            // Method 4: Try linking via admin_registrations using email
+            $stmt4 = $db->prepare("
                 SELECT sl.id as store_location_id
                 FROM store_locations sl
                 INNER JOIN admin_registrations ar ON (
@@ -260,29 +550,36 @@ class AdminController extends Controller {
                 WHERE u.id = ? AND u.email = ? AND sl.status = 'active'
                 LIMIT 1
             ");
-            $stmt2->execute([$userId, $userEmail]);
-            $result2 = $stmt2->fetch(PDO::FETCH_ASSOC);
+            $stmt4->execute([$userId, $userEmail]);
+            $result4 = $stmt4->fetch(PDO::FETCH_ASSOC);
             
-            if ($result2 && $result2['store_location_id']) {
-                return intval($result2['store_location_id']);
+            if ($result4 && $result4['store_location_id']) {
+                return intval($result4['store_location_id']);
             }
             
-            // Method 3: Try direct email match in store_locations
-            $stmt3 = $db->prepare("
+            // Method 5: Try to find any store where email matches (case-insensitive)
+            $stmt5 = $db->prepare("
                 SELECT id as store_location_id
                 FROM store_locations
-                WHERE email = ? AND status = 'active'
+                WHERE LOWER(email) = LOWER(?) AND status = 'active'
                 LIMIT 1
             ");
-            $stmt3->execute([$userEmail]);
-            $result3 = $stmt3->fetch(PDO::FETCH_ASSOC);
+            $stmt5->execute([$userEmail]);
+            $result5 = $stmt5->fetch(PDO::FETCH_ASSOC);
             
-            if ($result3 && $result3['store_location_id']) {
-                return intval($result3['store_location_id']);
+            if ($result5 && $result5['store_location_id']) {
+                return intval($result5['store_location_id']);
             }
             
-            // If no store found, log for debugging
+            // If no store found, log for debugging with more details
             error_log("WARNING: No store location found for admin user_id: $userId, email: $userEmail");
+            error_log("Attempted methods: direct user_id/admin_id, email match, admin_registrations via user_id, admin_registrations via email, case-insensitive email");
+            
+            // Debug: Check what stores exist
+            $debugStmt = $db->query("SELECT id, store_name, email, status FROM store_locations LIMIT 10");
+            $debugStores = $debugStmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Available stores (first 10): " . json_encode($debugStores));
+            
             return null;
         } catch (Exception $e) {
             error_log("Error getting admin store location: " . $e->getMessage());
@@ -946,22 +1243,49 @@ class AdminController extends Controller {
      * View All Bookings
      */
     public function allBookings() {
+        // Run automatic status updates based on pickup_date
+        // NOTE: This service will NOT touch bookings that are already in 'to_inspect' or beyond
+        try {
+            $updateStats = AutoStatusUpdateService::run();
+            // Log update statistics for debugging
+            if ($updateStats['checked'] > 0 || $updateStats['updated'] > 0) {
+                error_log("AutoStatusUpdate in allBookings: Checked: {$updateStats['checked']}, Updated: {$updateStats['updated']}, Errors: {$updateStats['errors']}");
+            }
+        } catch (Exception $e) {
+            error_log("AutoStatusUpdate error in allBookings: " . $e->getMessage());
+            error_log("AutoStatusUpdate stack trace: " . $e->getTraceAsString());
+        }
+        
+        // CRITICAL: After AutoStatusUpdate runs, verify that 'to_inspect' statuses are preserved
+        // This is a safety check to ensure no statuses were accidentally reverted
+        try {
+            $db = Database::getInstance()->getConnection();
+            $verifyStmt = $db->query("SELECT COUNT(*) as count FROM bookings WHERE status = 'to_inspect'");
+            $verifyResult = $verifyStmt->fetch();
+            if ($verifyResult && $verifyResult['count'] > 0) {
+                error_log("DEBUG allBookings: Found {$verifyResult['count']} bookings with 'to_inspect' status - these should be preserved");
+            }
+        } catch (Exception $e) {
+            error_log("Error verifying to_inspect statuses: " . $e->getMessage());
+        }
+        
         // Get database connection
         $db = Database::getInstance()->getConnection();
         
         // Get all bookings with customer and service details
-        // Use COALESCE to ensure status is never NULL
-        // Explicitly select payment_status to ensure it's included
-        // Filter out rejected bookings
+        // CRITICAL: Use b.status directly (not COALESCE) to preserve actual status values
+        // Only use COALESCE in WHERE clause for filtering, not in SELECT
+        // This ensures 'to_inspect', 'for_repair', etc. are preserved correctly
         $sql = "SELECT b.*, s.service_name, s.service_type, sc.category_name,
                 u.fullname as customer_name, u.email, u.phone,
-                COALESCE(b.status, 'pending') as status,
+                b.status,
                 COALESCE(b.payment_status, 'unpaid') as payment_status
                 FROM bookings b
                 LEFT JOIN services s ON b.service_id = s.id
                 LEFT JOIN service_categories sc ON s.category_id = sc.id
                 LEFT JOIN users u ON b.user_id = u.id
-                WHERE LOWER(COALESCE(b.status, 'pending')) NOT IN ('rejected', 'declined')
+                WHERE (b.status IS NULL OR LOWER(b.status) NOT IN ('rejected', 'declined'))
+                AND b.is_archived = 0
                 ORDER BY b.created_at DESC";
         
         $stmt = $db->prepare($sql);
@@ -969,17 +1293,22 @@ class AdminController extends Controller {
         $bookings = $stmt->fetchAll();
         
         // Preserve actual statuses and payment_status - only default if truly NULL or empty string
-        // Don't override valid statuses like 'approved', 'in_queue', etc.
+        // CRITICAL: Do NOT override valid statuses like 'to_inspect', 'for_repair', 'approved', etc.
         foreach ($bookings as &$booking) {
-            // Handle status
+            // Handle status - preserve actual value from database
             $status = trim($booking['status'] ?? '');
             // Only default to 'pending' if status is truly empty/null
-            // Preserve all valid statuses including 'approved', 'in_queue', etc.
+            // Preserve ALL valid statuses including 'to_inspect', 'for_repair', 'approved', 'in_queue', etc.
             if ($status === '' || $status === null || strtolower($status) === 'null') {
                 $booking['status'] = 'pending';
+                error_log("DEBUG allBookings: Booking #{$booking['id']} had NULL/empty status, defaulted to 'pending'");
             } else {
-                // Preserve the actual status from database
+                // Preserve the actual status from database - DO NOT CHANGE IT
                 $booking['status'] = $status;
+                // Debug log for to_inspect status
+                if (strtolower($status) === 'to_inspect') {
+                    error_log("DEBUG allBookings: Booking #{$booking['id']} has status 'to_inspect' - preserving it");
+                }
             }
             
             // Handle payment_status - preserve actual values from database
@@ -1007,16 +1336,23 @@ class AdminController extends Controller {
      * Update Booking Status
      */
     public function updateBookingStatus() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-                exit;
-            }
-            $this->redirect('admin/allBookings');
+        // Start output buffering and clear any existing output
+        ob_start();
+        ob_clean();
+        
+        // Set JSON headers immediately to prevent HTML output
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
         }
         
-        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            ob_end_flush();
+            exit;
+        }
         
         $bookingId = $_POST['booking_id'] ?? null;
         $newStatus = $_POST['status'] ?? null;
@@ -1028,37 +1364,46 @@ class AdminController extends Controller {
         $notifyCustomer = isset($_POST['notify_customer']) && $_POST['notify_customer'] == '1';
         $notifyCustomerProgress = isset($_POST['notify_customer_progress']) && $_POST['notify_customer_progress'] == '1';
         // Pickup/Delivery management removed - now handled by customer's service option selection
+        // Initialize variables that might be used later
+        $pickupDate = $_POST['pickup_date'] ?? null;
+        $deliveryDate = $_POST['delivery_date'] ?? null;
+        $deliveryAddress = $_POST['delivery_address'] ?? null;
+        $codPayment = $_POST['cod_payment'] ?? null;
+        $deliveryType = $_POST['delivery_type'] ?? null;
+        $notifyCustomerDelivery = isset($_POST['notify_customer_delivery']) && $_POST['notify_customer_delivery'] == '1';
         
         // Debug logging
         error_log("Update Booking Status - Booking ID: " . $bookingId . ", New Status: " . $newStatus);
         error_log("POST data: " . print_r($_POST, true));
         
         if (!$bookingId || !$newStatus) {
+            ob_clean();
             http_response_code(400);
             echo json_encode([
                 'success' => false, 
-                'message' => 'Booking ID and status are required',
-                'debug' => [
-                    'booking_id' => $bookingId,
-                    'status' => $newStatus,
-                    'post_data' => $_POST
-                ]
+                'message' => 'Booking ID and status are required'
             ]);
+            ob_end_flush();
             exit;
         }
         
         // Sanitize status value
         $newStatus = trim(strtolower($newStatus));
-            $allowedStatuses = [
-                'pending', 'for_pickup', 'picked_up', 'to_inspect', 'for_inspection', 
-                'for_repair', 'approved', 'in_queue', 'in_progress', 'under_repair', 'for_quality_check', 
-                'ready_for_pickup', 'out_for_delivery', 'completed', 'paid', 'closed', 
-                'delivered_and_paid', 'cancelled'
-            ];
+        
+        // Include new statuses
+        $allowedStatuses = [
+            'pending', 'accepted', 'for_pickup', 'picked_up', 'to_inspect', 'for_inspection', 
+            'inspect_completed', 'preview_receipt_sent',
+            'for_repair', 'under_repair', 'for_quality_check', 
+            'ready_for_pickup', 'out_for_delivery', 'completed', 'paid', 'closed', 
+            'delivered_and_paid', 'cancelled', 'repair_completed', 'repair_completed_ready_to_deliver'
+        ];
         
         if (!in_array($newStatus, $allowedStatuses)) {
+            ob_clean();
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Invalid status value: ' . $newStatus]);
+            ob_end_flush();
             exit;
         }
         
@@ -1069,27 +1414,67 @@ class AdminController extends Controller {
             // Start transaction to ensure atomic update
             $db->beginTransaction();
             
-            // Get current status for comparison
-            // Use id as primary key for db_upholcare database - use backticks for safety
+            // Get current status for comparison FIRST
             $currentStmt = $db->prepare("SELECT `status`, `payment_status` FROM `bookings` WHERE `id` = ?");
             $currentStmt->execute([$bookingId]);
             $currentBooking = $currentStmt->fetch();
             $currentStatus = $currentBooking['status'] ?? 'pending';
             $currentPaymentStatus = $currentBooking['payment_status'] ?? 'unpaid';
             
+            // STRICT STATUS FLOW: Use StatusTransitionGuard to prevent backward movement
+            // EXCEPTION: Admin can always reset to 'pending' status
+            require_once ROOT . DS . 'core' . DS . 'StatusTransitionGuard.php';
+            if ($newStatus !== 'pending') {
+                // Only validate transitions if not resetting to pending
+                try {
+                    StatusTransitionGuard::validateTransition($currentStatus, $newStatus);
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    ob_clean();
+                    http_response_code(400);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ]);
+                    ob_end_flush();
+                    exit;
+                }
+            } else {
+                // Admin is resetting to pending - log this action and reset payment status
+                error_log("Admin reset booking ID {$bookingId} from '{$currentStatus}' back to 'pending'");
+                // When resetting to pending, also reset payment status to unpaid
+                if ($paymentStatus === null) {
+                    $paymentStatus = 'unpaid';
+                }
+            }
+            
             error_log("Current status: " . $currentStatus . ", New status: " . $newStatus);
+            
+            // Status transition validation is now handled by StatusTransitionGuard above
+            // This ensures forward-only movement and prevents backward transitions
+            // Exception: Admin can always reset to 'pending'
             
             // Update booking status and payment
             $updateData = ['status' => $newStatus];
             
-            // Completion date tracking will be added after migration
-            // Uncomment after running: database/run_completion_date_migration.php
-            /*
-            if ($newStatus === 'completed' && $currentStatus !== 'completed') {
-                $updateData['completion_date'] = date('Y-m-d H:i:s');
-                error_log("Setting completion_date for booking ID " . $bookingId . " to " . $updateData['completion_date']);
+            // If resetting to pending, also reset payment status
+            if ($newStatus === 'pending' && $paymentStatus === null) {
+                $paymentStatus = 'unpaid';
             }
-            */
+            
+            // Set completion_date when booking is finalized (completed/paid or delivered/paid)
+            // Check if completion_date column exists
+            $checkCompletionDateColumn = $db->query("SHOW COLUMNS FROM bookings LIKE 'completion_date'");
+            $hasCompletionDateColumn = $checkCompletionDateColumn->rowCount() > 0;
+            
+            if ($hasCompletionDateColumn) {
+                // Set completion_date for both 'completed' (with paid) and 'delivered_and_paid' statuses
+                if (($newStatus === 'completed' && $currentStatus !== 'completed') ||
+                    ($newStatus === 'delivered_and_paid' && $currentStatus !== 'delivered_and_paid')) {
+                    $updateData['completion_date'] = date('Y-m-d H:i:s');
+                    error_log("Setting completion_date for booking ID " . $bookingId . " to " . $updateData['completion_date'] . " (status: " . $newStatus . ")");
+                }
+            }
             
             // Always update payment_status if provided in POST data (including 'unpaid')
             // Check both $paymentStatus variable and $_POST directly
@@ -1114,11 +1499,11 @@ class AdminController extends Controller {
                 // 3. Full Cash: status = "completed", payment_status = "paid_full_cash" (paid before repair)
                 
                 if (($finalPaymentStatus === 'paid' || $finalPaymentStatus === 'paid_on_delivery_cod') && 
-                    ($currentStatus === 'completed' || $newStatus === 'completed')) {
-                    // COD: If status is completed and payment is now paid, change to delivered_and_paid
+                    ($currentStatus === 'completed' || $newStatus === 'completed' || $currentStatus === 'out_for_delivery')) {
+                    // COD: If status is completed or out_for_delivery and payment is now paid, change to delivered_and_paid
                     $updateData['status'] = 'delivered_and_paid';
                     $newStatus = 'delivered_and_paid'; // Update the variable for consistency
-                    error_log("Auto-updating status to 'delivered_and_paid' because payment_status is now paid (COD) and status was completed");
+                    error_log("Auto-updating status to 'delivered_and_paid' because payment_status is now paid (COD) and status was {$currentStatus}");
                 } elseif ($finalPaymentStatus === 'paid_full_cash') {
                     // Full cash paid before repair - keep status as "completed" (already paid)
                     // Don't change to delivered_and_paid, just ensure it's completed
@@ -1388,6 +1773,40 @@ class AdminController extends Controller {
                     $this->sendReceiptNotification($bookingId);
                 }
                 
+                // Send notification when status changes to delivered_and_paid
+                if ($newStatus === 'delivered_and_paid' && $currentStatus !== 'delivered_and_paid') {
+                    try {
+                        require_once ROOT . DS . 'core' . DS . 'NotificationService.php';
+                        $notificationService = new NotificationService();
+                        
+                        // Get customer details
+                        $customerStmt = $db->prepare("
+                            SELECT u.email, u.fullname 
+                            FROM users u 
+                            INNER JOIN bookings b ON u.id = b.user_id 
+                            WHERE b.id = ?
+                        ");
+                        $customerStmt->execute([$bookingId]);
+                        $customer = $customerStmt->fetch(PDO::FETCH_ASSOC);
+                        
+                        if ($customer && $customer['email']) {
+                            $subject = "Delivery Completed - Thank You! - Booking #" . $bookingId;
+                            $message = "Dear {$customer['fullname']},\n\n";
+                            $message .= "🎉 Thank you for trusting UpholCare!\n\n";
+                            $message .= "Your item has been successfully delivered and payment has been received.\n\n";
+                            $message .= "We hope you are satisfied with our service. If you have any questions or concerns, please don't hesitate to contact us.\n\n";
+                            $message .= "Your official receipt will be issued shortly. You can view it in your account or it will be sent to your email.\n\n";
+                            $message .= "Thank you for choosing UpholCare!\n\n";
+                            $message .= "Best regards,\nUpholCare Team";
+                            
+                            $notificationService->sendEmail($customer['email'], $subject, $message);
+                        }
+                    } catch (Exception $e) {
+                        error_log("Error sending delivered_and_paid notification for booking ID {$bookingId}: " . $e->getMessage());
+                        // Don't fail the whole request if notification fails
+                    }
+                }
+                
                 // Commit the transaction to save all changes
                 $db->commit();
                 
@@ -1397,6 +1816,30 @@ class AdminController extends Controller {
                 $finalVerifyStmt->execute([$bookingId]);
                 $finalStatus = $finalVerifyStmt->fetch();
                 $actualStatus = $finalStatus['status'] ?? $newStatus;
+                
+                // CRITICAL: If we updated to inspection/repair statuses, ensure it stays that way
+                // Never allow reverting from advanced statuses back to basic statuses
+                $protectedStatuses = ['to_inspect', 'inspect_completed', 'preview_receipt_sent', 'under_repair', 'for_repair'];
+                if (in_array($newStatus, $protectedStatuses) && $actualStatus !== $newStatus) {
+                    error_log("CRITICAL: Status should be '{$newStatus}' but got '{$actualStatus}'. Forcing update to '{$newStatus}'...");
+                    $forceStmt = $db->prepare("UPDATE `bookings` SET `status` = ?, `updated_at` = NOW() WHERE `id` = ?");
+                    $forceStmt->execute([$newStatus, $bookingId]);
+                    $actualStatus = $newStatus;
+                    error_log("Forced status to '{$newStatus}' for booking #{$bookingId}");
+                }
+                
+                // Additional safeguard: If status is advanced, never allow it to be basic statuses
+                $advancedStatuses = ['to_inspect', 'inspect_completed', 'preview_receipt_sent', 'for_repair', 'under_repair', 'completed', 'paid', 'cancelled'];
+                if (in_array(strtolower($actualStatus), $advancedStatuses) && in_array($actualStatus, ['pending', 'approved'])) {
+                    error_log("CRITICAL: Status is advanced but showing as 'approved'. This should not happen!");
+                    // Force it back to the expected advanced status
+                    if ($newStatus !== 'approved' && in_array(strtolower($newStatus), $advancedStatuses)) {
+                        $forceCorrectStmt = $db->prepare("UPDATE `bookings` SET `status` = ?, `updated_at` = NOW() WHERE `id` = ?");
+                        $forceCorrectStmt->execute([$newStatus, $bookingId]);
+                        $actualStatus = $newStatus;
+                        error_log("Corrected status from 'approved' back to '{$newStatus}' for booking #{$bookingId}");
+                    }
+                }
                 
                 // Get payment_status - handle empty strings and null values
                 $dbPaymentStatus = $finalStatus['payment_status'] ?? null;
@@ -1422,6 +1865,26 @@ class AdminController extends Controller {
                 error_log("Final status returned to client: " . $actualStatus);
                 error_log("Final payment status returned to client: " . $actualPaymentStatus);
                 
+                // CRITICAL FINAL CHECK: If we tried to update to inspection/repair statuses, verify it's actually that status
+                $protectedStatuses = ['to_inspect', 'inspect_completed', 'preview_receipt_sent', 'under_repair'];
+                if (in_array($newStatus, $protectedStatuses)) {
+                    // Do one more verification query
+                    $finalCheckStmt = $db->prepare("SELECT `status` FROM `bookings` WHERE `id` = ?");
+                    $finalCheckStmt->execute([$bookingId]);
+                    $finalCheck = $finalCheckStmt->fetch();
+                    $finalStatusCheck = $finalCheck['status'] ?? null;
+                    
+                    if ($finalStatusCheck !== $newStatus) {
+                        error_log("CRITICAL FINAL CHECK: Status is '{$finalStatusCheck}' but should be '{$newStatus}'. Forcing one more time...");
+                        $finalForceStmt = $db->prepare("UPDATE `bookings` SET `status` = ?, `updated_at` = NOW() WHERE `id` = ?");
+                        $finalForceStmt->execute([$newStatus, $bookingId]);
+                        $actualStatus = $newStatus;
+                        error_log("Final force update completed. Status is now: {$newStatus}");
+                    } else {
+                        error_log("Final check passed: Status is correctly '{$newStatus}'");
+                    }
+                }
+                
                 echo json_encode([
                     'success' => true,
                     'message' => 'Booking updated successfully. All changes have been saved.',
@@ -1431,22 +1894,274 @@ class AdminController extends Controller {
                     'previous_status' => $currentStatus,
                     'new_status' => $actualStatus
                 ]);
+                ob_end_flush();
             } else {
                 if ($db->inTransaction()) {
                     $db->rollBack();
                 }
+                ob_clean();
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Failed to update booking status']);
+                ob_end_flush();
             }
         } catch (Exception $e) {
-            if ($db->inTransaction()) {
+            if (isset($db) && $db->inTransaction()) {
                 $db->rollBack();
             }
+            ob_clean();
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
             error_log("Error updating booking status: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'An error occurred while updating status. Please try again.']);
+            ob_end_flush();
+            exit;
         }
-        exit;
+    }
+    
+    /**
+     * Mark Item as Received (for_dropoff → for_inspect)
+     * For Delivery Service: Customer brought item to shop
+     */
+    public function markItemReceived() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+        
+        header('Content-Type: application/json');
+        
+        $bookingId = $_POST['booking_id'] ?? null;
+        
+        if (!$bookingId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Booking ID is required']);
+            return;
+        }
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get booking details
+            $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ?");
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch();
+            
+            if (!$booking) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Booking not found']);
+                return;
+            }
+            
+            // Only allow if status is 'for_dropoff'
+            if ($booking['status'] !== 'for_dropoff') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Item can only be marked as received when status is "For Drop-off"'
+                ]);
+                return;
+            }
+            
+            // Update status to 'for_inspect'
+            $updateStmt = $db->prepare("UPDATE bookings SET status = 'for_inspect', updated_at = NOW() WHERE id = ?");
+            $result = $updateStmt->execute([$bookingId]);
+            
+            if ($result) {
+                // Send notification to customer
+                try {
+                    require_once ROOT . DS . 'core' . DS . 'NotificationService.php';
+                    $notificationService = new NotificationService();
+                    
+                    // Get customer details
+                    $customerStmt = $db->prepare("SELECT u.email, u.fullname FROM users u INNER JOIN bookings b ON u.id = b.user_id WHERE b.id = ?");
+                    $customerStmt->execute([$bookingId]);
+                    $customer = $customerStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($customer && $customer['email']) {
+                        $subject = "Item Received - Ready for Inspection - Booking #" . $bookingId;
+                        $message = "Dear {$customer['fullname']},\n\n";
+                        $message .= "Your item has been received at our shop. Our team will now proceed with inspection.\n\n";
+                        $message .= "We will inspect your item for:\n";
+                        $message .= "• Damage assessment\n";
+                        $message .= "• Material requirements\n";
+                        $message .= "• Labor cost estimation\n";
+                        $message .= "• Repair timeline\n\n";
+                        $message .= "Once inspection is complete, you will receive a preview receipt with the estimated cost for your approval.\n\n";
+                        $message .= "Thank you for choosing UpholCare!\n\n";
+                        $message .= "Best regards,\nUpholCare Team";
+                        
+                        $notificationService->sendEmail($customer['email'], $subject, $message);
+                    }
+                } catch (Exception $e) {
+                    error_log("Error sending notification for booking ID {$bookingId}: " . $e->getMessage());
+                    // Don't fail the whole request if notification fails
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Item marked as received. Status changed to "For Inspect". Customer has been notified.',
+                    'new_status' => 'for_inspect'
+                ]);
+            } else {
+                throw new Exception('Database update failed');
+            }
+        } catch (Exception $e) {
+            error_log("Error marking item as received: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to mark item as received']);
+        }
+    }
+    
+    /**
+     * Mark as Out for Delivery (repair_completed_ready_to_deliver → out_for_delivery)
+     */
+    public function markOutForDelivery() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+        
+        header('Content-Type: application/json');
+        
+        $bookingId = $_POST['booking_id'] ?? null;
+        
+        if (!$bookingId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Booking ID is required']);
+            return;
+        }
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get booking details
+            $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ?");
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch();
+            
+            if (!$booking) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Booking not found']);
+                return;
+            }
+            
+            // Only allow if status is 'repair_completed_ready_to_deliver'
+            if ($booking['status'] !== 'repair_completed_ready_to_deliver') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Can only mark as out for delivery when status is "Repair Completed - Ready for Delivery"'
+                ]);
+                return;
+            }
+            
+            // Update status to 'out_for_delivery'
+            $updateStmt = $db->prepare("UPDATE bookings SET status = 'out_for_delivery', updated_at = NOW() WHERE id = ?");
+            $result = $updateStmt->execute([$bookingId]);
+            
+            if ($result) {
+                // Send notification to customer
+                try {
+                    require_once ROOT . DS . 'core' . DS . 'NotificationService.php';
+                    $notificationService = new NotificationService();
+                    
+                    // Get customer and booking details
+                    $customerStmt = $db->prepare("
+                        SELECT u.email, u.fullname, b.delivery_date, b.delivery_address 
+                        FROM users u 
+                        INNER JOIN bookings b ON u.id = b.user_id 
+                        WHERE b.id = ?
+                    ");
+                    $customerStmt->execute([$bookingId]);
+                    $data = $customerStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($data && $data['email']) {
+                        $deliveryDate = !empty($data['delivery_date']) ? date('F d, Y', strtotime($data['delivery_date'])) : 'your scheduled date';
+                        $deliveryAddress = !empty($data['delivery_address']) ? $data['delivery_address'] : 'your address';
+                        
+                        $subject = "Your Item is On Its Way - Booking #" . $bookingId;
+                        $message = "Dear {$data['fullname']},\n\n";
+                        $message .= "Great news! Your item repair is completed and your order is now out for delivery.\n\n";
+                        $message .= "📦 Delivery Details:\n";
+                        $message .= "• Scheduled Date: {$deliveryDate}\n";
+                        $message .= "• Delivery Address: {$deliveryAddress}\n\n";
+                        $message .= "Please prepare payment (COD) when the rider arrives.\n\n";
+                        $message .= "We'll notify you once your item has been delivered.\n\n";
+                        $message .= "Thank you for choosing UpholCare!\n\n";
+                        $message .= "Best regards,\nUpholCare Team";
+                        
+                        $notificationService->sendEmail($data['email'], $subject, $message);
+                    }
+                } catch (Exception $e) {
+                    error_log("Error sending notification for booking ID {$bookingId}: " . $e->getMessage());
+                    // Don't fail the whole request if notification fails
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Booking marked as out for delivery. Status changed to "On Delivery". Customer has been notified.',
+                    'new_status' => 'out_for_delivery'
+                ]);
+            } else {
+                throw new Exception('Database update failed');
+            }
+        } catch (Exception $e) {
+            error_log("Error marking as out for delivery: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to mark as out for delivery']);
+        }
+    }
+    
+    /**
+     * Auto-determine next status based on current status and service option
+     */
+    public function autoNextStatus($currentStatus, $serviceOption) {
+        // Delivery Flow: Customer brings item → Inspection → Repair → Delivery → Payment → Official Receipt
+        $deliveryFlow = [
+            "for_dropoff" => "for_inspect",           // Customer brought item to shop
+            "for_inspect" => "to_inspect",         // Ready for inspection
+            "to_inspect" => "inspection_completed_waiting_approval",   // Inspection done, waiting for customer approval
+            "inspection_completed_waiting_approval" => "under_repair",    // After customer approves preview receipt
+            "under_repair" => "repair_completed_ready_to_deliver",  // Repair finished, ready for delivery
+            "repair_completed_ready_to_deliver" => "out_for_delivery", // Delivery scheduled, out for delivery
+            "out_for_delivery" => "delivered_and_paid" // Delivered and payment received (COD)
+        ];
+        
+        // Pickup Flow: Admin picks up → Inspection → Repair → Customer picks up → Payment
+        $pickupFlow = [
+            "for_pickup" => "picked_up",           // Admin picked up item
+            "picked_up" => "to_inspect",           // Ready for inspection
+            "to_inspect" => "inspect_completed",   // Inspection done
+            "inspect_completed" => "for_repair",    // After customer approves preview receipt
+            "for_repair" => "under_repair",        // Repair started
+            "under_repair" => "repair_completed",  // Repair finished
+            "repair_completed" => "completed"      // Customer picks up (payment before or on pickup)
+        ];
+        
+        $serviceOption = strtolower(trim($serviceOption ?? ''));
+        
+        if ($serviceOption === "delivery") {
+            return $deliveryFlow[$currentStatus] ?? $currentStatus;
+        }
+        
+        if ($serviceOption === "pickup") {
+            return $pickupFlow[$currentStatus] ?? $currentStatus;
+        }
+        
+        // Both: Follows pickup flow until repair, then delivery flow
+        if ($serviceOption === "both") {
+            if (in_array($currentStatus, ['for_pickup', 'picked_up', 'to_inspect', 'inspect_completed', 'for_repair', 'under_repair'])) {
+                return $pickupFlow[$currentStatus] ?? $currentStatus;
+            } else {
+                // After repair, follow delivery flow
+                return $deliveryFlow[$currentStatus] ?? $currentStatus;
+            }
+        }
+        
+        return $currentStatus;
     }
     
     /**
@@ -1530,6 +2245,7 @@ class AdminController extends Controller {
                         i.color_name,
                         i.color_code,
                         i.color_hex,
+                        COALESCE(i.price_per_meter, 0) as inventory_price_per_meter,
                         COALESCE(b.status, 'pending') as status
                         FROM bookings b
                         LEFT JOIN services s ON b.service_id = s.id
@@ -1662,6 +2378,7 @@ class AdminController extends Controller {
                         i.color_name,
                         i.color_code,
                         i.color_hex,
+                        COALESCE(i.price_per_meter, 0) as inventory_price_per_meter,
                         COALESCE(b.status, 'pending') as status
                         FROM bookings b
                         LEFT JOIN services s ON b.service_id = s.id
@@ -1815,10 +2532,15 @@ class AdminController extends Controller {
                 WHERE b.id = ?
             ");
             $stmt->execute([$bookingId]);
-            $booking = $stmt->fetch();
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if (!$booking || !$booking['customer_id']) {
-                error_log("Cannot send receipt notification: Booking or customer not found for booking ID: " . $bookingId);
+            if (!$booking) {
+                error_log("Cannot send receipt notification: Booking not found for booking ID: " . $bookingId);
+                return false;
+            }
+            
+            if (empty($booking['customer_id']) || empty($booking['user_id'])) {
+                error_log("Cannot send receipt notification: Customer not found for booking ID: " . $bookingId . " (user_id: " . ($booking['user_id'] ?? 'null') . ")");
                 return false;
             }
             
@@ -1828,51 +2550,114 @@ class AdminController extends Controller {
             $grandTotal = floatval($booking['grand_total'] ?? $booking['total_amount'] ?? 0);
             
             // Check if receipt notification was already sent for this booking to avoid duplicates
-            $checkStmt = $db->prepare("
-                SELECT id FROM notifications 
-                WHERE user_id = ? 
-                AND related_id = ? 
-                AND related_type = 'booking' 
-                AND title = 'Payment Receipt Available'
-                LIMIT 1
-            ");
-            $checkStmt->execute([$customerId, $bookingId]);
+            // First check if related_id column exists
+            $checkColumns = $db->query("SHOW COLUMNS FROM notifications LIKE 'related_id'");
+            $hasRelatedId = $checkColumns->fetch();
+            
+            if ($hasRelatedId) {
+                $checkStmt = $db->prepare("
+                    SELECT id FROM notifications 
+                    WHERE user_id = ? 
+                    AND related_id = ? 
+                    AND related_type = 'booking' 
+                    AND title = 'Payment Receipt Available'
+                    LIMIT 1
+                ");
+                $checkStmt->execute([$customerId, $bookingId]);
+            } else {
+                // Fallback: check by title and message content
+                $checkStmt = $db->prepare("
+                    SELECT id FROM notifications 
+                    WHERE user_id = ? 
+                    AND title = 'Payment Receipt Available'
+                    AND message LIKE ?
+                    LIMIT 1
+                ");
+                $checkStmt->execute([$customerId, "%{$bookingNumber}%"]);
+            }
             $existingNotification = $checkStmt->fetch();
             
             // Only send notification and email if it hasn't been sent before
             if (!$existingNotification) {
                 // Create notification for customer
-                $stmt = $db->prepare("
-                    INSERT INTO notifications (user_id, type, title, message, related_id, related_type, created_at)
-                    VALUES (?, 'success', ?, ?, ?, 'booking', NOW())
-                ");
-                
-                $title = 'Payment Receipt Available';
-                $message = "Your payment receipt for booking {$bookingNumber} (Amount: ₱" . number_format($grandTotal, 2) . ") is now available. You can view it in your notifications.";
-                
-                $stmt->execute([
-                    $customerId,
-                    $title,
-                    $message,
-                    $bookingId
-                ]);
+                try {
+                    // Check if related_id and related_type columns exist
+                    $checkColumns = $db->query("SHOW COLUMNS FROM notifications LIKE 'related_id'");
+                    $hasRelatedId = $checkColumns->fetch();
+                    
+                    $title = 'Payment Receipt Available - Approval Required';
+                    $message = "Your payment receipt for booking {$bookingNumber} (Amount: ₱" . number_format($grandTotal, 2) . ") is now available. Please review and approve the receipt to proceed with the repair. Once approved, your item will be moved to 'Under Repair' status.";
+                    
+                    if ($hasRelatedId) {
+                        // Use extended notification structure with related_id and related_type
+                        $stmt = $db->prepare("
+                            INSERT INTO notifications (user_id, type, title, message, related_id, related_type, created_at)
+                            VALUES (?, 'success', ?, ?, ?, 'booking', NOW())
+                        ");
+                        $result = $stmt->execute([
+                            $customerId,
+                            $title,
+                            $message,
+                            $bookingId
+                        ]);
+                    } else {
+                        // Use basic notification structure without related_id and related_type
+                        $stmt = $db->prepare("
+                            INSERT INTO notifications (user_id, type, title, message, created_at)
+                            VALUES (?, 'success', ?, ?, NOW())
+                        ");
+                        $result = $stmt->execute([
+                            $customerId,
+                            $title,
+                            $message
+                        ]);
+                    }
+                    
+                    if (!$result) {
+                        $errorInfo = $stmt->errorInfo();
+                        error_log("Failed to insert notification for booking ID: " . $bookingId);
+                        error_log("PDO Error Info: " . print_r($errorInfo, true));
+                        throw new Exception("Failed to insert notification: " . ($errorInfo[2] ?? 'Unknown error'));
+                    }
+                } catch (PDOException $e) {
+                    error_log("PDO Exception inserting notification: " . $e->getMessage());
+                    error_log("SQL State: " . $e->getCode());
+                    // Check if it's a table doesn't exist error
+                    if ($e->getCode() == '42S02') {
+                        error_log("ERROR: notifications table does not exist. Please create it first.");
+                    } elseif (strpos($e->getMessage(), 'Unknown column') !== false) {
+                        error_log("ERROR: notifications table is missing required columns. Please update the table structure.");
+                    }
+                    throw $e; // Re-throw to be caught by outer catch
+                }
                 
                 // Also send email notification if email is configured
                 if (!empty($booking['customer_email'])) {
                     try {
-                        require_once ROOT . DS . 'core' . DS . 'NotificationService.php';
-                        $notificationService = new NotificationService();
-                        
-                        // Send receipt email using NotificationService
-                        $notificationService->sendPaymentReceipt(
-                            $booking['customer_email'],
-                            $customerName,
-                            $bookingNumber,
-                            $booking,
-                            $grandTotal
-                        );
+                        $notificationServicePath = ROOT . DS . 'core' . DS . 'NotificationService.php';
+                        if (file_exists($notificationServicePath)) {
+                            require_once $notificationServicePath;
+                            $notificationService = new NotificationService();
+                            
+                            // Send receipt email using NotificationService
+                            $notificationService->sendPaymentReceipt(
+                                $booking['customer_email'],
+                                $customerName,
+                                $bookingNumber,
+                                $booking,
+                                $grandTotal
+                            );
+                        } else {
+                            error_log("NotificationService.php not found at: " . $notificationServicePath);
+                            // Don't fail the whole process if NotificationService is missing
+                        }
                     } catch (Exception $e) {
                         error_log("Error sending receipt email: " . $e->getMessage());
+                        error_log("Stack trace: " . $e->getTraceAsString());
+                        // Don't fail the whole process if email fails
+                    } catch (Error $e) {
+                        error_log("Fatal error sending receipt email: " . $e->getMessage());
+                        error_log("Stack trace: " . $e->getTraceAsString());
                         // Don't fail the whole process if email fails
                     }
                 }
@@ -1884,8 +2669,18 @@ class AdminController extends Controller {
             
             return true;
             
+        } catch (PDOException $e) {
+            error_log("Database error sending receipt notification: " . $e->getMessage());
+            error_log("SQL Error Code: " . $e->getCode());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return false;
         } catch (Exception $e) {
             error_log("Error sending receipt notification: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return false;
+        } catch (Error $e) {
+            error_log("Fatal error sending receipt notification: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         }
     }
@@ -1952,14 +2747,14 @@ class AdminController extends Controller {
             
             // Check if booking can be deleted
             // Allow deletion if:
-            // 1. Status is pending, cancelled, rejected, declined, OR
+            // 1. Status is pending, cancelled, declined, OR
             // 2. Status is completed but payment is unpaid (unused completed bookings)
             // 3. Payment status is unpaid or cancelled
             $status = strtolower($booking['status'] ?? '');
             $paymentStatus = strtolower($booking['payment_status'] ?? 'unpaid');
             
-            $allowedStatuses = ['pending', 'cancelled', 'rejected', 'declined'];
-            $restrictedStatuses = ['delivered_and_paid', 'in_queue', 'under_repair'];
+            $allowedStatuses = ['pending', 'cancelled', 'declined'];
+            $restrictedStatuses = ['delivered_and_paid', 'under_repair'];
             
             // Allow deletion of completed bookings only if unpaid
             if ($status === 'completed' && !in_array($paymentStatus, ['unpaid', 'cancelled'])) {
@@ -2162,6 +2957,10 @@ class AdminController extends Controller {
             $checkLeatherType = $db->query("SHOW COLUMNS FROM inventory LIKE 'leather_type'");
             $hasLeatherType = $checkLeatherType->rowCount() > 0;
             
+            // Check if price_per_meter column exists
+            $checkPricePerMeter = $db->query("SHOW COLUMNS FROM inventory LIKE 'price_per_meter'");
+            $hasPricePerMeter = $checkPricePerMeter->rowCount() > 0;
+            
             // Build inventory type selection based on which column exists
             $inventoryTypeSelect = '';
             if ($hasFabricType && $hasLeatherType) {
@@ -2173,6 +2972,23 @@ class AdminController extends Controller {
                 $inventoryTypeSelect = "i.leather_type as inventory_type";
             } else {
                 $inventoryTypeSelect = "NULL as inventory_type";
+            }
+            
+            // Build price selection based on which column exists
+            // Try price_per_meter first, then fallback to price_per_unit
+            $checkPricePerUnit = $db->query("SHOW COLUMNS FROM inventory LIKE 'price_per_unit'");
+            $hasPricePerUnit = $checkPricePerUnit->rowCount() > 0;
+            
+            $inventoryPriceSelect = '';
+            if ($hasPricePerMeter && $hasPricePerUnit) {
+                // Both exist, prefer price_per_meter but fallback to price_per_unit if price_per_meter is 0
+                $inventoryPriceSelect = "COALESCE(NULLIF(i.price_per_meter, 0), i.price_per_unit, 0) as inventory_price_per_meter";
+            } elseif ($hasPricePerMeter) {
+                $inventoryPriceSelect = "COALESCE(i.price_per_meter, 0) as inventory_price_per_meter";
+            } elseif ($hasPricePerUnit) {
+                $inventoryPriceSelect = "COALESCE(i.price_per_unit, 0) as inventory_price_per_meter";
+            } else {
+                $inventoryPriceSelect = "0 as inventory_price_per_meter";
             }
             
             // Build SQL query based on whether selected_color_id column exists
@@ -2187,6 +3003,7 @@ class AdminController extends Controller {
                         i.color_name,
                         i.color_code,
                         i.color_hex,
+                        {$inventoryPriceSelect},
                         {$inventoryTypeSelect},
                         COALESCE(b.status, 'pending') as status
                         FROM bookings b
@@ -2285,7 +3102,273 @@ class AdminController extends Controller {
     }
     
     /**
-     * Accept Reservation (AJAX)
+     * Accept Booking (Simplified - JSON only)
+     */
+    public function acceptBooking() {
+        ob_start();
+        
+        // Set JSON header immediately
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            ob_clean();
+            http_response_code(405);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid request method. POST required.'
+            ]);
+            ob_end_flush();
+            exit;
+        }
+        
+        // Read JSON input
+        $json = file_get_contents("php://input");
+        $data = json_decode($json, true);
+        
+        if (!$data || !isset($data['booking_id'])) {
+            ob_clean();
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid data'
+            ]);
+            ob_end_flush();
+            exit;
+        }
+        
+        $bookingId = $data['booking_id'];
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get booking details
+            $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ?");
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch();
+            
+            if (!$booking) {
+                ob_clean();
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Booking not found'
+                ]);
+                ob_end_flush();
+                exit;
+            }
+            
+            // Check if booking is already accepted or in inspection
+            if (in_array($booking['status'], ['accepted', 'approved', 'for_pickup', 'for_dropoff', 'for_inspect', 'to_inspect', 'for_inspection', 'picked_up'])) {
+                ob_clean();
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Booking is already accepted or in progress'
+                ]);
+                ob_end_flush();
+                exit;
+            }
+            
+            // Determine correct status based on service option
+            $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
+            
+            // Log for debugging
+            error_log("acceptBooking: Booking ID {$bookingId}, Service Option: '{$serviceOption}', Current Status: '{$booking['status']}'");
+            
+            // NEW WORKFLOW: For Delivery service option
+            if ($serviceOption === 'delivery') {
+                // Delivery: Customer must bring item to shop → status 'for_dropoff'
+                $newStatus = 'for_dropoff';
+                $statusMessage = 'Booking accepted. Customer must bring item to shop. Status changed to "For Drop-off".';
+            } elseif ($serviceOption === 'pickup' || $serviceOption === 'both') {
+                // Pickup/Both: Admin picks up item → goes to 'for_pickup'
+                $newStatus = 'for_pickup';
+                $statusMessage = 'Booking accepted successfully. Status changed to "For Pick-Up".';
+            } else {
+                // Default to 'approved' for walk-in or other options
+                $newStatus = 'approved';
+                $statusMessage = 'Booking accepted successfully. Status changed to "Approved".';
+            }
+            
+            error_log("acceptBooking: Will update booking ID {$bookingId} to status '{$newStatus}'");
+            
+            // Update status - Use explicit transaction to ensure data consistency
+            // CRITICAL: Check if status value exists in ENUM before updating
+            try {
+                // First, verify the status value is valid by checking ENUM
+                $checkEnumStmt = $db->query("SHOW COLUMNS FROM bookings WHERE Field = 'status'");
+                $enumColumn = $checkEnumStmt->fetch(PDO::FETCH_ASSOC);
+                $enumType = $enumColumn['Type'] ?? '';
+                
+                // Check if the new status is in the ENUM
+                if (stripos($enumType, $newStatus) === false) {
+                    error_log("acceptBooking: ✗ CRITICAL ERROR - Status '{$newStatus}' is NOT in the database ENUM!");
+                    error_log("acceptBooking: Current ENUM values: {$enumType}");
+                    throw new Exception("Status '{$newStatus}' is not a valid status value. Please run the database migration to add this status to the ENUM.");
+                }
+                
+                // Start transaction to ensure atomic update
+                $db->beginTransaction();
+                
+                // Update status with explicit WHERE clause
+                $updateSql = "UPDATE bookings SET status = :status, updated_at = NOW() WHERE id = :booking_id";
+                $updateStmt = $db->prepare($updateSql);
+                
+                if (!$updateStmt) {
+                    $errorInfo = $db->errorInfo();
+                    $db->rollBack();
+                    throw new Exception('Failed to prepare UPDATE query: ' . ($errorInfo[2] ?? 'Unknown error'));
+                }
+                
+                $result = $updateStmt->execute([
+                    ':status' => $newStatus,
+                    ':booking_id' => $bookingId
+                ]);
+                
+                if (!$result) {
+                    $errorInfo = $updateStmt->errorInfo();
+                    $db->rollBack();
+                    error_log("acceptBooking: ✗ UPDATE query execution failed");
+                    error_log("acceptBooking: PDO Error Code: " . ($errorInfo[0] ?? 'N/A'));
+                    error_log("acceptBooking: PDO Error Message: " . ($errorInfo[2] ?? 'N/A'));
+                    throw new Exception('Failed to execute UPDATE query: ' . ($errorInfo[2] ?? 'Unknown error'));
+                }
+                
+                $rowsAffected = $updateStmt->rowCount();
+                error_log("acceptBooking: UPDATE query executed, rows affected: {$rowsAffected}");
+                
+                if ($rowsAffected === 0) {
+                    $db->rollBack();
+                    throw new Exception("No rows were updated. Booking ID {$bookingId} may not exist or status is already '{$newStatus}'. Please check the booking ID and current status.");
+                }
+                
+                // CRITICAL: Verify the update BEFORE committing
+                $verifyStmt = $db->prepare("SELECT status FROM bookings WHERE id = :booking_id");
+                $verifyStmt->execute([':booking_id' => $bookingId]);
+                $verifyData = $verifyStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$verifyData) {
+                    $db->rollBack();
+                    throw new Exception("Booking ID {$bookingId} not found after update attempt.");
+                }
+                
+                $actualStatus = $verifyData['status'] ?? null;
+                
+                if ($actualStatus !== $newStatus) {
+                    $db->rollBack();
+                    error_log("acceptBooking: ✗ CRITICAL - Status verification failed!");
+                    error_log("acceptBooking: Expected status: '{$newStatus}'");
+                    error_log("acceptBooking: Actual status: '{$actualStatus}'");
+                    error_log("acceptBooking: This usually means the status value is not in the database ENUM or there was a constraint violation.");
+                    throw new Exception("Status update verification failed. Expected '{$newStatus}' but got '{$actualStatus}'. The status may not be in the database ENUM. Please run the database migration.");
+                }
+                
+                // Commit the transaction only if verification passed
+                $db->commit();
+                error_log("acceptBooking: ✓ Successfully updated booking ID {$bookingId} to status '{$newStatus}' and verified in database");
+                
+            } catch (PDOException $e) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+                error_log("acceptBooking: ✗ PDOException: " . $e->getMessage());
+                error_log("acceptBooking: PDO Error Info: " . print_r($e->errorInfo ?? [], true));
+                error_log("acceptBooking: SQL State: " . ($e->errorInfo[0] ?? 'N/A'));
+                
+                // Check if it's an ENUM constraint violation
+                if (isset($e->errorInfo[0]) && $e->errorInfo[0] === '22007' || 
+                    (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1265)) {
+                    throw new Exception("Invalid status value '{$newStatus}'. This status is not in the database ENUM. Please run the database migration: database/add_delivery_workflow_statuses.sql");
+                }
+                
+                throw $e;
+            } catch (Exception $e) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+                error_log("acceptBooking: ✗ Error: " . $e->getMessage());
+                throw $e;
+            }
+            
+            // Send notification to customer if delivery service
+            if ($serviceOption === 'delivery') {
+                try {
+                    $customerStmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+                    $customerStmt->execute([$booking['user_id']]);
+                    $customer = $customerStmt->fetch();
+                    
+                    if ($customer) {
+                        require_once ROOT . DS . 'core' . DS . 'NotificationService.php';
+                        $notificationService = new NotificationService();
+                        
+                        // Send email notification
+                        $bookingDate = !empty($booking['booking_date']) ? date('F d, Y', strtotime($booking['booking_date'])) : 'your scheduled date';
+                        $subject = "Booking Accepted - Bring Item to Shop - Booking #" . $bookingId;
+                        $message = "Dear {$customer['fullname']},\n\n";
+                        $message .= "Your booking has been accepted. Please bring your item to the shop on {$bookingDate}.\n\n";
+                        $message .= "After you bring the item, our team will inspect it and send you a preview receipt with the estimated cost.\n\n";
+                        $message .= "Thank you for choosing UpholCare!";
+                        
+                        $notificationService->sendEmail($customer['email'], $subject, $message);
+                    }
+                } catch (Exception $e) {
+                    error_log("Error sending notification: " . $e->getMessage());
+                    // Don't fail the whole request if notification fails
+                }
+            }
+            
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'message' => $statusMessage,
+                'new_status' => $newStatus
+            ], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        } catch (PDOException $e) {
+            ob_clean();
+            $errorMessage = $e->getMessage();
+            $errorInfo = $e->errorInfo ?? [];
+            error_log("Error accepting booking (PDOException): " . $errorMessage);
+            error_log("PDO Error Info: " . print_r($errorInfo, true));
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Database error occurred: ' . (defined('APP_DEBUG') && APP_DEBUG ? $errorMessage : 'Please try again later'),
+                'error' => (defined('APP_DEBUG') && APP_DEBUG) ? [
+                    'message' => $errorMessage,
+                    'code' => $e->getCode(),
+                    'errorInfo' => $errorInfo
+                ] : null
+            ], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        } catch (Exception $e) {
+            ob_clean();
+            $errorMessage = $e->getMessage();
+            error_log("Error accepting booking (Exception): " . $errorMessage);
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error occurred: ' . (defined('APP_DEBUG') && APP_DEBUG ? $errorMessage : 'Please try again later'),
+                'error' => (defined('APP_DEBUG') && APP_DEBUG) ? [
+                    'message' => $errorMessage,
+                    'code' => $e->getCode()
+                ] : null
+            ], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+    }
+    
+    /**
+     * Accept Reservation (AJAX) - Legacy method
      */
     /**
      * Accept Reservation and Assign Booking Number
@@ -2410,8 +3493,9 @@ class AdminController extends Controller {
                 exit;
             }
             
-            // After setting to "approved", check if service option is Pick Up
-            // If so, automatically update to "for_pickup" and send email
+            // After setting to "approved", check service option
+            // For Pickup/Both: Auto-update to "for_pickup" (admin will pick up)
+            // For Delivery: Update to "for_dropoff" (customer brings item to shop)
             if ($updateResult && $newStatus === 'approved') {
                 $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
                 
@@ -2423,6 +3507,15 @@ class AdminController extends Controller {
                     if ($pickupUpdateResult) {
                         $newStatus = 'for_pickup'; // Update for response
                         error_log("Auto-updated booking ID " . $bookingId . " from 'approved' to 'for_pickup' (Pick Up service)");
+                    }
+                } elseif ($serviceOption === 'delivery') {
+                    // For Delivery: Update to 'for_dropoff' - customer must bring item to shop
+                    $dropoffUpdateStmt = $db->prepare("UPDATE bookings SET status = 'for_dropoff', updated_at = NOW() WHERE id = ?");
+                    $dropoffUpdateResult = $dropoffUpdateStmt->execute([$bookingId]);
+                    
+                    if ($dropoffUpdateResult) {
+                        $newStatus = 'for_dropoff'; // Update for response
+                        error_log("Auto-updated booking ID " . $bookingId . " from 'approved' to 'for_dropoff' (Delivery service)");
                     }
                 }
             }
@@ -2484,6 +3577,9 @@ class AdminController extends Controller {
                     
                     if ($serviceOption === 'pickup' || $serviceOption === 'both') {
                         $notificationMessage .= " Your booking status is now 'For Pick Up'. We will pick up your item on the scheduled date. You will receive an email confirmation shortly.";
+                    } elseif ($serviceOption === 'delivery') {
+                        $bookingDate = !empty($booking['booking_date']) ? date('F d, Y', strtotime($booking['booking_date'])) : 'your scheduled date';
+                        $notificationMessage .= " Your booking status is now 'Approved'. Please bring your item to the shop on {$bookingDate} for inspection. After inspection, you will receive a Preview Receipt with the estimated cost.";
                     } else {
                         $notificationMessage .= " Your booking status is now 'Approved'. You can now track your repair progress.";
                     }
@@ -3154,66 +4250,210 @@ class AdminController extends Controller {
      * Called when admin views/generates a receipt - automatically sends it to customer
      */
     public function sendReceiptToCustomer() {
-        header('Content-Type: application/json');
-        header('Cache-Control: no-cache, no-store, must-revalidate');
-        header('Pragma: no-cache');
-        header('Expires: 0');
+        // Start output buffering to prevent any unwanted output
+        ob_start();
         
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Set headers first - MUST be before any output
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+        }
+        
+        // Check request method - also check for X-HTTP-Method-Override header (for compatibility)
+        $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $overrideMethod = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? null;
+        $xRequestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? 'not set';
+        
+        // Log request details for debugging
+        error_log("sendReceiptToCustomer called - Method: " . $requestMethod . ", URI: " . ($_SERVER['REQUEST_URI'] ?? 'unknown') . ", X-Requested-With: " . $xRequestedWith);
+        error_log("POST data: " . print_r($_POST, true));
+        error_log("php://input: " . file_get_contents('php://input'));
+        
+        // Allow POST or method override
+        if ($requestMethod !== 'POST' && $overrideMethod !== 'POST') {
+            error_log("sendReceiptToCustomer: Method not allowed - Expected POST, got " . $requestMethod);
+            ob_clean();
             http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Method not allowed. Expected POST, got ' . $requestMethod,
+                'debug' => [
+                    'request_method' => $requestMethod,
+                    'http_method_override' => $overrideMethod,
+                    'x_requested_with' => $xRequestedWith,
+                    'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+                    'script_name' => $_SERVER['SCRIPT_NAME'] ?? 'unknown',
+                    'has_post_data' => !empty($_POST),
+                    'has_input_data' => !empty(file_get_contents('php://input'))
+                ]
+            ]);
+            ob_end_flush();
             exit;
         }
         
         try {
-            // Get JSON input
-            $input = json_decode(file_get_contents('php://input'), true);
-            $bookingId = $input['booking_id'] ?? $_POST['booking_id'] ?? null;
+            // Handle both JSON and FormData
+            $bookingId = null;
+            
+            // First check $_POST (for FormData)
+            if (!empty($_POST['booking_id'])) {
+                $bookingId = $_POST['booking_id'];
+            } else {
+                // Try JSON input
+                $rawInput = file_get_contents('php://input');
+                if (!empty($rawInput)) {
+                    $input = json_decode($rawInput, true);
+                    if (!empty($input) && isset($input['booking_id'])) {
+                        $bookingId = $input['booking_id'];
+                    }
+                }
+            }
+            
+            // Final fallback to GET (shouldn't happen for POST requests)
+            if (empty($bookingId)) {
+                $bookingId = $_GET['booking_id'] ?? null;
+            }
             
             if (empty($bookingId) || !is_numeric($bookingId)) {
+                ob_clean();
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid booking ID']);
+                ob_end_flush();
                 exit;
             }
             
             $db = Database::getInstance()->getConnection();
             
-            // Update status to for_repair (ready for repair after sending receipt) if currently in inspection stage
+            // Check current status - DO NOT change status yet, wait for customer approval
             $checkStmt = $db->prepare("SELECT status FROM bookings WHERE id = ?");
             $checkStmt->execute([$bookingId]);
             $currentBooking = $checkStmt->fetch(PDO::FETCH_ASSOC);
             $currentStatus = $currentBooking['status'] ?? '';
             
-            // Update status to for_repair if in inspection-related status (receipt sent, ready for repair)
-            if (in_array($currentStatus, ['to_inspect', 'for_inspection', 'picked_up'])) {
-                $updateStmt = $db->prepare("UPDATE bookings SET status = 'for_repair', quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+            // Get booking details to check service option
+            $bookingStmt = $db->prepare("SELECT service_option FROM bookings WHERE id = ?");
+            $bookingStmt->execute([$bookingId]);
+            $bookingData = $bookingStmt->fetch(PDO::FETCH_ASSOC);
+            $serviceOption = strtolower(trim($bookingData['service_option'] ?? ''));
+            
+            // STRICT STATUS FLOW: Only send receipt if in inspection-related status
+            // For Delivery: Change status to 'inspection_completed_waiting_approval' - customer must approve
+            // For Other: Change status to 'inspect_completed' - customer must approve
+            $newStatus = $currentStatus; // Default to current status
+            
+            // Validate status transition - only allow from inspection statuses
+            $allowedFromStatuses = ['to_inspect', 'for_inspection', 'picked_up', 'for_inspect'];
+            if (!in_array($currentStatus, $allowedFromStatuses)) {
+                ob_clean();
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Cannot send receipt. Booking must be in inspection status. Current status: ' . $currentStatus
+                ]);
+                ob_end_flush();
+                exit;
+            }
+            
+            // Check if quotation_sent column exists before updating
+            $checkColumn = $db->query("SHOW COLUMNS FROM bookings LIKE 'quotation_sent'");
+            $columnExists = $checkColumn->fetch();
+            
+            // Check if inspection_completed_waiting_approval status exists in ENUM
+            $checkStatusEnum = $db->query("SHOW COLUMNS FROM bookings WHERE Field = 'status'");
+            $statusColumn = $checkStatusEnum->fetch(PDO::FETCH_ASSOC);
+            $hasInspectionCompletedWaitingApproval = strpos($statusColumn['Type'] ?? '', 'inspection_completed_waiting_approval') !== false;
+            $hasInspectCompleted = strpos($statusColumn['Type'] ?? '', 'inspect_completed') !== false;
+            
+            // For Delivery service: Use 'inspection_completed_waiting_approval'
+            // For Other services: Use 'inspect_completed' or fallback
+            if ($serviceOption === 'delivery' && $hasInspectionCompletedWaitingApproval) {
+                // Delivery service: Set status to 'inspection_completed_waiting_approval'
+                if ($columnExists) {
+                    $updateStmt = $db->prepare("UPDATE bookings SET status = 'inspection_completed_waiting_approval', quotation_sent = 1, quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                } else {
+                    $updateStmt = $db->prepare("UPDATE bookings SET status = 'inspection_completed_waiting_approval', quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                }
                 $updateStmt->execute([$bookingId]);
+                $newStatus = 'inspection_completed_waiting_approval';
+            } elseif ($hasInspectCompleted) {
+                // Other services: Use 'inspect_completed'
+                if ($columnExists) {
+                    $updateStmt = $db->prepare("UPDATE bookings SET status = 'inspect_completed', quotation_sent = 1, quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                } else {
+                    $updateStmt = $db->prepare("UPDATE bookings SET status = 'inspect_completed', quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                }
+                $updateStmt->execute([$bookingId]);
+                $newStatus = 'inspect_completed';
+            } elseif ($columnExists) {
+                // Fallback: If statuses don't exist, use preview_receipt_sent (backward compatibility)
+                $checkPreviewStatus = strpos($statusColumn['Type'] ?? '', 'preview_receipt_sent') !== false;
+                if ($checkPreviewStatus) {
+                    $updateStmt = $db->prepare("UPDATE bookings SET status = 'preview_receipt_sent', quotation_sent = 1, quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                    $updateStmt->execute([$bookingId]);
+                    $newStatus = 'preview_receipt_sent';
+                } else {
+                    // If neither status exists, mark receipt as sent but keep current status
+                    $updateStmt = $db->prepare("UPDATE bookings SET quotation_sent = 1, quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                    $updateStmt->execute([$bookingId]);
+                    $newStatus = $currentStatus; // Keep current status
+                }
+            } else {
+                // Fallback: only update quotation_sent_at if quotation_sent column doesn't exist
+                $updateStmt = $db->prepare("UPDATE bookings SET quotation_sent_at = NOW(), updated_at = NOW() WHERE id = ?");
+                $updateStmt->execute([$bookingId]);
+                $newStatus = $currentStatus; // Keep current status
             }
             
             // Use the existing sendReceiptNotification method
-            $result = $this->sendReceiptNotification($bookingId);
-            
-            if ($result) {
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Preview receipt sent to customer successfully. Status updated to "For Repair".',
-                    'status' => 'for_repair'
-                ]);
-            } else {
+            try {
+                $result = $this->sendReceiptNotification($bookingId);
+                
+                if ($result) {
+                    ob_clean();
+                    $statusMessage = $serviceOption === 'delivery' 
+                        ? 'Preview receipt sent to customer successfully. Status changed to "Inspection Completed - Waiting for Customer Approval". Customer will receive a notification and can approve the receipt to proceed with repair.'
+                        : 'Preview receipt sent to customer successfully. Status changed to "Inspect Completed". Customer will receive a notification and can approve the receipt to proceed with repair.';
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $statusMessage,
+                        'status' => $newStatus, // Return the new status
+                        'previous_status' => $currentStatus
+                    ]);
+                    ob_end_flush();
+                } else {
+                    ob_clean();
+                    http_response_code(500);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to send receipt notification to customer. Please check error logs for details.'
+                    ]);
+                    ob_end_flush();
+                }
+            } catch (Exception $notificationError) {
+                error_log("Error in sendReceiptNotification: " . $notificationError->getMessage());
+                error_log("Stack trace: " . $notificationError->getTraceAsString());
+                ob_clean();
                 http_response_code(500);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Failed to send receipt to customer'
+                    'message' => 'An error occurred while sending receipt notification',
+                    'error' => (defined('APP_DEBUG') && APP_DEBUG) ? $notificationError->getMessage() : null
                 ]);
+                ob_end_flush();
             }
         } catch (Exception $e) {
             error_log("Error in sendReceiptToCustomer: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            ob_clean();
             http_response_code(500);
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while sending receipt',
                 'error' => (defined('APP_DEBUG') && APP_DEBUG) ? $e->getMessage() : null
             ]);
+            ob_end_flush();
         }
         exit;
     }
@@ -3240,6 +4480,14 @@ class AdminController extends Controller {
             $numberOfMeters = floatval($input['number_of_meters'] ?? $_POST['number_of_meters'] ?? 0);
             $pricePerMeter = floatval($input['price_per_meter'] ?? $_POST['price_per_meter'] ?? 0);
             $laborFee = floatval($input['labor_fee'] ?? $_POST['labor_fee'] ?? 0);
+            $repairDays = intval($input['repair_days'] ?? $_POST['repair_days'] ?? 0);
+            
+            // Material fields from Materials tab
+            $fabricType = $input['fabric_type'] ?? $_POST['fabric_type'] ?? null;
+            $meters = floatval($input['meters'] ?? $_POST['meters'] ?? 0);
+            $foamReplacement = $input['foam_replacement'] ?? $_POST['foam_replacement'] ?? null;
+            $foamThickness = floatval($input['foam_thickness'] ?? $_POST['foam_thickness'] ?? 0);
+            $accessories = $input['accessories'] ?? $_POST['accessories'] ?? []; // Array of selected accessories
             
             if (!$bookingId || !is_numeric($bookingId)) {
                 http_response_code(400);
@@ -3250,6 +4498,12 @@ class AdminController extends Controller {
             if ($numberOfMeters <= 0 || $pricePerMeter <= 0) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Number of meters and price per meter must be greater than 0']);
+                exit;
+            }
+            
+            if ($repairDays <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Repair days must be greater than 0']);
                 exit;
             }
             
@@ -3264,9 +4518,35 @@ class AdminController extends Controller {
                 exit;
             }
             
+            // Get color price from inventory if color is selected
+            $colorPrice = 0;
+            if ($leatherColorId) {
+                // Check which price columns exist in inventory table
+                $checkPricePerMeter = $db->query("SHOW COLUMNS FROM inventory LIKE 'price_per_meter'");
+                $hasPricePerMeter = $checkPricePerMeter->rowCount() > 0;
+                $checkPricePerUnit = $db->query("SHOW COLUMNS FROM inventory LIKE 'price_per_unit'");
+                $hasPricePerUnit = $checkPricePerUnit->rowCount() > 0;
+                
+                // Build query based on which columns exist
+                if ($hasPricePerMeter && $hasPricePerUnit) {
+                    $priceQuery = "SELECT COALESCE(NULLIF(price_per_meter, 0), price_per_unit, 0) as price FROM inventory WHERE id = ?";
+                } elseif ($hasPricePerMeter) {
+                    $priceQuery = "SELECT COALESCE(price_per_meter, 0) as price FROM inventory WHERE id = ?";
+                } elseif ($hasPricePerUnit) {
+                    $priceQuery = "SELECT COALESCE(price_per_unit, 0) as price FROM inventory WHERE id = ?";
+                } else {
+                    $priceQuery = "SELECT 0 as price FROM inventory WHERE id = ?";
+                }
+                
+                $inventoryStmt = $db->prepare($priceQuery);
+                $inventoryStmt->execute([$leatherColorId]);
+                $inventoryData = $inventoryStmt->fetch(PDO::FETCH_ASSOC);
+                $colorPrice = floatval($inventoryData['price'] ?? 0);
+            }
+            
             // Calculate totals
             $fabricCost = $numberOfMeters * $pricePerMeter;
-            $grandTotal = $fabricCost + $laborFee;
+            $grandTotal = $fabricCost + $colorPrice + $laborFee;
             
             // Get leather color name for notes
             $leatherColorName = '';
@@ -3320,8 +4600,39 @@ class AdminController extends Controller {
             if (in_array('total_amount', $existingColumns)) {
                 $updateData['total_amount'] = $grandTotal;
             }
+            if (in_array('color_price', $existingColumns)) {
+                $updateData['color_price'] = $colorPrice;
+            }
+            if (in_array('number_of_meters', $existingColumns)) {
+                $updateData['number_of_meters'] = $numberOfMeters;
+            }
+            if (in_array('price_per_meter', $existingColumns)) {
+                $updateData['price_per_meter'] = $pricePerMeter;
+            }
             if (in_array('calculation_notes', $existingColumns)) {
-                $updateData['calculation_notes'] = "Receipt Details - Quality: " . ucfirst($leatherQuality) . ", Leather: {$leatherColorName}, Meters: {$numberOfMeters}, Price per Meter: ₱{$pricePerMeter}, Leather Cost: ₱{$fabricCost}, Labor Fee: ₱{$laborFee}, Grand Total: ₱{$grandTotal}";
+                $updateData['calculation_notes'] = "Receipt Details - Quality: " . ucfirst($leatherQuality) . ", Leather: {$leatherColorName}, Meters: {$numberOfMeters}, Price per Meter: ₱{$pricePerMeter}, Color Price: ₱{$colorPrice}, Leather Cost: ₱{$fabricCost}, Labor Fee: ₱{$laborFee}, Grand Total: ₱{$grandTotal}";
+            }
+            
+            // Save repair_days if column exists
+            if (in_array('repair_days', $existingColumns)) {
+                $updateData['repair_days'] = $repairDays;
+            }
+            
+            // Save material fields if columns exist
+            if (in_array('fabric_type', $existingColumns) && $fabricType) {
+                $updateData['fabric_type'] = $fabricType;
+            }
+            if (in_array('meters', $existingColumns) && $meters > 0) {
+                $updateData['meters'] = $meters;
+            }
+            if (in_array('foam_replacement', $existingColumns) && $foamReplacement) {
+                $updateData['foam_replacement'] = $foamReplacement;
+            }
+            if (in_array('foam_thickness', $existingColumns) && $foamThickness > 0) {
+                $updateData['foam_thickness'] = $foamThickness;
+            }
+            if (in_array('accessories', $existingColumns) && is_array($accessories) && !empty($accessories)) {
+                $updateData['accessories'] = json_encode($accessories); // Store as JSON
             }
             
             // Always update updated_at if column exists
@@ -3380,25 +4691,1091 @@ class AdminController extends Controller {
     }
     
     /**
+     * Get Receipt Preview Data (AJAX)
+     * Returns JSON data for receipt preview modal
+     */
+    public function getReceiptPreview($bookingId) {
+        header('Content-Type: application/json');
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get complete booking details with all inspection data
+            $sql = "SELECT b.*, 
+                    s.service_name, 
+                    s.service_type, 
+                    sc.category_name,
+                    u.fullname as customer_name, 
+                    u.email as customer_email, 
+                    u.phone as customer_phone,
+                    inv.color_name,
+                    inv.color_code,
+                    b.color_type,
+                    admin.fullname as admin_name
+                    FROM bookings b
+                    LEFT JOIN services s ON b.service_id = s.id
+                    LEFT JOIN service_categories sc ON s.category_id = sc.id
+                    LEFT JOIN users u ON b.user_id = u.id
+                    LEFT JOIN inventory inv ON b.selected_color_id = inv.id
+                    LEFT JOIN users admin ON admin.role = 'admin' AND admin.status = 'active'
+                    WHERE b.id = ?
+                    LIMIT 1";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$booking) {
+                echo json_encode(['success' => false, 'message' => 'Booking not found']);
+                exit;
+            }
+            
+            // Check if booking is paid
+            $paymentStatus = strtolower(trim($booking['payment_status'] ?? 'unpaid'));
+            $isPaid = in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod']) || 
+                     in_array(strtolower($booking['status'] ?? ''), ['delivered_and_paid', 'completed']);
+            
+            if (!$isPaid) {
+                echo json_encode(['success' => false, 'message' => 'Official receipt can only be generated for paid bookings']);
+                exit;
+            }
+            
+            // Calculate amounts
+            $laborFee = floatval($booking['labor_fee'] ?? 0);
+            $pickupFee = floatval($booking['pickup_fee'] ?? 0);
+            $deliveryFee = floatval($booking['delivery_fee'] ?? 0);
+            $gasFee = floatval($booking['gas_fee'] ?? 0);
+            $travelFee = floatval($booking['travel_fee'] ?? 0);
+            $inspectionFee = floatval($booking['inspection_fee'] ?? 0);
+            $colorPrice = floatval($booking['color_price'] ?? 0);
+            $numberOfMeters = floatval($booking['number_of_meters'] ?? $booking['meters'] ?? 0);
+            $pricePerMeter = floatval($booking['price_per_meter'] ?? $booking['fabric_cost_per_meter'] ?? 0);
+            $fabricCost = $numberOfMeters * $pricePerMeter;
+            if ($fabricCost == 0 && $colorPrice > 0) {
+                $fabricCost = $colorPrice;
+            }
+            
+            // Calculate totals
+            $subtotal = $laborFee + $fabricCost;
+            $totalAdditionalFees = $pickupFee + $deliveryFee + $gasFee + $travelFee + $inspectionFee;
+            $totalAmount = $subtotal + $totalAdditionalFees;
+            $discount = floatval($booking['discount'] ?? 0);
+            $totalPaid = $totalAmount - $discount;
+            
+            // Generate Official Receipt Number
+            $receiptNumber = 'OR-' . date('Ymd') . '-' . str_pad($bookingId, 4, '0', STR_PAD_LEFT);
+            
+            // Get current admin name
+            $adminName = $_SESSION['user']['fullname'] ?? 'Admin';
+            
+            // Payment mode
+            $paymentMode = 'Cash';
+            if ($paymentStatus === 'paid_on_delivery_cod') {
+                $paymentMode = 'Cash on Delivery (COD)';
+            } elseif (strpos(strtolower($paymentStatus), 'gcash') !== false || strpos(strtolower($paymentStatus), 'bank') !== false) {
+                $paymentMode = 'GCash / Bank Transfer';
+            }
+            
+            // Dates
+            $completionDate = !empty($booking['completed_at']) ? date('M d, Y', strtotime($booking['completed_at'])) : 
+                             (!empty($booking['updated_at']) ? date('M d, Y', strtotime($booking['updated_at'])) : date('M d, Y'));
+            $deliveryDate = !empty($booking['delivered_at']) ? date('M d, Y', strtotime($booking['delivered_at'])) : $completionDate;
+            $paymentDate = !empty($booking['payment_date']) ? date('F d, Y', strtotime($booking['payment_date'])) : 
+                          (!empty($booking['updated_at']) ? date('F d, Y', strtotime($booking['updated_at'])) : date('F d, Y'));
+            $paymentTime = !empty($booking['payment_date']) ? date('g:i A', strtotime($booking['payment_date'])) : 
+                          (!empty($booking['updated_at']) ? date('g:i A', strtotime($booking['updated_at'])) : date('g:i A'));
+            
+            // Item details
+            $itemName = $booking['item_description'] ?? $booking['service_name'] ?? 'N/A';
+            $itemIssue = $booking['damage_description'] ?? 'N/A';
+            $materialUsed = '';
+            if (!empty($booking['color_name'])) {
+                $colorType = ($booking['color_type'] === 'premium') ? 'Premium' : 'Standard';
+                $materialUsed = $booking['color_name'] . ' (' . $colorType . ')';
+            }
+            if (!empty($booking['foam_type'])) {
+                $materialUsed .= ($materialUsed ? ' / ' : '') . 'Foam: ' . $booking['foam_type'];
+            }
+            if (empty($materialUsed)) {
+                $materialUsed = 'N/A';
+            }
+            
+            // Measurements
+            $measurement = '';
+            if (!empty($booking['measurement_height']) || !empty($booking['measurement_width'])) {
+                $height = $booking['measurement_height'] ?? 0;
+                $width = $booking['measurement_width'] ?? 0;
+                $thickness = $booking['measurement_thickness'] ?? 0;
+                if ($thickness > 0) {
+                    $measurement = $height . ' x ' . $width . ' x ' . $thickness . ' inches';
+                } else {
+                    $measurement = $height . ' x ' . $width . ' inches';
+                }
+            } else {
+                $measurement = $booking['measurement_custom'] ?? 'N/A';
+            }
+            
+            // Service option
+            $serviceOption = ucfirst(strtolower($booking['service_option'] ?? 'pickup'));
+            if ($serviceOption === 'Both') {
+                $serviceOption = 'Both (Pickup & Delivery)';
+            }
+            
+            // Inspected by
+            $inspectedBy = $adminName;
+            if (!empty($booking['inspected_by'])) {
+                $inspectedBy = $booking['inspected_by'];
+            }
+            
+            // Return receipt data
+            echo json_encode([
+                'success' => true,
+                'receipt' => [
+                    'receiptNumber' => $receiptNumber,
+                    'dateIssued' => date('F d, Y'),
+                    'booking' => [
+                        'id' => $booking['id'],
+                        'bookingNumber' => '#' . $booking['id'],
+                        'serviceName' => $booking['service_name'] ?? 'N/A',
+                        'categoryName' => $booking['category_name'] ?? 'N/A',
+                        'serviceOption' => $serviceOption,
+                        'completionDate' => $completionDate,
+                        'deliveryDate' => $deliveryDate,
+                        'inspectedBy' => $inspectedBy
+                    ],
+                    'customer' => [
+                        'name' => $booking['customer_name'] ?? 'N/A',
+                        'email' => $booking['customer_email'] ?? 'N/A',
+                        'phone' => $booking['customer_phone'] ?? 'N/A',
+                        'address' => $booking['delivery_address'] ?? $booking['pickup_address'] ?? 'N/A'
+                    ],
+                    'item' => [
+                        'name' => $itemName,
+                        'issue' => $itemIssue,
+                        'materialUsed' => $materialUsed,
+                        'measurement' => $measurement,
+                        'quantity' => 1
+                    ],
+                    'payment' => [
+                        'laborFee' => $laborFee,
+                        'fabricCost' => $fabricCost,
+                        'foamCost' => floatval($booking['foam_cost'] ?? 0),
+                        'miscMaterialsCost' => floatval($booking['misc_materials_cost'] ?? 0),
+                        'pickupFee' => $pickupFee,
+                        'deliveryFee' => $deliveryFee,
+                        'gasFee' => $gasFee,
+                        'travelFee' => $travelFee,
+                        'inspectionFee' => $inspectionFee,
+                        'subtotal' => $subtotal,
+                        'totalAdditionalFees' => $totalAdditionalFees,
+                        'discount' => $discount,
+                        'totalAmount' => $totalAmount,
+                        'totalPaid' => $totalPaid,
+                        'balance' => 0,
+                        'mode' => $paymentMode,
+                        'referenceNumber' => $booking['payment_ref_number'] ?? '',
+                        'paymentDate' => $paymentDate,
+                        'paymentTime' => $paymentTime
+                    ],
+                    'admin' => [
+                        'name' => $adminName
+                    ]
+                ]
+            ], JSON_UNESCAPED_UNICODE);
+            
+        } catch (Exception $e) {
+            error_log("Error getting receipt preview: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
+     * Generate Official Receipt
+     * Generates a complete official receipt for paid bookings
+     */
+    public function generateOfficialReceipt($bookingId) {
+        ob_start();
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get complete booking details
+            $sql = "SELECT b.*, 
+                    s.service_name, 
+                    s.service_type, 
+                    sc.category_name,
+                    u.fullname as customer_name, 
+                    u.email as customer_email, 
+                    u.phone as customer_phone,
+                    inv.color_name,
+                    inv.color_code,
+                    b.color_type,
+                    admin.fullname as admin_name
+                    FROM bookings b
+                    LEFT JOIN services s ON b.service_id = s.id
+                    LEFT JOIN service_categories sc ON s.category_id = sc.id
+                    LEFT JOIN users u ON b.user_id = u.id
+                    LEFT JOIN inventory inv ON b.selected_color_id = inv.id
+                    LEFT JOIN users admin ON admin.role = 'admin' AND admin.status = 'active'
+                    WHERE b.id = ?
+                    LIMIT 1";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$booking) {
+                $_SESSION['error'] = 'Booking not found';
+                $this->redirect('admin/allBookings');
+                return;
+            }
+            
+            // Check if booking is paid
+            $paymentStatus = strtolower(trim($booking['payment_status'] ?? 'unpaid'));
+            $isPaid = in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod']) || 
+                     in_array(strtolower($booking['status'] ?? ''), ['delivered_and_paid', 'completed']);
+            
+            if (!$isPaid) {
+                $_SESSION['error'] = 'Official receipt can only be generated for paid bookings';
+                $this->redirect('admin/allBookings');
+                return;
+            }
+            
+            // Calculate amounts
+            $laborFee = floatval($booking['labor_fee'] ?? 0);
+            $pickupFee = floatval($booking['pickup_fee'] ?? 0);
+            $deliveryFee = floatval($booking['delivery_fee'] ?? 0);
+            $gasFee = floatval($booking['gas_fee'] ?? 0);
+            $travelFee = floatval($booking['travel_fee'] ?? 0);
+            $colorPrice = floatval($booking['color_price'] ?? 0);
+            $numberOfMeters = floatval($booking['number_of_meters'] ?? $booking['meters'] ?? 0);
+            $pricePerMeter = floatval($booking['price_per_meter'] ?? $booking['fabric_cost_per_meter'] ?? 0);
+            $fabricCost = $numberOfMeters * $pricePerMeter;
+            if ($fabricCost == 0 && $colorPrice > 0) {
+                $fabricCost = $colorPrice;
+            }
+            
+            // Calculate subtotal
+            $subtotal = $fabricCost + $laborFee + $pickupFee + $deliveryFee + $gasFee + $travelFee;
+            
+            // Generate Official Receipt Number (OR-000XXX format)
+            $receiptNumber = 'OR-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+            
+            // Get current admin name
+            $adminName = $_SESSION['user']['fullname'] ?? 'Admin';
+            
+            // Payment mode
+            $paymentMode = 'Cash';
+            if ($paymentStatus === 'paid_on_delivery_cod') {
+                $paymentMode = 'Cash on Delivery (COD)';
+            } elseif (strpos(strtolower($paymentStatus), 'gcash') !== false || strpos(strtolower($paymentStatus), 'bank') !== false) {
+                $paymentMode = 'GCash / Bank Transfer';
+            }
+            
+            // Payment date/time
+            $paymentDate = !empty($booking['updated_at']) ? $booking['updated_at'] : date('Y-m-d H:i:s');
+            $paymentDateFormatted = date('F d, Y', strtotime($paymentDate));
+            $paymentTimeFormatted = date('g:i A', strtotime($paymentDate));
+            
+            // Generate receipt HTML
+            $receiptHtml = $this->generateOfficialReceiptHTML($booking, $receiptNumber, $adminName, [
+                'laborFee' => $laborFee,
+                'pickupFee' => $pickupFee,
+                'deliveryFee' => $deliveryFee,
+                'gasFee' => $gasFee,
+                'travelFee' => $travelFee,
+                'fabricCost' => $fabricCost,
+                'numberOfMeters' => $numberOfMeters,
+                'pricePerMeter' => $pricePerMeter,
+                'colorName' => $booking['color_name'] ?? 'N/A',
+                'colorCode' => $booking['color_code'] ?? 'N/A',
+                'colorType' => $booking['color_type'] ?? 'standard',
+                'subtotal' => $subtotal,
+                'totalAmount' => $subtotal,
+                'totalPaid' => $subtotal,
+                'balance' => 0,
+                'paymentMode' => $paymentMode,
+                'paymentDate' => $paymentDateFormatted,
+                'paymentTime' => $paymentTimeFormatted
+            ]);
+            
+            // Output receipt
+            header('Content-Type: text/html; charset=UTF-8');
+            echo $receiptHtml;
+            exit;
+            
+        } catch (Exception $e) {
+            ob_clean();
+            error_log("Error generating official receipt: " . $e->getMessage());
+            $_SESSION['error'] = 'Error generating receipt: ' . $e->getMessage();
+            $this->redirect('admin/allBookings');
+        }
+    }
+    
+    /**
+     * Generate Official Receipt HTML
+     * Creates the complete official receipt HTML with all required sections
+     */
+    private function generateOfficialReceiptHTML($booking, $receiptNumber, $adminName, $amounts) {
+        $businessName = 'UpholCare Upholstery Services';
+        // TODO: Update these with actual business information
+        $businessAddress = 'Complete Address'; // Update with actual business address
+        $contactNumber = 'Contact Number'; // Update with actual contact number
+        $email = 'Email'; // Update with actual business email
+        $tinNumber = 'TIN Number'; // Update with actual TIN number
+        $birPermit = 'BIR Permit Number'; // Update with actual BIR Permit number
+        
+        $dateIssued = date('F d, Y');
+        
+        // Build item/service details table
+        $itemsHtml = '';
+        $itemCount = 0;
+        
+        // Labor Fee
+        if ($amounts['laborFee'] > 0) {
+            $itemCount++;
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>' . htmlspecialchars($booking['service_name'] ?? 'Upholstery Service') . ' – Labor</td>';
+            $itemsHtml .= '<td style="text-align: center;">1</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['laborFee'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['laborFee'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        // Fabric/Color
+        if ($amounts['fabricCost'] > 0) {
+            $itemCount++;
+            $colorTypeText = ($amounts['colorType'] === 'premium') ? 'Premium' : 'Standard';
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>Selected Fabric (Color: ' . htmlspecialchars($amounts['colorName']) . ', Code: ' . htmlspecialchars($amounts['colorCode']) . ', ' . $colorTypeText . ' Type)</td>';
+            $itemsHtml .= '<td style="text-align: center;">' . number_format($amounts['numberOfMeters'], 2) . ' meters</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['pricePerMeter'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['fabricCost'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        // Pickup Fee
+        if ($amounts['pickupFee'] > 0) {
+            $itemCount++;
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>Pick-Up Fee</td>';
+            $itemsHtml .= '<td style="text-align: center;">1</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['pickupFee'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['pickupFee'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        // Delivery Fee
+        if ($amounts['deliveryFee'] > 0) {
+            $itemCount++;
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>Delivery Fee</td>';
+            $itemsHtml .= '<td style="text-align: center;">1</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['deliveryFee'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['deliveryFee'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        // Gas Fee
+        if ($amounts['gasFee'] > 0) {
+            $itemCount++;
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>Gas Fee</td>';
+            $itemsHtml .= '<td style="text-align: center;">1</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['gasFee'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['gasFee'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        // Travel Fee
+        if ($amounts['travelFee'] > 0) {
+            $itemCount++;
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>Travel Fee</td>';
+            $itemsHtml .= '<td style="text-align: center;">1</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['travelFee'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['travelFee'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        // If no items, add a default item
+        if ($itemCount === 0) {
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td>' . htmlspecialchars($booking['service_name'] ?? 'Service') . '</td>';
+            $itemsHtml .= '<td style="text-align: center;">1</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['totalAmount'], 2) . '</td>';
+            $itemsHtml .= '<td style="text-align: right;">₱' . number_format($amounts['totalAmount'], 2) . '</td>';
+            $itemsHtml .= '</tr>';
+        }
+        
+        $html = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Receipt - ' . htmlspecialchars($receiptNumber) . '</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: "Arial", "Helvetica", sans-serif; 
+            background: #f5f5f5; 
+            padding: 20px;
+        }
+        .receipt-container { 
+            background: white; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 40px; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding-bottom: 20px; 
+            border-bottom: 3px solid #2c3e50; 
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            font-weight: 700; 
+        }
+        .header .business-name { 
+            font-size: 1.5rem; 
+            font-weight: 600; 
+            color: #4e73df; 
+            margin-bottom: 10px; 
+        }
+        .header .business-info { 
+            font-size: 0.95rem; 
+            color: #6c757d; 
+            line-height: 1.6; 
+            margin: 5px 0; 
+        }
+        .receipt-title { 
+            color: #28a745; 
+            font-weight: 700; 
+            font-size: 1.3rem; 
+            margin-top: 15px; 
+            text-transform: uppercase; 
+        }
+        .receipt-number { 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            color: #2c3e50; 
+            margin-top: 10px; 
+        }
+        .section { 
+            margin: 25px 0; 
+        }
+        .section-title { 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            color: #2c3e50; 
+            margin-bottom: 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 2px solid #e3e6f0; 
+        }
+        .info-row { 
+            margin: 8px 0; 
+            display: flex; 
+            justify-content: space-between; 
+        }
+        .info-label { 
+            font-weight: 600; 
+            color: #5a5c69; 
+            min-width: 150px; 
+        }
+        .info-value { 
+            color: #2c3e50; 
+            flex: 1; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0; 
+        }
+        table thead { 
+            background: #4e73df; 
+            color: white; 
+        }
+        table th { 
+            padding: 12px; 
+            text-align: left; 
+            font-weight: 600; 
+        }
+        table th:nth-child(2),
+        table th:nth-child(3),
+        table th:nth-child(4) { 
+            text-align: center; 
+        }
+        table td { 
+            padding: 10px 12px; 
+            border: 1px solid #e3e6f0; 
+        }
+        table td:nth-child(2),
+        table td:nth-child(3),
+        table td:nth-child(4) { 
+            text-align: right; 
+        }
+        table tbody tr:nth-child(even) { 
+            background: #f8f9fc; 
+        }
+        .summary-table { 
+            margin-top: 20px; 
+        }
+        .summary-table td { 
+            padding: 10px; 
+            border: 1px solid #e3e6f0; 
+        }
+        .summary-table td:first-child { 
+            font-weight: 600; 
+            background: #f8f9fc; 
+        }
+        .summary-table td:last-child { 
+            text-align: right; 
+            font-weight: 600; 
+        }
+        .total-row { 
+            background: #28a745 !important; 
+            color: white !important; 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+        }
+        .total-row td { 
+            border-color: #28a745; 
+        }
+        .signature-section { 
+            margin-top: 40px; 
+            display: flex; 
+            justify-content: space-between; 
+        }
+        .signature-box { 
+            width: 30%; 
+            text-align: center; 
+        }
+        .signature-line { 
+            border-top: 2px solid #2c3e50; 
+            margin-top: 50px; 
+            padding-top: 5px; 
+        }
+        .footer-notes { 
+            margin-top: 30px; 
+            padding-top: 20px; 
+            border-top: 2px solid #e3e6f0; 
+            text-align: center; 
+            color: #6c757d; 
+            font-size: 0.9rem; 
+            line-height: 1.8; 
+        }
+        .print-button { 
+            text-align: center; 
+            margin: 20px 0; 
+        }
+        .print-button button { 
+            background: #4e73df; 
+            color: white; 
+            border: none; 
+            padding: 12px 30px; 
+            font-size: 1rem; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .print-button button:hover { 
+            background: #2e59d9; 
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .receipt-container { box-shadow: none; padding: 20px; }
+            .print-button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-button">
+        <button onclick="window.print()">
+            <i class="fas fa-print"></i> Print Receipt
+        </button>
+    </div>
+    
+    <div class="receipt-container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>UpholCare</h1>
+            <div class="business-name">Upholstery Services</div>
+            <div class="business-info">
+                <div>' . htmlspecialchars($businessAddress) . '</div>
+                <div>Contact Number: ' . htmlspecialchars($contactNumber) . '</div>
+                <div>Email: ' . htmlspecialchars($email) . '</div>
+                <div>TIN Number: ' . htmlspecialchars($tinNumber) . '</div>
+                <div>BIR Permit Number: ' . htmlspecialchars($birPermit) . '</div>
+            </div>
+            <div class="receipt-title">Official Receipt</div>
+            <div class="receipt-number">Official Receipt Number: ' . htmlspecialchars($receiptNumber) . '</div>
+            <div style="margin-top: 10px; font-size: 1rem;">Date Issued: ' . htmlspecialchars($dateIssued) . '</div>
+        </div>
+        
+        <!-- Customer Information -->
+        <div class="section">
+            <div class="section-title">Customer Information</div>
+            <div class="info-row">
+                <span class="info-label">Customer Name:</span>
+                <span class="info-value">' . htmlspecialchars($booking['customer_name'] ?? 'N/A') . '</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Address:</span>
+                <span class="info-value">' . htmlspecialchars($booking['delivery_address'] ?? $booking['pickup_address'] ?? 'N/A') . '</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Contact Number:</span>
+                <span class="info-value">' . htmlspecialchars($booking['customer_phone'] ?? 'N/A') . '</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Booking Number:</span>
+                <span class="info-value">#' . htmlspecialchars($booking['id']) . '</span>
+            </div>
+        </div>
+        
+        <!-- Item / Service Details -->
+        <div class="section">
+            <div class="section-title">Item / Service Details</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description of Service</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ' . $itemsHtml . '
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Summary of Charges -->
+        <div class="section">
+            <div class="section-title">Summary of Charges</div>
+            <table class="summary-table">
+                <tbody>
+                    <tr>
+                        <td>Subtotal</td>
+                        <td>₱' . number_format($amounts['subtotal'], 2) . '</td>
+                    </tr>
+                    <tr>
+                        <td>Inspection Fee (if any)</td>
+                        <td>₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Pick-Up Fee (if applicable)</td>
+                        <td>₱' . number_format($amounts['pickupFee'], 2) . '</td>
+                    </tr>
+                    <tr>
+                        <td>Delivery Fee (if applicable)</td>
+                        <td>₱' . number_format($amounts['deliveryFee'], 2) . '</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>TOTAL AMOUNT DUE</td>
+                        <td>₱' . number_format($amounts['totalAmount'], 2) . '</td>
+                    </tr>
+                    <tr>
+                        <td>TOTAL AMOUNT PAID</td>
+                        <td>₱' . number_format($amounts['totalPaid'], 2) . '</td>
+                    </tr>
+                    <tr>
+                        <td>BALANCE</td>
+                        <td>₱' . number_format($amounts['balance'], 2) . '</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Payment Details -->
+        <div class="section">
+            <div class="section-title">Payment Details</div>
+            <div class="info-row" style="margin-bottom: 15px;">
+                <span class="info-label">Mode of Payment:</span>
+                <span class="info-value">
+                    ' . ($amounts['paymentMode'] === 'Cash' || $amounts['paymentMode'] === 'Cash on Delivery (COD)' ? '✔' : '☐') . ' Cash
+                    ' . (strpos($amounts['paymentMode'], 'GCash') !== false || strpos($amounts['paymentMode'], 'Bank') !== false ? '✔' : '☐') . ' GCash / Bank Transfer
+                </span>
+            </div>
+            ' . (strpos($amounts['paymentMode'], 'GCash') !== false || strpos($amounts['paymentMode'], 'Bank') !== false ? '
+            <div class="info-row">
+                <span class="info-label">Reference Number:</span>
+                <span class="info-value">' . htmlspecialchars($receiptNumber) . ' (if online payment)</span>
+            </div>
+            ' : '') . '
+            <div class="info-row">
+                <span class="info-label">Date/Time of Payment:</span>
+                <span class="info-value">' . htmlspecialchars($amounts['paymentDate']) . ' – ' . htmlspecialchars($amounts['paymentTime']) . '</span>
+            </div>
+        </div>
+        
+        <!-- Prepared By -->
+        <div class="section">
+            <div class="section-title">Prepared By</div>
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div><strong>Prepared By:</strong> ' . htmlspecialchars($adminName) . '</div>
+                    <div class="signature-line">Signature</div>
+                </div>
+                <div class="signature-box">
+                    <div><strong>Released By (Delivery Personnel):</strong></div>
+                    <div class="signature-line">Signature</div>
+                </div>
+                <div class="signature-box">
+                    <div><strong>Received By (Customer):</strong></div>
+                    <div class="signature-line">Signature</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem;">Date Received: ____________________</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Notes -->
+        <div class="footer-notes">
+            <p><strong>Thank you for trusting UpholCare.</strong></p>
+            <p>This serves as your official receipt for full payment.</p>
+            <p>Items repaired and delivered are subject to 7-day workmanship warranty.</p>
+        </div>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            // Auto-print option (optional - can be enabled)
+            // window.print();
+        };
+    </script>
+</body>
+</html>';
+        
+        return $html;
+    }
+    
+    /**
+     * Email Official Receipt to Customer
+     */
+    public function emailOfficialReceipt($bookingId) {
+        header('Content-Type: application/json');
+        
+        try {
+            // Get receipt data (reuse getReceiptPreview logic)
+            $db = Database::getInstance()->getConnection();
+            
+            $sql = "SELECT b.*, 
+                    s.service_name, 
+                    sc.category_name,
+                    u.fullname as customer_name, 
+                    u.email as customer_email, 
+                    u.phone as customer_phone,
+                    inv.color_name,
+                    inv.color_code,
+                    b.color_type
+                    FROM bookings b
+                    LEFT JOIN services s ON b.service_id = s.id
+                    LEFT JOIN service_categories sc ON s.category_id = sc.id
+                    LEFT JOIN users u ON b.user_id = u.id
+                    LEFT JOIN inventory inv ON b.selected_color_id = inv.id
+                    WHERE b.id = ?
+                    LIMIT 1";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$booking) {
+                echo json_encode(['success' => false, 'message' => 'Booking not found']);
+                exit;
+            }
+            
+            // Generate receipt number
+            $receiptNumber = 'OR-' . date('Ymd') . '-' . str_pad($bookingId, 4, '0', STR_PAD_LEFT);
+            $adminName = $_SESSION['user']['fullname'] ?? 'Admin';
+            
+            // Calculate amounts
+            $laborFee = floatval($booking['labor_fee'] ?? 0);
+            $pickupFee = floatval($booking['pickup_fee'] ?? 0);
+            $deliveryFee = floatval($booking['delivery_fee'] ?? 0);
+            $gasFee = floatval($booking['gas_fee'] ?? 0);
+            $travelFee = floatval($booking['travel_fee'] ?? 0);
+            $inspectionFee = floatval($booking['inspection_fee'] ?? 0);
+            $numberOfMeters = floatval($booking['number_of_meters'] ?? $booking['meters'] ?? 0);
+            $pricePerMeter = floatval($booking['price_per_meter'] ?? $booking['fabric_cost_per_meter'] ?? 0);
+            $fabricCost = $numberOfMeters * $pricePerMeter;
+            if ($fabricCost == 0) {
+                $fabricCost = floatval($booking['color_price'] ?? 0);
+            }
+            
+            $subtotal = $laborFee + $fabricCost;
+            $totalAdditionalFees = $pickupFee + $deliveryFee + $gasFee + $travelFee + $inspectionFee;
+            $totalAmount = $subtotal + $totalAdditionalFees;
+            $discount = floatval($booking['discount'] ?? 0);
+            $totalPaid = $totalAmount - $discount;
+            
+            $paymentMode = 'Cash';
+            $paymentStatus = strtolower(trim($booking['payment_status'] ?? 'unpaid'));
+            if ($paymentStatus === 'paid_on_delivery_cod') {
+                $paymentMode = 'Cash on Delivery (COD)';
+            } elseif (strpos(strtolower($paymentStatus), 'gcash') !== false || strpos(strtolower($paymentStatus), 'bank') !== false) {
+                $paymentMode = 'GCash / Bank Transfer';
+            }
+            
+            // Generate receipt HTML
+            $amounts = [
+                'laborFee' => $laborFee,
+                'pickupFee' => $pickupFee,
+                'deliveryFee' => $deliveryFee,
+                'gasFee' => $gasFee,
+                'travelFee' => $travelFee,
+                'inspectionFee' => $inspectionFee,
+                'fabricCost' => $fabricCost,
+                'numberOfMeters' => $numberOfMeters,
+                'pricePerMeter' => $pricePerMeter,
+                'colorName' => $booking['color_name'] ?? 'N/A',
+                'colorCode' => $booking['color_code'] ?? 'N/A',
+                'colorType' => $booking['color_type'] ?? 'standard',
+                'subtotal' => $subtotal,
+                'totalAmount' => $totalAmount,
+                'totalPaid' => $totalPaid,
+                'balance' => 0,
+                'paymentMode' => $paymentMode,
+                'paymentDate' => date('F d, Y'),
+                'paymentTime' => date('g:i A')
+            ];
+            
+            $receiptHtml = $this->generateOfficialReceiptHTML($booking, $receiptNumber, $adminName, $amounts);
+            
+            // Send email using NotificationService
+            require_once ROOT . DS . 'core' . DS . 'NotificationService.php';
+            $notificationService = new NotificationService();
+            
+            // Create HTML email message
+            $subject = "Official Receipt - " . $receiptNumber . " - UpholCare";
+            $message = "
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #4e73df; color: white; padding: 20px; text-align: center; }
+                    .content { padding: 20px; background: #f8f9fc; }
+                    .receipt-info { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745; }
+                    .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 12px; }
+                    .button { display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h2>Official Receipt - UpholCare</h2>
+                    </div>
+                    <div class='content'>
+                        <p>Dear " . htmlspecialchars($booking['customer_name']) . ",</p>
+                        <p>Thank you for your business! Please find your official receipt details below:</p>
+                        
+                        <div class='receipt-info'>
+                            <p><strong>Receipt Number:</strong> " . htmlspecialchars($receiptNumber) . "</p>
+                            <p><strong>Booking Number:</strong> #" . htmlspecialchars($booking['id']) . "</p>
+                            <p><strong>Total Amount Paid:</strong> ₱" . number_format($totalPaid, 2) . "</p>
+                            <p><strong>Payment Method:</strong> " . htmlspecialchars($paymentMode) . "</p>
+                            <p><strong>Date Issued:</strong> " . date('F d, Y') . "</p>
+                        </div>
+                        
+                        <p>Your official receipt has been generated and is attached to this email. Please keep this receipt for your records.</p>
+                        
+                        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+                        
+                        <p>Thank you for choosing UpholCare!</p>
+                        
+                        <p>Best regards,<br>
+                        <strong>UpholCare Team</strong></p>
+                    </div>
+                    <div class='footer'>
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                        <p>UpholCare - Upholstery & Furniture Repair Services</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+            
+            // Send email
+            $emailSent = $notificationService->sendEmail(
+                $booking['customer_email'],
+                $subject,
+                $message
+            );
+            
+            if ($emailSent) {
+                echo json_encode(['success' => true, 'message' => 'Receipt sent successfully to ' . $booking['customer_email']]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to send email. Please check email configuration in config/email.php']);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error emailing receipt: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
+     * Download Official Receipt as PDF
+     */
+    public function downloadOfficialReceiptPDF($bookingId) {
+        // For now, redirect to HTML version (PDF generation requires TCPDF or similar library)
+        $this->generateOfficialReceipt($bookingId);
+    }
+    
+    /**
+     * Issue Official Receipt (Save to database and mark booking)
+     */
+    public function issueOfficialReceipt($bookingId) {
+        header('Content-Type: application/json');
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Check if booking exists and is paid
+            $sql = "SELECT b.*, u.email as customer_email, u.fullname as customer_name
+                    FROM bookings b
+                    LEFT JOIN users u ON b.user_id = u.id
+                    WHERE b.id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$bookingId]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$booking) {
+                echo json_encode(['success' => false, 'message' => 'Booking not found']);
+                exit;
+            }
+            
+            // Check if already issued (only if column exists)
+            $checkReceiptColumn = $db->query("SHOW COLUMNS FROM bookings LIKE 'receipt_issued'");
+            $hasReceiptColumn = $checkReceiptColumn->rowCount() > 0;
+            
+            if ($hasReceiptColumn && !empty($booking['receipt_issued']) && $booking['receipt_issued'] == 1) {
+                echo json_encode(['success' => false, 'message' => 'Receipt already issued for this booking']);
+                exit;
+            }
+            
+            // Generate receipt number
+            $receiptNumber = 'OR-' . date('Ymd') . '-' . str_pad($bookingId, 4, '0', STR_PAD_LEFT);
+            $adminId = $_SESSION['user']['id'] ?? null;
+            
+            // Save receipt to official_receipts table (if exists)
+            $checkTable = $db->query("SHOW TABLES LIKE 'official_receipts'");
+            if ($checkTable->rowCount() > 0) {
+                $receiptData = [
+                    'booking_id' => $bookingId,
+                    'receipt_number' => $receiptNumber,
+                    'issued_by' => $adminId,
+                    'receipt_data' => json_encode($booking),
+                    'status' => 'issued',
+                    'email_sent' => 0
+                ];
+                
+                $insertSql = "INSERT INTO official_receipts (booking_id, receipt_number, issued_by, receipt_data, status, email_sent) 
+                             VALUES (?, ?, ?, ?, ?, ?)";
+                $insertStmt = $db->prepare($insertSql);
+                $insertStmt->execute([
+                    $receiptData['booking_id'],
+                    $receiptData['receipt_number'],
+                    $receiptData['issued_by'],
+                    $receiptData['receipt_data'],
+                    $receiptData['status'],
+                    $receiptData['email_sent']
+                ]);
+            }
+            
+            // Update booking to mark receipt as issued (only if columns exist)
+            $checkReceiptIssued = $db->query("SHOW COLUMNS FROM bookings LIKE 'receipt_issued'");
+            $checkReceiptIssuedAt = $db->query("SHOW COLUMNS FROM bookings LIKE 'receipt_issued_at'");
+            $checkReceiptNumber = $db->query("SHOW COLUMNS FROM bookings LIKE 'receipt_number'");
+            
+            $hasReceiptIssued = $checkReceiptIssued->rowCount() > 0;
+            $hasReceiptIssuedAt = $checkReceiptIssuedAt->rowCount() > 0;
+            $hasReceiptNumber = $checkReceiptNumber->rowCount() > 0;
+            
+            if ($hasReceiptIssued || $hasReceiptIssuedAt || $hasReceiptNumber) {
+                $updateFields = [];
+                $updateValues = [];
+                
+                if ($hasReceiptIssued) {
+                    $updateFields[] = "receipt_issued = 1";
+                }
+                if ($hasReceiptIssuedAt) {
+                    $updateFields[] = "receipt_issued_at = NOW()";
+                }
+                if ($hasReceiptNumber) {
+                    $updateFields[] = "receipt_number = ?";
+                    $updateValues[] = $receiptNumber;
+                }
+                
+                if (!empty($updateFields)) {
+                    $updateValues[] = $bookingId;
+                    $updateSql = "UPDATE bookings SET " . implode(", ", $updateFields) . " WHERE id = ?";
+                    $updateStmt = $db->prepare($updateSql);
+                    $updateStmt->execute($updateValues);
+                }
+            }
+            
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Official receipt issued successfully',
+                'receiptNumber' => $receiptNumber
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error issuing receipt: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
      * Save Measurements (AJAX)
      * Saves item measurements during inspection
      */
     public function saveMeasurements() {
+        // Start output buffering to prevent any output before JSON
+        ob_start();
         header('Content-Type: application/json');
         
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Check request method
+        $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if ($requestMethod !== 'POST') {
             http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Method not allowed. Expected POST, got ' . $requestMethod]);
+            ob_end_flush();
             exit;
         }
         
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $bookingId = $input['booking_id'] ?? $_POST['booking_id'] ?? null;
+            // Handle both JSON and FormData
+            $input = [];
+            $rawInput = file_get_contents('php://input');
+            
+            // Try to parse as JSON first
+            if (!empty($rawInput)) {
+                $jsonInput = json_decode($rawInput, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonInput)) {
+                    $input = $jsonInput;
+                }
+            }
+            
+            // Merge with $_POST (FormData will be here)
+            $data = array_merge($input, $_POST);
+            
+            $bookingId = $data['booking_id'] ?? null;
             
             if (!$bookingId || !is_numeric($bookingId)) {
                 http_response_code(400);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Invalid booking ID']);
+                ob_end_flush();
                 exit;
             }
             
@@ -3413,40 +5790,68 @@ class AdminController extends Controller {
             
             $updateData = [];
             if (in_array('measurement_height', $existingColumns)) {
-                $updateData['measurement_height'] = floatval($input['height'] ?? $_POST['height'] ?? 0);
+                $updateData['measurement_height'] = floatval($data['height'] ?? 0);
             }
             if (in_array('measurement_width', $existingColumns)) {
-                $updateData['measurement_width'] = floatval($input['width'] ?? $_POST['width'] ?? 0);
+                $updateData['measurement_width'] = floatval($data['width'] ?? 0);
             }
             if (in_array('measurement_thickness', $existingColumns)) {
-                $updateData['measurement_thickness'] = floatval($input['thickness'] ?? $_POST['thickness'] ?? 0);
+                $updateData['measurement_thickness'] = floatval($data['thickness'] ?? 0);
             }
             if (in_array('measurement_custom', $existingColumns)) {
-                $updateData['measurement_custom'] = $input['custom_measurements'] ?? $_POST['custom_measurements'] ?? '';
+                $updateData['measurement_custom'] = $data['custom_measurements'] ?? '';
             }
             if (in_array('measurement_notes', $existingColumns)) {
-                $updateData['measurement_notes'] = $input['notes'] ?? $_POST['notes'] ?? '';
+                $updateData['measurement_notes'] = $data['notes'] ?? '';
             }
             
             if (empty($updateData)) {
-                // Store in calculation_notes if no dedicated columns
-                $notes = "Measurements - Height: " . ($input['height'] ?? $_POST['height'] ?? 'N/A') . 
-                         "cm, Width: " . ($input['width'] ?? $_POST['width'] ?? 'N/A') . 
-                         "cm, Thickness: " . ($input['thickness'] ?? $_POST['thickness'] ?? 'N/A') . 
-                         "cm. " . ($input['custom_measurements'] ?? $_POST['custom_measurements'] ?? '');
-                $updateData['calculation_notes'] = $notes;
+                // Store in calculation_notes if no dedicated columns AND if the column exists
+                if (in_array('calculation_notes', $existingColumns)) {
+                    $notes = "Measurements - Height: " . ($data['height'] ?? 'N/A') . 
+                             "cm, Width: " . ($data['width'] ?? 'N/A') . 
+                             "cm, Thickness: " . ($data['thickness'] ?? 'N/A') . 
+                             "cm. " . ($data['custom_measurements'] ?? '');
+                    $updateData['calculation_notes'] = $notes;
+                } else {
+                    // If no columns exist at all, at least try to save something
+                    // This should not happen, but handle gracefully
+                    error_log("Warning: No measurement columns found in bookings table for booking ID: " . $bookingId);
+                }
             }
             
             if (in_array('updated_at', $existingColumns)) {
                 $updateData['updated_at'] = date('Y-m-d H:i:s');
             }
             
+            // If no columns to update, still return success (data might be stored elsewhere or not needed)
+            if (empty($updateData)) {
+                ob_clean();
+                echo json_encode(['success' => true, 'message' => 'Measurements processed (no dedicated columns found)']);
+                ob_end_flush();
+                exit;
+            }
+            
             $updateFields = [];
             $updateValues = [];
             foreach ($updateData as $field => $value) {
-                $updateFields[] = "$field = ?";
-                $updateValues[] = $value;
+                // Double-check that the field exists before adding to update
+                if (in_array($field, $existingColumns)) {
+                    $updateFields[] = "$field = ?";
+                    $updateValues[] = $value;
+                } else {
+                    error_log("Warning: Attempted to update non-existent column '$field' in bookings table");
+                }
             }
+            
+            // If after filtering we have no valid fields, return success anyway
+            if (empty($updateFields)) {
+                ob_clean();
+                echo json_encode(['success' => true, 'message' => 'Measurements processed (no valid columns to update)']);
+                ob_end_flush();
+                exit;
+            }
+            
             $updateValues[] = $bookingId;
             
             $updateQuery = "UPDATE bookings SET " . implode(', ', $updateFields) . " WHERE id = ?";
@@ -3454,15 +5859,22 @@ class AdminController extends Controller {
             $result = $updateStmt->execute($updateValues);
             
             if ($result) {
+                ob_clean();
                 echo json_encode(['success' => true, 'message' => 'Measurements saved successfully']);
+                ob_end_flush();
             } else {
                 http_response_code(500);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Failed to save measurements']);
+                ob_end_flush();
             }
         } catch (Exception $e) {
             error_log("Error in saveMeasurements: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
+            ob_clean();
             echo json_encode(['success' => false, 'message' => 'Error saving measurements: ' . $e->getMessage()]);
+            ob_end_flush();
         }
         exit;
     }
@@ -3472,21 +5884,43 @@ class AdminController extends Controller {
      * Saves damage/defect records during inspection
      */
     public function saveDamages() {
+        // Start output buffering to prevent any output before JSON
+        ob_start();
         header('Content-Type: application/json');
         
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Check request method
+        $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if ($requestMethod !== 'POST') {
             http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Method not allowed. Expected POST, got ' . $requestMethod]);
+            ob_end_flush();
             exit;
         }
         
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $bookingId = $input['booking_id'] ?? $_POST['booking_id'] ?? null;
+            // Handle both JSON and FormData
+            $input = [];
+            $rawInput = file_get_contents('php://input');
+            
+            // Try to parse as JSON first
+            if (!empty($rawInput)) {
+                $jsonInput = json_decode($rawInput, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonInput)) {
+                    $input = $jsonInput;
+                }
+            }
+            
+            // Merge with $_POST (FormData will be here)
+            $data = array_merge($input, $_POST);
+            
+            $bookingId = $data['booking_id'] ?? null;
             
             if (!$bookingId || !is_numeric($bookingId)) {
                 http_response_code(400);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Invalid booking ID']);
+                ob_end_flush();
                 exit;
             }
             
@@ -3499,10 +5933,17 @@ class AdminController extends Controller {
                 $existingColumns[] = $row['Field'];
             }
             
-            $damageTypes = $input['damage_types'] ?? $_POST['damage_types'] ?? [];
-            $damageDescription = $input['description'] ?? $_POST['description'] ?? '';
-            $damageLocation = $input['location'] ?? $_POST['location'] ?? '';
-            $damageSeverity = $input['severity'] ?? $_POST['severity'] ?? 'moderate';
+            // Handle damage_types - could be array or comma-separated string
+            $damageTypes = $data['damage_types'] ?? [];
+            if (is_string($damageTypes)) {
+                $damageTypes = explode(',', $damageTypes);
+                $damageTypes = array_map('trim', $damageTypes);
+                $damageTypes = array_filter($damageTypes);
+            }
+            
+            $damageDescription = $data['description'] ?? '';
+            $damageLocation = $data['location'] ?? '';
+            $damageSeverity = $data['severity'] ?? 'moderate';
             
             $updateData = [];
             
@@ -3521,6 +5962,16 @@ class AdminController extends Controller {
             }
             if (in_array('damage_severity', $existingColumns)) {
                 $updateData['damage_severity'] = $damageSeverity;
+            }
+            // Save damage_types as comma-separated string or JSON
+            if (in_array('damage_types', $existingColumns)) {
+                if (is_array($damageTypes) && !empty($damageTypes)) {
+                    $updateData['damage_types'] = implode(', ', $damageTypes);
+                } elseif (is_string($damageTypes) && !empty($damageTypes)) {
+                    $updateData['damage_types'] = $damageTypes;
+                } else {
+                    $updateData['damage_types'] = 'None';
+                }
             }
             
             // Always update calculation_notes with damage info
@@ -3541,7 +5992,9 @@ class AdminController extends Controller {
             
             if (empty($updateData)) {
                 http_response_code(500);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'No valid columns found to update']);
+                ob_end_flush();
                 exit;
             }
             
@@ -3558,15 +6011,22 @@ class AdminController extends Controller {
             $result = $updateStmt->execute($updateValues);
             
             if ($result) {
+                ob_clean();
                 echo json_encode(['success' => true, 'message' => 'Damage record saved successfully']);
+                ob_end_flush();
             } else {
                 http_response_code(500);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Failed to save damage record']);
+                ob_end_flush();
             }
         } catch (Exception $e) {
             error_log("Error in saveDamages: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
+            ob_clean();
             echo json_encode(['success' => false, 'message' => 'Error saving damages: ' . $e->getMessage()]);
+            ob_end_flush();
         }
         exit;
     }
@@ -3576,21 +6036,43 @@ class AdminController extends Controller {
      * Saves materials/fabrics used during inspection
      */
     public function saveMaterials() {
+        // Start output buffering to prevent any output before JSON
+        ob_start();
         header('Content-Type: application/json');
         
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Check request method
+        $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if ($requestMethod !== 'POST') {
             http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Method not allowed. Expected POST, got ' . $requestMethod]);
+            ob_end_flush();
             exit;
         }
         
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $bookingId = $input['booking_id'] ?? $_POST['booking_id'] ?? null;
+            // Handle both JSON and FormData
+            $input = [];
+            $rawInput = file_get_contents('php://input');
+            
+            // Try to parse as JSON first
+            if (!empty($rawInput)) {
+                $jsonInput = json_decode($rawInput, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonInput)) {
+                    $input = $jsonInput;
+                }
+            }
+            
+            // Merge with $_POST (FormData will be here)
+            $data = array_merge($input, $_POST);
+            
+            $bookingId = $data['booking_id'] ?? null;
             
             if (!$bookingId || !is_numeric($bookingId)) {
                 http_response_code(400);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Invalid booking ID']);
+                ob_end_flush();
                 exit;
             }
             
@@ -3603,12 +6085,13 @@ class AdminController extends Controller {
                 $existingColumns[] = $row['Field'];
             }
             
-            $fabricType = $input['fabric_type'] ?? $_POST['fabric_type'] ?? '';
-            $meters = floatval($input['meters'] ?? $_POST['meters'] ?? 0);
-            $foamReplacement = $input['foam_replacement'] ?? $_POST['foam_replacement'] ?? 'none';
-            $foamThickness = floatval($input['foam_thickness'] ?? $_POST['foam_thickness'] ?? 0);
-            $accessories = $input['accessories'] ?? $_POST['accessories'] ?? [];
-            $notes = $input['notes'] ?? $_POST['notes'] ?? '';
+            // Handle field names - support both 'fabric_type' and 'material_fabric_type'
+            $fabricType = $data['fabric_type'] ?? $data['material_fabric_type'] ?? '';
+            $meters = floatval($data['meters'] ?? $data['material_meters'] ?? 0);
+            $foamReplacement = $data['foam_replacement'] ?? $data['material_foam'] ?? 'none';
+            $foamThickness = floatval($data['foam_thickness'] ?? $data['material_foam_thickness'] ?? 0);
+            $accessories = $data['accessories'] ?? [];
+            $notes = $data['notes'] ?? $data['material_notes'] ?? '';
             
             $updateData = [];
             
@@ -3662,7 +6145,9 @@ class AdminController extends Controller {
             
             if (empty($updateData)) {
                 http_response_code(500);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'No valid columns found to update']);
+                ob_end_flush();
                 exit;
             }
             
@@ -3679,15 +6164,22 @@ class AdminController extends Controller {
             $result = $updateStmt->execute($updateValues);
             
             if ($result) {
+                ob_clean();
                 echo json_encode(['success' => true, 'message' => 'Materials saved successfully']);
+                ob_end_flush();
             } else {
                 http_response_code(500);
+                ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Failed to save materials']);
+                ob_end_flush();
             }
         } catch (Exception $e) {
             error_log("Error in saveMaterials: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
+            ob_clean();
             echo json_encode(['success' => false, 'message' => 'Error saving materials: ' . $e->getMessage()]);
+            ob_end_flush();
         }
         exit;
     }
@@ -3983,6 +6475,113 @@ class AdminController extends Controller {
     /**
      * Test Email Configuration
      */
+    /**
+     * Test Auto Status Update Service
+     * Access via: /admin/testAutoStatusUpdate
+     */
+    public function testAutoStatusUpdate() {
+        header('Content-Type: text/html; charset=utf-8');
+        
+        echo "<!DOCTYPE html><html><head><title>Test Auto Status Update</title>";
+        echo "<style>body{font-family:Arial,sans-serif;padding:20px;} .success{color:green;} .error{color:red;} .info{color:blue;} pre{background:#f5f5f5;padding:10px;border:1px solid #ddd;} table{border-collapse:collapse;margin:10px 0;} th,td{border:1px solid #ddd;padding:8px;text-align:left;}</style>";
+        echo "</head><body>";
+        echo "<h1>Auto Status Update Test</h1>";
+        
+        try {
+            echo "<h2>Running Auto Status Update Service...</h2>";
+            
+            $stats = AutoStatusUpdateService::run();
+            
+            echo "<div class='info'><strong>Statistics:</strong></div>";
+            echo "<ul>";
+            echo "<li><strong>Bookings Checked:</strong> {$stats['checked']}</li>";
+            echo "<li><strong>Bookings Updated:</strong> {$stats['updated']}</li>";
+            echo "<li><strong>Errors:</strong> {$stats['errors']}</li>";
+            if (isset($stats['error_message'])) {
+                echo "<li><strong>Error Message:</strong> <span class='error'>{$stats['error_message']}</span></li>";
+            }
+            echo "</ul>";
+            
+            if (!empty($stats['details'])) {
+                echo "<h3>Updated Bookings:</h3>";
+                echo "<table>";
+                echo "<tr><th>Booking ID</th><th>Old Status</th><th>New Status</th><th>Pickup Date</th></tr>";
+                foreach ($stats['details'] as $detail) {
+                    echo "<tr>";
+                    echo "<td>#{$detail['booking_id']}</td>";
+                    echo "<td>{$detail['old_status']}</td>";
+                    echo "<td class='success'><strong>{$detail['new_status']}</strong></td>";
+                    echo "<td>{$detail['pickup_date']}</td>";
+                    echo "</tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "<div class='info'>No bookings were updated.</div>";
+            }
+            
+            // Show current bookings that should be updated
+            echo "<h3>Current Bookings Status (for debugging):</h3>";
+            $db = Database::getInstance()->getConnection();
+            $today = date('Y-m-d');
+            
+            $sql = "SELECT id, status, pickup_date, service_option 
+                    FROM bookings 
+                    WHERE pickup_date IS NOT NULL 
+                    AND pickup_date != ''
+                    AND (
+                        DATE(pickup_date) <= :today
+                        OR pickup_date <= :todayDateTime
+                    )
+                    AND status IN ('approved', 'for_pickup')
+                    ORDER BY pickup_date ASC
+                    LIMIT 20";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([
+                'today' => $today,
+                'todayDateTime' => date('Y-m-d H:i:s')
+            ]);
+            $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (empty($bookings)) {
+                echo "<div class='info'>No bookings found with pickup_date <= today and status 'approved' or 'for_pickup'.</div>";
+            } else {
+                echo "<table>";
+                echo "<tr><th>Booking ID</th><th>Status</th><th>Pickup Date</th><th>Service Option</th><th>Should Update?</th></tr>";
+                foreach ($bookings as $booking) {
+                    $shouldUpdate = '';
+                    if ($booking['status'] === 'approved' && in_array(strtolower($booking['service_option']), ['pickup', 'both'])) {
+                        $shouldUpdate = '<span class="success">Yes → for_pickup</span>';
+                    } elseif ($booking['status'] === 'for_pickup') {
+                        $shouldUpdate = '<span class="success">Yes → picked_up → to_inspect</span>';
+                    } else {
+                        $shouldUpdate = '<span class="error">No</span>';
+                    }
+                    
+                    echo "<tr>";
+                    echo "<td>#{$booking['id']}</td>";
+                    echo "<td>{$booking['status']}</td>";
+                    echo "<td>{$booking['pickup_date']}</td>";
+                    echo "<td>{$booking['service_option']}</td>";
+                    echo "<td>{$shouldUpdate}</td>";
+                    echo "</tr>";
+                }
+                echo "</table>";
+            }
+            
+            echo "<hr>";
+            echo "<p><strong>Current Date/Time:</strong> " . date('Y-m-d H:i:s') . "</p>";
+            echo "<p><a href='javascript:location.reload()'>Refresh</a> | <a href='" . BASE_URL . "admin/allBookings'>Back to All Bookings</a></p>";
+            
+        } catch (Exception $e) {
+            echo "<div class='error'><strong>Error:</strong> " . htmlspecialchars($e->getMessage()) . "</div>";
+            echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
+        }
+        
+        echo "</body></html>";
+        exit;
+    }
+    
     public function testEmail() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -4634,6 +7233,311 @@ class AdminController extends Controller {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
+     * Admin Profile
+     */
+    public function profile() {
+        $userModel = $this->model('User');
+        $userId = $this->currentUser()['id'];
+        $userDetails = $userModel->getById($userId);
+        
+        // Get user's profile images with fallback
+        // Check if database columns exist, if not create them
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Check and add cover_image column if it doesn't exist
+            $checkCover = $db->query("SHOW COLUMNS FROM users LIKE 'cover_image'");
+            if ($checkCover->rowCount() == 0) {
+                $db->exec("ALTER TABLE users ADD COLUMN cover_image VARCHAR(255) DEFAULT NULL");
+            }
+            
+            // Check and add profile_image column if it doesn't exist
+            $checkProfile = $db->query("SHOW COLUMNS FROM users LIKE 'profile_image'");
+            if ($checkProfile->rowCount() == 0) {
+                $db->exec("ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) DEFAULT NULL");
+            }
+            
+            // Refresh user details after adding columns
+            $userDetails = $userModel->getById($userId);
+        } catch (Exception $e) {
+            error_log('Error checking/adding columns: ' . $e->getMessage());
+            // Continue anyway - columns might already exist
+        }
+        
+        // Set default images
+        $coverImage = BASE_URL . 'assets/images/default-cover.svg';
+        $profileImage = BASE_URL . 'startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg';
+        
+        if (!empty($userDetails['cover_image'])) {
+            $coverImagePath = $userDetails['cover_image'];
+            // Check if file exists
+            if (file_exists(ROOT . DS . $coverImagePath)) {
+                $coverImage = BASE_URL . $coverImagePath;
+            }
+        }
+        
+        if (!empty($userDetails['profile_image'])) {
+            $profileImagePath = $userDetails['profile_image'];
+            // Check if file exists
+            if (file_exists(ROOT . DS . $profileImagePath)) {
+                $profileImage = BASE_URL . $profileImagePath . '?t=' . time(); // Add cache busting
+            }
+        }
+        
+        // Merge userDetails with currentUser to ensure all fields are available
+        $currentUser = $this->currentUser();
+        $user = array_merge($currentUser ?? [], $userDetails ?? []);
+        
+        // Update session with latest user data from database to ensure consistency
+        $_SESSION['user'] = $userDetails;
+        
+        $data = [
+            'title' => 'My Profile - ' . APP_NAME,
+            'user' => $user, // Use full user data from database
+            'userDetails' => $userDetails,
+            'coverImage' => $coverImage,
+            'profileImage' => $profileImage
+        ];
+        
+        $this->view('admin/profile', $data);
+    }
+    
+    /**
+     * Update Admin Profile
+     */
+    public function updateProfile() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('admin/profile');
+        }
+        
+        $userId = $this->currentUser()['id'];
+        $userModel = $this->model('User');
+        
+        // Get form data - check for both 'name' and 'fullname' columns
+        $updateData = [];
+        
+        // Check which column exists
+        try {
+            $db = Database::getInstance()->getConnection();
+            $checkFullname = $db->query("SHOW COLUMNS FROM users LIKE 'fullname'");
+            $hasFullname = $checkFullname->rowCount() > 0;
+            
+            if ($hasFullname) {
+                $updateData['fullname'] = trim($_POST['fullname'] ?? '');
+            } else {
+                $updateData['name'] = trim($_POST['fullname'] ?? trim($_POST['name'] ?? ''));
+            }
+        } catch (Exception $e) {
+            // Default to 'name' if check fails
+            $updateData['name'] = trim($_POST['fullname'] ?? trim($_POST['name'] ?? ''));
+        }
+        
+        $updateData['email'] = trim($_POST['email'] ?? '');
+        $updateData['phone'] = trim($_POST['phone'] ?? '');
+        
+        // Validate required fields
+        if (empty($updateData['fullname'] ?? $updateData['name'] ?? '')) {
+            $_SESSION['error'] = 'Full name is required';
+            $this->redirect('admin/profile');
+        }
+        
+        if (empty($updateData['email'])) {
+            $_SESSION['error'] = 'Email is required';
+            $this->redirect('admin/profile');
+        }
+        
+        // Check if email is already taken by another user
+        $existingUser = $userModel->findByEmail($updateData['email']);
+        if ($existingUser && $existingUser['id'] != $userId) {
+            $_SESSION['error'] = 'Email is already taken by another user';
+            $this->redirect('admin/profile');
+        }
+        
+        // Update user
+        $result = $userModel->updateUser($userId, $updateData);
+        
+        if ($result) {
+            // Update session with new data
+            $updatedUser = $userModel->getById($userId);
+            $_SESSION['user'] = $updatedUser;
+            
+            $_SESSION['success'] = 'Profile updated successfully!';
+        } else {
+            $_SESSION['error'] = 'Failed to update profile. Please try again.';
+        }
+        
+        $this->redirect('admin/profile');
+    }
+    
+    /**
+     * Change Admin Password
+     */
+    public function changePassword() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('admin/profile');
+        }
+        
+        $userId = $this->currentUser()['id'];
+        $userModel = $this->model('User');
+        $user = $userModel->getById($userId);
+        
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        // Validate
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            $_SESSION['error'] = 'All password fields are required';
+            $this->redirect('admin/profile');
+        }
+        
+        // Verify current password
+        if (!password_verify($currentPassword, $user['password'])) {
+            $_SESSION['error'] = 'Current password is incorrect';
+            $this->redirect('admin/profile');
+        }
+        
+        // Check if new password matches confirmation
+        if ($newPassword !== $confirmPassword) {
+            $_SESSION['error'] = 'New password and confirmation do not match';
+            $this->redirect('admin/profile');
+        }
+        
+        // Check password strength (minimum 6 characters)
+        if (strlen($newPassword) < 6) {
+            $_SESSION['error'] = 'New password must be at least 6 characters long';
+            $this->redirect('admin/profile');
+        }
+        
+        // Update password
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $result = $userModel->updateUser($userId, ['password' => $hashedPassword]);
+        
+        if ($result) {
+            $_SESSION['success'] = 'Password changed successfully!';
+        } else {
+            $_SESSION['error'] = 'Failed to change password. Please try again.';
+        }
+        
+        $this->redirect('admin/profile');
+    }
+    
+    /**
+     * Upload Profile Images (AJAX)
+     */
+    public function uploadProfileImages() {
+        header('Content-Type: application/json');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+            exit;
+        }
+        
+        $userId = $this->currentUser()['id'];
+        $uploadDir = ROOT . DS . 'assets' . DS . 'uploads' . DS . 'profiles' . DS;
+        
+        // Create upload directory if it doesn't exist
+        if (!file_exists($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true)) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to create upload directory']);
+                exit;
+            }
+        }
+        
+        $errors = [];
+        $uploadedFiles = [];
+        
+        // Handle cover image upload
+        if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
+            $coverImage = $_FILES['cover_image'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (in_array($coverImage['type'], $allowedTypes)) {
+                $coverFileName = 'cover_' . $userId . '_' . time() . '.' . pathinfo($coverImage['name'], PATHINFO_EXTENSION);
+                $coverPath = $uploadDir . $coverFileName;
+                
+                if (move_uploaded_file($coverImage['tmp_name'], $coverPath)) {
+                    $uploadedFiles['cover_image'] = 'assets/uploads/profiles/' . $coverFileName;
+                } else {
+                    $errors[] = 'Failed to upload cover image';
+                }
+            } else {
+                $errors[] = 'Invalid cover image format. Allowed: JPG, PNG, GIF, WEBP';
+            }
+        }
+        
+        // Handle profile image upload
+        if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+            $profileImage = $_FILES['profile_image'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (in_array($profileImage['type'], $allowedTypes)) {
+                $profileFileName = 'profile_' . $userId . '_' . time() . '.' . pathinfo($profileImage['name'], PATHINFO_EXTENSION);
+                $profilePath = $uploadDir . $profileFileName;
+                
+                if (move_uploaded_file($profileImage['tmp_name'], $profilePath)) {
+                    $uploadedFiles['profile_image'] = 'assets/uploads/profiles/' . $profileFileName;
+                } else {
+                    $errors[] = 'Failed to upload profile image';
+                }
+            } else {
+                $errors[] = 'Invalid profile image format. Allowed: JPG, PNG, GIF, WEBP';
+            }
+        }
+        
+        if (empty($errors) && !empty($uploadedFiles)) {
+            try {
+                $userModel = $this->model('User');
+                $updateData = [];
+                
+                if (isset($uploadedFiles['cover_image'])) {
+                    $updateData['cover_image'] = $uploadedFiles['cover_image'];
+                }
+                if (isset($uploadedFiles['profile_image'])) {
+                    $updateData['profile_image'] = $uploadedFiles['profile_image'];
+                }
+                
+                if (!empty($updateData)) {
+                    $result = $userModel->updateUser($userId, $updateData);
+                    
+                    if ($result) {
+                        // Update session
+                        $updatedUser = $userModel->getById($userId);
+                        $_SESSION['user'] = $updatedUser;
+                        
+                        echo json_encode([
+                            'success' => true, 
+                            'message' => 'Image uploaded successfully',
+                            'files' => $uploadedFiles
+                        ]);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'Failed to update user profile']);
+                    }
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'No files to upload']);
+                }
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Error: ' . $e->getMessage()
+                ]);
+            }
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false, 
+                'message' => !empty($errors) ? implode(', ', $errors) : 'No files uploaded'
+            ]);
         }
         exit;
     }

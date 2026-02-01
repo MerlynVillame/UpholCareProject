@@ -72,7 +72,7 @@ $totalExpensesFormatted = number_format($totalExpenses / 1000, 0) . 'K';
 #yearSearch {
     font-size: 1rem;
     font-weight: 600;
-    border: 2px solid #4e73df;
+    border: 2px solid var(--uphol-blue);
     transition: all 0.3s ease;
 }
 
@@ -83,13 +83,13 @@ $totalExpensesFormatted = number_format($totalExpenses / 1000, 0) . 'K';
 
 .input-group-append .btn-primary {
     border-radius: 0 0.35rem 0.35rem 0;
-    border: 2px solid #4e73df;
+    border: 2px solid var(--uphol-blue);
     border-left: none;
     transition: all 0.3s ease;
 }
 
 .input-group-append .btn-primary:hover {
-    background: linear-gradient(180deg, #2e59d9 10%, #4e73df 100%);
+    background: linear-gradient(180deg, var(--uphol-navy) 10%, var(--uphol-blue) 100%);
     transform: scale(1.05);
 }
 
@@ -283,7 +283,7 @@ $totalExpensesFormatted = number_format($totalExpenses / 1000, 0) . 'K';
 }
 
 #modalBookingsTable tbody tr:hover {
-    border-left-color: #4e73df;
+    border-left-color: var(--uphol-blue);
 }
 
 /* Smooth modal transitions */
@@ -486,16 +486,8 @@ body.modal-open {
 </style>
 
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-3">
+<div class="mb-3">
     <h1 class="h3 mb-2 text-gray-800">Sales & Revenue Report</h1>
-    <div class="d-flex align-items-center">
-        <button class="btn btn-secondary btn-sm mr-2" onclick="window.print()">
-            <i class="fas fa-download"></i> Export PDF
-        </button>
-        <button class="btn btn-success btn-sm" onclick="refreshData()">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-    </div>
 </div>
 
 <!-- YEAR SEARCH - PROMINENT -->
@@ -504,7 +496,7 @@ body.modal-open {
         <div class="row align-items-center">
             <div class="col-md-6">
                 <h5 class="mb-2" style="color: #2c3e50; font-weight: 700;">
-                    <i class="fas fa-calendar-alt mr-2" style="color: #4e73df;"></i>
+                    <i class="fas fa-calendar-alt mr-2" style="color: var(--uphol-blue);"></i>
                     Search by Year
                 </h5>
                 <p class="text-muted mb-0 small">
@@ -521,9 +513,9 @@ body.modal-open {
                            value="<?php echo $selectedYear ?? date('Y'); ?>"
                            min="2000" 
                            max="<?php echo date('Y') + 5; ?>"
-                           style="border: 2px solid #4e73df; font-size: 1.1rem; font-weight: 600;">
+                           style="border: 2px solid var(--uphol-blue); font-size: 1.1rem; font-weight: 600;">
                     <div class="input-group-append">
-                        <button class="btn btn-primary btn-lg" type="button" onclick="searchByYear()" style="padding: 0.5rem 2rem;">
+                        <button class="btn btn-primary-admin btn-lg" type="button" onclick="searchByYear()" style="padding: 0.5rem 2rem;">
                             <i class="fas fa-search mr-2"></i> Search Year
                         </button>
                     </div>
@@ -536,7 +528,7 @@ body.modal-open {
     </div>
 </div>
 
-<div class="alert alert-info mb-4" style="border-left: 5px solid #4e73df;">
+<div class="alert alert-info mb-4" style="border-left: 5px solid var(--uphol-blue);">
     <div class="row align-items-center">
         <div class="col-md-6">
             <h6 class="mb-0">
@@ -545,7 +537,7 @@ body.modal-open {
             </h6>
             <small class="text-muted">
                 <i class="fas fa-check-circle text-success mr-1"></i>
-                Based on <strong>completed bookings only</strong> (status = completed & payment = paid)
+                Based on <strong>completed/paid and delivered/paid bookings</strong> (status = completed & payment = paid, or status = delivered_and_paid)
             </small>
         </div>
         <div class="col-md-6 text-right">
@@ -554,7 +546,7 @@ body.modal-open {
                 <?php 
                 $years = $availableYears ?? [date('Y')];
                 if (empty($years)) {
-                    echo '<span class="badge badge-warning">No data yet - Please seed test data</span>';
+                    echo '<span class="text-warning font-weight-bold">No data yet - Please seed test data</span>';
                 } else {
                     echo implode(', ', $years); 
                 }
@@ -698,7 +690,7 @@ body.modal-open {
 
 <!-- Monthly Data Table -->
 <div class="card shadow mb-4" id="monthly-breakdown">
-    <div class="card-header py-3" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); color: white;">
+    <div class="card-header py-3" style="background: linear-gradient(135deg, var(--uphol-navy) 0%, var(--uphol-blue) 100%); color: white;">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="m-0 font-weight-bold">
                 <i class="fas fa-table mr-2"></i>Monthly Breakdown - Year <?php echo $selectedYear ?? date('Y'); ?>
@@ -715,8 +707,8 @@ body.modal-open {
             <table class="table table-bordered table-hover mb-0" id="monthlyTable" width="100%" cellspacing="0" data-skip-datatable="true">
                 <thead style="background: linear-gradient(135deg, #f8f9fc 0%, #e7e9ed 100%); position: sticky; top: 0; z-index: 10;">
                     <tr>
-                        <th style="padding: 1rem; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: #2c3e50; border-bottom: 3px solid #4e73df;">
-                            <i class="fas fa-calendar mr-2" style="color: #4e73df;"></i>Month
+                        <th style="padding: 1rem; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: #2c3e50; border-bottom: 3px solid var(--uphol-blue);">
+                            <i class="fas fa-calendar mr-2" style="color: var(--uphol-blue);"></i>Month
                         </th>
                         <th class="text-center" style="padding: 1rem; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: #2c3e50; border-bottom: 3px solid #4e73df;">
                             <i class="fas fa-shopping-cart mr-2" style="color: #4e73df;"></i>Orders
@@ -777,15 +769,14 @@ body.modal-open {
                         </td>
                         <td class="text-center" style="padding: 0.75rem;">
                             <?php if ($hasData): ?>
-                                <span class="badge" style="font-size: 0.9rem; padding: 0.5rem 1rem; background: <?php 
-                                    echo $profitMargin > 70 ? 'linear-gradient(135deg, #1cc88a 0%, #17a673 100%)' : 
-                                        ($profitMargin > 60 ? 'linear-gradient(135deg, #f6c23e 0%, #dda20a 100%)' : 
-                                        'linear-gradient(135deg, #858796 0%, #6c757d 100%)'); 
-                                ?>; color: white; font-weight: 700;">
+                                <span class="text-<?php 
+                                    echo $profitMargin > 70 ? 'success' : 
+                                        ($profitMargin > 60 ? 'warning' : 'secondary'); 
+                                ?> font-weight-bold" style="font-size: 0.9rem;">
                                     <?php echo number_format($profitMargin, 2); ?>%
                                     </span>
                                     <?php else: ?>
-                                <span class="badge badge-secondary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">0.00%</span>
+                                <span class="text-secondary font-weight-bold" style="font-size: 0.9rem;">0.00%</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -1064,9 +1055,7 @@ var summaryChart = new Chart(ctxSummary, {
     }
 });
 
-function refreshData() {
-    location.reload();
-}
+// refreshData function removed - Refresh button has been removed
 
 // Scroll to section function
 function scrollToSection(sectionId) {
@@ -1489,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); color: white;">
                 <h5 class="modal-title" id="monthBookingsModalLabel">
-                    <i class="fas fa-calendar-alt mr-2"></i><span id="modalMonthName">Month</span> - Completed Bookings
+                    <i class="fas fa-calendar-alt mr-2"></i><span id="modalMonthName">Month</span> - Completed & Delivered Bookings
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -1534,7 +1523,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card shadow">
                     <div class="card-header py-3 bg-white">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-list mr-2"></i>All Completed Bookings
+                            <i class="fas fa-list mr-2"></i>All Completed & Delivered Bookings
                         </h6>
                         <small class="text-muted">Click on any booking to view detailed item information</small>
                     </div>
@@ -1700,31 +1689,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-lg-12">
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h6 class="mb-0 text-muted">
-                            <i class="fas fa-info-circle mr-2"></i>Need to add more data?
-                        </h6>
-                        <small class="text-muted">Generate test data for different years to compare trends</small>
-                    </div>
-                    <div class="col-md-6 text-right">
-                        <a href="<?php echo BASE_URL; ?>database/" class="btn btn-primary">
-                            <i class="fas fa-database mr-2"></i>Data Management
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>database/seed_2024_2025_data.php" class="btn btn-success">
-                            <i class="fas fa-bolt mr-2"></i>Quick Seed Data
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <?php endif; ?>
 
 </div>

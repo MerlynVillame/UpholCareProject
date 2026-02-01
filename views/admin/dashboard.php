@@ -5,7 +5,7 @@
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Admin Dashboard</h1>
-    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#generateReportModal"><i
+    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary-admin shadow-sm" data-toggle="modal" data-target="#generateReportModal"><i
             class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
 </div>
 
@@ -206,7 +206,7 @@
                             <?php if (!empty($pendingBookings)): ?>
                                 <?php foreach ($pendingBookings as $booking): ?>
                                     <tr>
-                                        <td><span class="badge badge-warning"><?php echo htmlspecialchars($booking['booking_number']); ?></span></td>
+                                        <td><span class="text-warning font-weight-bold"><?php echo htmlspecialchars($booking['booking_number']); ?></span></td>
                                         <td><?php echo htmlspecialchars($booking['customer_name']); ?></td>
                                         <td><?php echo htmlspecialchars($booking['service_name']); ?></td>
                                         <td>₱<?php echo number_format($booking['total_amount'], 2); ?></td>
@@ -247,7 +247,7 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">Recent Bookings</h6>
-                <a href="<?php echo BASE_URL; ?>admin/allBookings" class="btn btn-sm btn-primary">View All</a>
+                <a href="<?php echo BASE_URL; ?>admin/allBookings" class="btn btn-sm btn-primary-admin">View All</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -267,7 +267,7 @@
                             <?php if (!empty($recentBookings)): ?>
                                 <?php foreach ($recentBookings as $booking): ?>
                                     <tr>
-                                        <td><span class="badge badge-info"><?php echo htmlspecialchars($booking['booking_number']); ?></span></td>
+                                        <td><span class="text-info font-weight-bold"><?php echo htmlspecialchars($booking['booking_number']); ?></span></td>
                                         <td><?php echo htmlspecialchars($booking['customer_name']); ?></td>
                                         <td><?php echo htmlspecialchars($booking['service_name']); ?></td>
                                         <td>
@@ -282,7 +282,7 @@
                                                 default: $statusClass = 'badge-secondary';
                                             }
                                             ?>
-                                            <span class="badge <?php echo $statusClass; ?>"><?php echo ucfirst($booking['status']); ?></span>
+                                            <span class="text-<?php echo str_replace('badge-', '', $statusClass); ?> font-weight-bold"><?php echo ucfirst($booking['status']); ?></span>
                                         </td>
                                         <td><?php echo date('M d, Y', strtotime($booking['created_at'])); ?></td>
                                         <td>₱<?php echo number_format($booking['total_amount'], 2); ?></td>
@@ -317,7 +317,7 @@
 <div class="modal fade" id="generateReportModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: #4e73df; color: white; border: none;">
+            <div class="modal-header" style="background: var(--uphol-blue); color: white; border: none;">
                 <h5 class="modal-title" style="color: white; font-weight: 600;">
                     <i class="fas fa-file-download"></i> Generate Report
                 </h5>
@@ -464,7 +464,7 @@
                 <button type="button" class="btn btn-info" onclick="previewReport()">
                     <i class="fas fa-eye"></i> Preview
                 </button>
-                <button type="button" class="btn btn-primary" onclick="generateReport()">
+                <button type="button" class="btn btn-primary-admin" onclick="generateReport()">
                     <i class="fas fa-download"></i> Generate & Download
                 </button>
             </div>
@@ -485,8 +485,8 @@ var myAreaChart = new Chart(ctxArea, {
         datasets: [{
             label: "Revenue",
             lineTension: 0.3,
-            backgroundColor: "rgba(78, 115, 223, 0.05)",
-            borderColor: "rgba(78, 115, 223, 1)",
+            backgroundColor: "rgba(52, 152, 219, 0.05)",
+            borderColor: "rgba(52, 152, 219, 1)",
             pointRadius: 3,
             pointBackgroundColor: "rgba(78, 115, 223, 1)",
             pointBorderColor: "rgba(78, 115, 223, 1)",
@@ -574,8 +574,8 @@ var myPieChart = new Chart(ctxPie, {
         labels: ["Vehicle Covers", "Bedding", "Furniture"],
         datasets: [{
             data: [45, 30, 25],
-            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+            backgroundColor: ['#2C3E50', '#3498DB', '#E67E22', '#27AE60'],
+            hoverBackgroundColor: ['#1A252F', '#2980B9', '#D35400', '#219150'],
             hoverBorderColor: "rgba(234, 236, 244, 1)",
         }],
     },

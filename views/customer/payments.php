@@ -421,7 +421,7 @@
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-labelledby="receiptPreviewModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
                 <h5 class="modal-title" id="receiptPreviewModalLabel" style="font-size: 1.5rem; font-weight: 700;">
                     <i class="fas fa-receipt mr-2"></i>Preview Receipt (Bayronon)
                 </h5>
@@ -433,9 +433,9 @@
                 <div class="receipt-preview-container p-4" style="background: white; border: 2px solid #e3e6f0; border-radius: 10px;">
                     <!-- Company Header -->
                     <div class="text-center mb-4 pb-3 border-bottom border-primary">
-                        <h2 class="mb-2" style="color: #8B4513; font-weight: 700; font-size: 2rem;">UphoCare</h2>
+                        <h2 class="mb-2" style="color: #1F4E79; font-weight: 700; font-size: 2rem;">UphoCare</h2>
                         <p class="text-muted mb-1" style="font-size: 1.1rem; font-weight: 600;">Upholstery Services</p>
-                        <p class="mb-0" style="color: #8B4513; font-weight: 600; font-size: 1rem;">Preview Receipt - Bayronon</p>
+                        <p class="mb-0" style="color: #1F4E79; font-weight: 600; font-size: 1rem;">Preview Receipt - Bayronon</p>
                     </div>
 
                     <!-- Receipt Details -->
@@ -464,12 +464,12 @@
 
                     <!-- Payment Breakdown -->
                     <div class="mb-4">
-                        <h6 class="mb-3" style="color: #2c3e50; font-weight: 700; font-size: 1.1rem; border-bottom: 2px solid #8B4513; padding-bottom: 0.5rem;">
+                        <h6 class="mb-3" style="color: #2c3e50; font-weight: 700; font-size: 1.1rem; border-bottom: 2px solid #1F4E79; padding-bottom: 0.5rem;">
                             <i class="fas fa-list-ul mr-2"></i>Payment Breakdown
                         </h6>
                         <div class="table-responsive">
                             <table class="table table-bordered bg-white" style="font-size: 1rem; margin-bottom: 0;">
-                                <thead style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+                                <thead style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
                                     <tr>
                                         <th style="font-weight: 600; padding: 1rem;">Description</th>
                                         <th class="text-right" style="font-weight: 600; padding: 1rem; width: 180px;">Amount</th>
@@ -482,7 +482,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                <tfoot style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+                                <tfoot style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
                                     <tr>
                                         <th style="font-size: 1.2rem; font-weight: 700; padding: 1rem;">GRAND TOTAL (BAYRONON)</th>
                                         <th class="text-right" style="font-size: 1.3rem; font-weight: 700; padding: 1rem;">₱<span id="preview-final-total">0.00</span></th>

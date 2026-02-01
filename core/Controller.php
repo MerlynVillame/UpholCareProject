@@ -60,6 +60,14 @@ class Controller {
      */
     protected function requireLogin() {
         if (!$this->isLoggedIn()) {
+            // For AJAX requests, return JSON error instead of redirecting
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Authentication required. Please login.']);
+                exit;
+            }
+            
             $this->redirect('auth/login');
         }
     }
@@ -70,6 +78,14 @@ class Controller {
     protected function requireRole($role) {
         $this->requireLogin();
         if (!$this->hasRole($role)) {
+            // For AJAX requests, return JSON error instead of redirecting
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied. Insufficient privileges.']);
+                exit;
+            }
+            
             $this->redirect('error/unauthorized');
         }
     }
@@ -98,6 +114,15 @@ class Controller {
         // SECURITY: Verify user is actually an admin
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== ROLE_ADMIN) {
             error_log("SECURITY ALERT: Unauthorized admin access attempt by user: " . ($_SESSION['username'] ?? 'unknown'));
+            
+            // For AJAX requests, return JSON error instead of redirecting
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied. Admin privileges required.']);
+                exit;
+            }
+            
             $_SESSION['error'] = 'Access denied. Admin privileges required.';
             $this->redirect('auth/login');
         }
@@ -130,7 +155,7 @@ class Controller {
             error_log("User {$_SESSION['username']} logged out");
         }
         session_destroy();
-        $this->redirect('auth/login');
+        $this->redirect('home#login');
     }
 }
 

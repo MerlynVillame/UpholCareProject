@@ -68,32 +68,17 @@
                 </div>
                 <div class="col-md-2">
                     <div class="font-weight-bold">₱<?php echo number_format($booking['total_amount'] ?? 0, 2); ?></div>
-                    <div class="small text-muted"><?php echo ucfirst($booking['payment_status'] ?? 'unpaid'); ?></div>
+                    <?php if (isset($booking['payment_status']) && strtolower($booking['payment_status']) !== 'unpaid'): ?>
+                        <div class="small text-muted"><?php echo ucfirst($booking['payment_status']); ?></div>
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-2 text-right">
-                    <div class="btn-group" role="group" style="flex-wrap: wrap; gap: 3px;">
-                        <a href="<?php echo BASE_URL; ?>customer/viewBooking/<?php echo $booking['id']; ?>" 
-                           class="btn btn-sm btn-primary btn-action" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <?php
-                        $paymentStatus = strtolower($booking['payment_status'] ?? 'unpaid');
-                        $isPaid = in_array($paymentStatus, ['paid', 'paid_full_cash', 'paid_on_delivery_cod']);
-                        if ($isPaid): ?>
                             <button type="button" 
                                     class="btn btn-sm btn-success btn-action" 
-                                    onclick="viewReceipt(<?php echo $booking['id']; ?>)" 
-                                    title="View Receipt">
+                            onclick="viewOfficialReceipt(<?php echo $booking['id']; ?>)" 
+                            title="View Official Receipt">
                                 <i class="fas fa-receipt"></i>
                             </button>
-                            <a href="<?php echo BASE_URL; ?>customer/downloadReceipt/<?php echo $booking['id']; ?>" 
-                               class="btn btn-sm btn-info btn-action" 
-                               title="Download Receipt" 
-                               target="_blank">
-                                <i class="fas fa-download"></i>
-                            </a>
-                        <?php endif; ?>
-                    </div>
                 </div>
             </div>
         </div>
@@ -130,25 +115,49 @@
     font-size: 0.75rem !important;
     margin: 0 !important;
 }
+
+/* Modal sizing to respect sidebar */
+#officialReceiptModal .modal-dialog {
+    max-width: 900px !important;
+    width: 90% !important;
+    margin: 1.75rem auto !important;
+}
+
+/* Ensure modal doesn't overlap sidebar on larger screens */
+@media (min-width: 992px) {
+    #officialReceiptModal .modal-dialog {
+        max-width: 850px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
+
+/* On smaller screens, make it responsive */
+@media (max-width: 991.98px) {
+    #officialReceiptModal .modal-dialog {
+        max-width: 95% !important;
+        margin: 1rem auto !important;
+    }
+}
 </style>
 
-<!-- Receipt Modal -->
-<div class="modal fade" id="receiptModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
+<!-- Official Receipt Modal -->
+<div class="modal fade" id="officialReceiptModal" tabindex="-1" role="dialog" aria-labelledby="officialReceiptModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
-                <h5 class="modal-title" id="receiptModalLabel" style="font-size: 1.5rem; font-weight: 700;">
-                    <i class="fas fa-receipt mr-2"></i>Payment Receipt
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+                <h5 class="modal-title" id="officialReceiptModalLabel" style="font-size: 1.5rem; font-weight: 700;">
+                    <i class="fas fa-receipt mr-2"></i>Official Receipt
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="font-size: 2rem; opacity: 1;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding: 2rem; max-height: 70vh; overflow-y: auto;">
-                <div id="receiptContent">
+            <div class="modal-body" style="padding: 2rem; max-height: 80vh; overflow-y: auto;">
+                <div id="officialReceiptContent">
                     <div class="text-center">
                         <i class="fas fa-spinner fa-spin fa-2x"></i>
-                        <p>Loading receipt...</p>
+                        <p>Loading official receipt...</p>
                     </div>
                 </div>
             </div>
@@ -156,7 +165,7 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
                     <i class="fas fa-times mr-1"></i>Close
                 </button>
-                <button type="button" class="btn btn-primary" onclick="printReceipt()" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
+                <button type="button" class="btn btn-primary" onclick="printOfficialReceipt()" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
                     <i class="fas fa-print mr-1"></i>Print Receipt
                 </button>
             </div>
@@ -167,119 +176,226 @@
 <script>
 let currentReceiptBookingId = null;
 
-function viewReceipt(bookingId) {
+function viewOfficialReceipt(bookingId) {
     currentReceiptBookingId = bookingId;
     
     // Show modal
     if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
-        jQuery('#receiptModal').modal('show');
+        jQuery('#officialReceiptModal').modal('show');
     } else {
-        const modalEl = document.getElementById('receiptModal');
+        const modalEl = document.getElementById('officialReceiptModal');
         if (modalEl) new bootstrap.Modal(modalEl).show();
     }
     
-    // Load receipt data
-    fetch('<?php echo BASE_URL; ?>customer/getBookingDetails/' + bookingId)
+    // Show loading
+    document.getElementById('officialReceiptContent').innerHTML = 
+        '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading official receipt...</p></div>';
+    
+    // Load official receipt data
+    fetch('<?php echo BASE_URL; ?>customer/getOfficialReceipt/' + bookingId)
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.data) {
-                displayReceipt(data.data);
+            if (data.success && data.receipt) {
+                populateOfficialReceiptModal(data.receipt);
             } else {
-                document.getElementById('receiptContent').innerHTML = 
-                    '<div class="alert alert-danger">Error loading receipt: ' + (data.message || 'Unknown error') + '</div>';
+                document.getElementById('officialReceiptContent').innerHTML = 
+                    '<div class="alert alert-danger">Error loading official receipt: ' + (data.message || 'Unknown error') + '</div>';
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('receiptContent').innerHTML = 
-                '<div class="alert alert-danger">Error loading receipt. Please try again.</div>';
+            document.getElementById('officialReceiptContent').innerHTML = 
+                '<div class="alert alert-danger">Error loading official receipt. Please try again.</div>';
         });
 }
 
-function displayReceipt(booking) {
-    const paymentStatus = (booking.payment_status || 'unpaid').toLowerCase();
-    const isPaid = ['paid', 'paid_full_cash', 'paid_on_delivery_cod'].includes(paymentStatus);
+// Populate Official Receipt Modal
+function populateOfficialReceiptModal(receipt) {
+    const modalBody = document.getElementById('officialReceiptContent');
+    if (!modalBody) return;
     
-    if (!isPaid) {
-        document.getElementById('receiptContent').innerHTML = 
-            '<div class="alert alert-warning">Receipt is only available for paid bookings.</div>';
-        return;
+    // Build official receipt HTML
+    let receiptHtml = `
+        <div class="text-center mb-4" style="border-bottom: 3px solid #2c3e50; padding-bottom: 20px;">
+            <h2 style="color: #2c3e50; font-weight: 700; margin-bottom: 10px;">UpholCare</h2>
+            <h4 style="color: #4e73df; font-weight: 600; margin-bottom: 10px;">Upholstery Services</h4>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">Complete Address</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">Contact Number: Contact Number</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">Email: Email</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">TIN Number: TIN Number</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">BIR Permit Number: BIR Permit Number</p>
+            <h3 style="color: #28a745; font-weight: 700; margin-top: 15px; text-transform: uppercase;">Official Receipt</h3>
+            <p style="font-size: 1.1rem; font-weight: 600; color: #2c3e50; margin-top: 10px;">
+                Official Receipt Number: <strong>${receipt.receiptNumber || 'N/A'}</strong>
+            </p>
+            <p style="font-size: 1rem; color: #6c757d; margin-top: 5px;">
+                Date Issued: ${receipt.dateIssued || 'N/A'}
+            </p>
+            </div>
+            
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Customer Information</h6>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Customer Name:</strong></div>
+                <div class="col-md-8">${receipt.customer?.name || 'N/A'}</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Address:</strong></div>
+                <div class="col-md-8">${receipt.customer?.address || 'N/A'}</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Contact Number:</strong></div>
+                <div class="col-md-8">${receipt.customer?.phone || 'N/A'}</div>
+                </div>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Booking Number:</strong></div>
+                <div class="col-md-8">${receipt.booking?.bookingNumber || 'N/A'}</div>
+                </div>
+            </div>
+            
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Item / Service Details</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered" style="margin-bottom: 0;">
+                    <thead style="background: #4e73df; color: white;">
+                        <tr>
+                            <th>Description of Service</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+    
+    // Add service items
+    if (receipt.services && receipt.services.length > 0) {
+        receipt.services.forEach(item => {
+            receiptHtml += `
+                <tr>
+                    <td>${item.description || 'N/A'}</td>
+                    <td style="text-align: center;">${item.quantity || 1}</td>
+                    <td style="text-align: right;">₱${parseFloat(item.unitPrice || 0).toFixed(2)}</td>
+                    <td style="text-align: right;">₱${parseFloat(item.total || 0).toFixed(2)}</td>
+                </tr>`;
+        });
     }
     
-    // Calculate total
-    const laborFee = parseFloat(booking.labor_fee || 0);
-    const pickupFee = parseFloat(booking.pickup_fee || 0);
-    const deliveryFee = parseFloat(booking.delivery_fee || 0);
-    const colorPrice = parseFloat(booking.color_price || 0);
-    const grandTotal = laborFee + pickupFee + deliveryFee + colorPrice;
+    // Add materials
+    if (receipt.item?.materials && receipt.item.materials.length > 0) {
+        receipt.item.materials.forEach(material => {
+            receiptHtml += `
+                <tr>
+                    <td>${material.name || 'N/A'}</td>
+                    <td style="text-align: center;">${material.quantity || 0} ${material.unit || ''}</td>
+                    <td style="text-align: right;">₱${parseFloat(material.price || 0).toFixed(2)}</td>
+                    <td style="text-align: right;">₱${parseFloat(material.total || 0).toFixed(2)}</td>
+                </tr>`;
+        });
+    }
     
-    const receiptHtml = `
-        <div class="receipt-container p-4" style="background: white; border: 2px solid #e3e6f0; border-radius: 10px;">
-            <div class="text-center mb-4 pb-3 border-bottom border-primary">
-                <h2 class="mb-2" style="color: #4e73df; font-weight: 700; font-size: 2rem;">UphoCare</h2>
-                <p class="text-muted mb-1" style="font-size: 1.1rem; font-weight: 600;">Upholstery Services</p>
-                <p class="mb-0" style="color: #28a745; font-weight: 600; font-size: 1rem;">Payment Receipt</p>
+    receiptHtml += `
+                    </tbody>
+                </table>
+            </div>
             </div>
             
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <p class="mb-1"><strong>Booking Number:</strong></p>
-                    <p>${booking.booking_number || 'N/A'}</p>
-                </div>
-                <div class="col-md-6 text-right">
-                    <p class="mb-1"><strong>Date:</strong></p>
-                    <p>${new Date(booking.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                </div>
-            </div>
-            
-            <div class="mb-3">
-                <p class="mb-1"><strong>Service:</strong></p>
-                <p>${booking.service_name || 'N/A'}</p>
-            </div>
-            
-            <div class="mb-3">
-                <p class="mb-1"><strong>Item Description:</strong></p>
-                <p>${booking.item_description || 'N/A'}</p>
-            </div>
-            
-            <hr style="border-color: #e3e6f0;">
-            
-            <h6 class="mb-3" style="font-weight: 700; color: #2c3e50;">Payment Breakdown</h6>
-            <table class="table table-bordered mb-3">
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Summary of Charges</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered">
                 <tbody>
-                    ${laborFee > 0 ? `<tr><td>Labor Fee</td><td class="text-right">₱${laborFee.toFixed(2)}</td></tr>` : ''}
-                    ${pickupFee > 0 ? `<tr><td>Pickup Fee</td><td class="text-right">₱${pickupFee.toFixed(2)}</td></tr>` : ''}
-                    ${deliveryFee > 0 ? `<tr><td>Delivery Fee</td><td class="text-right">₱${deliveryFee.toFixed(2)}</td></tr>` : ''}
-                    ${colorPrice > 0 ? `<tr><td>Fabric/Color Price</td><td class="text-right">₱${colorPrice.toFixed(2)}</td></tr>` : ''}
-                    <tr style="background: #28a745; color: white;">
-                        <td><strong>TOTAL AMOUNT</strong></td>
-                        <td class="text-right"><strong>₱${grandTotal.toFixed(2)}</strong></td>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;"><strong>Subtotal</strong></td>
+                            <td style="text-align: right; font-weight: 600;">₱${parseFloat(receipt.payment?.subtotal || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;">Pick-Up Fee (if applicable)</td>
+                            <td style="text-align: right;">₱${parseFloat(receipt.payment?.pickupFee || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;">Delivery Fee (if applicable)</td>
+                            <td style="text-align: right;">₱${parseFloat(receipt.payment?.deliveryFee || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr style="background: #28a745; color: white; font-size: 1.2rem;">
+                            <td style="font-weight: 700; border-color: #28a745;"><strong>TOTAL AMOUNT DUE</strong></td>
+                            <td style="text-align: right; font-weight: 700; border-color: #28a745;"><strong>₱${parseFloat(receipt.payment?.grandTotal || receipt.payment?.totalAmount || 0).toFixed(2)}</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;"><strong>TOTAL AMOUNT PAID</strong></td>
+                            <td style="text-align: right; font-weight: 600;"><strong>₱${parseFloat(receipt.payment?.totalPaid || receipt.payment?.grandTotal || receipt.payment?.totalAmount || 0).toFixed(2)}</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;"><strong>BALANCE</strong></td>
+                            <td style="text-align: right; font-weight: 600;">₱${parseFloat(receipt.payment?.balance || 0).toFixed(2)}</td>
                     </tr>
                 </tbody>
             </table>
-            
-            <div class="text-center mt-4 pt-3 border-top border-primary">
-                <p class="text-muted mb-0" style="font-size: 0.9rem;">Thank you for your business!</p>
             </div>
+        </div>
+        
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Payment Details</h6>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Mode of Payment:</strong></div>
+                <div class="col-md-8">${receipt.payment?.mode || 'Cash'}</div>
+            </div>
+            ${receipt.payment?.referenceNumber ? `
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Reference Number:</strong></div>
+                <div class="col-md-8">${receipt.payment.referenceNumber}</div>
+            </div>
+            ` : ''}
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Date/Time of Payment:</strong></div>
+                <div class="col-md-8">${receipt.payment?.paymentDate || 'N/A'} – ${receipt.payment?.paymentTime || 'N/A'}</div>
+            </div>
+            ${receipt.payment?.deliveryDate ? `
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Delivery Date:</strong></div>
+                <div class="col-md-8">${receipt.payment.deliveryDate}</div>
+            </div>
+            ` : ''}
+        </div>
+        
+        <div class="section mb-4" style="margin-top: 40px;">
+            <div class="row">
+                <div class="col-md-6 text-center">
+                    <div style="border-top: 2px solid #2c3e50; margin-top: 50px; padding-top: 5px;">
+                        <strong>Customer Signature</strong>
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div style="border-top: 2px solid #2c3e50; margin-top: 50px; padding-top: 5px;">
+                        <strong>Authorized Signature</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mb-0" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e3e6f0; text-align: center; color: #6c757d; font-size: 0.9rem;">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Thank you for trusting UpholCare!</strong> Please keep this receipt for your records.
         </div>
     `;
     
-    document.getElementById('receiptContent').innerHTML = receiptHtml;
+    modalBody.innerHTML = receiptHtml;
 }
 
-function printReceipt() {
-    const receiptContent = document.getElementById('receiptContent').innerHTML;
+function printOfficialReceipt() {
+    const receiptContent = document.getElementById('officialReceiptContent').innerHTML;
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Receipt - ${currentReceiptBookingId || 'N/A'}</title>
+            <title>Official Receipt - ${currentReceiptBookingId || 'N/A'}</title>
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; }
-                .receipt-container { background: white; }
                 table { width: 100%; border-collapse: collapse; }
-                table td { padding: 0.75rem; border: 1px solid #ddd; }
+                table td, table th { padding: 0.75rem; border: 1px solid #ddd; }
+                @media print {
+                    body { padding: 0; }
+                }
             </style>
         </head>
         <body>

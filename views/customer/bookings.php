@@ -16,12 +16,12 @@
 }
 
 .breadcrumb-custom .breadcrumb-item a {
-    color: #8B4513;
+    color: #1F4E79;
     text-decoration: none;
 }
 
 .btn-new-booking {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     border: none;
     color: white;
     padding: 0.65rem 1.5rem;
@@ -42,7 +42,7 @@
 }
 
 .btn-business-mode {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
     border: none;
     color: white;
     padding: 0.5rem 1.25rem;
@@ -203,6 +203,60 @@
     margin-bottom: 1rem;
     color: #d1d3e2;
 }
+
+/* Fix Modal Visibility and Brightness - Ensure modal is bright and visible */
+.modal-backdrop {
+    background-color: transparent !important; /* Fully transparent - no dark overlay */
+    opacity: 0 !important; /* Fully transparent - bright modal */
+    z-index: 1040 !important;
+    pointer-events: none !important; /* Allow clicks through transparent backdrop */
+}
+
+.modal-backdrop.show {
+    background-color: transparent !important; /* Fully transparent - no dark overlay */
+    opacity: 0 !important; /* Fully transparent - bright modal like Official Receipt */
+    z-index: 1040 !important;
+    pointer-events: none !important; /* Allow clicks through transparent backdrop */
+}
+
+.modal {
+    z-index: 1050 !important;
+    opacity: 1 !important; /* ensure modal is not transparent */
+}
+
+.modal.show {
+    z-index: 1050 !important;
+    opacity: 1 !important; /* ensure modal is not transparent */
+}
+
+.modal-content {
+    background-color: #ffffff !important; /* bright white */
+    opacity: 1 !important; /* ensure not transparent */
+    backdrop-filter: none !important; /* remove any backdrop filter */
+}
+
+.modal-dialog {
+    z-index: 1055 !important;
+}
+
+/* Preview Receipt Modal - Smaller size to avoid sidebar overlay */
+#previewReceiptModal .modal-dialog {
+    max-width: 800px !important;
+    margin-left: 250px !important;
+}
+
+@media (max-width: 1200px) {
+    #previewReceiptModal .modal-dialog {
+        margin-left: 0 !important;
+        max-width: 90% !important;
+    }
+}
+
+/* Ensure modal body is also bright */
+.modal-body {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+}
 </style>
 
 <!-- Page Heading -->
@@ -229,20 +283,20 @@
 <!-- Reservations Card -->
 <div class="card booking-card">
     <!-- Colored top bar -->
-    <div style="height: 4px; background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);"></div>
+    <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);"></div>
     
     <div class="card-header">
         <div class="row align-items-center mb-3">
             <div class="col-md-6">
                 <h3 class="mb-0" style="font-size: 1.5rem; font-weight: 700; color: #2c3e50;">
-                    <i class="fas fa-calendar-check mr-2" style="color: #8B4513;"></i>My Reservations
+                    <i class="fas fa-calendar-check mr-2" style="color: #1F4E79;"></i>My Reservations
                 </h3>
             </div>
             <!-- <div class="col-md-6 text-md-right">
                 <button class="btn btn-new-booking" onclick="window.location.href='<?php echo BASE_URL; ?>customer/newBooking'" style="margin-right: 0.5rem;">
                     <i class="fas fa-plus mr-2"></i>New Reservation
                 </button> -->
-                <button class="btn btn-new-booking" onclick="window.location.href='<?php echo BASE_URL; ?>customer/newRepairReservation'" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);">
+                <button class="btn btn-new-booking" onclick="openReservationModal()" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);">
                     <i class="fas fa-tools mr-2"></i>Repair Reservation
                 </button>
             </div>
@@ -255,20 +309,44 @@
                     </label>
                     <select id="statusFilterDropdown" class="form-control filter-dropdown" onchange="filterBookings(this.value)">
                         <option value="all" <?php echo ($currentStatus === 'all') ? 'selected' : ''; ?>>All</option>
-                        <option value="pending" <?php echo ($currentStatus === 'pending') ? 'selected' : ''; ?>>Pending</option>
-                        <option value="approved" <?php echo ($currentStatus === 'approved') ? 'selected' : ''; ?>>Approved</option>
-                        <option value="in_queue" <?php echo ($currentStatus === 'in_queue') ? 'selected' : ''; ?>>In Queue</option>
-                        <option value="under_repair" <?php echo ($currentStatus === 'under_repair') ? 'selected' : ''; ?>>Under Repair</option>
-                        <option value="for_quality_check" <?php echo ($currentStatus === 'for_quality_check') ? 'selected' : ''; ?>>For Quality Check</option>
-                        <option value="ready_for_pickup" <?php echo ($currentStatus === 'ready_for_pickup') ? 'selected' : ''; ?>>Ready for Pickup</option>
-                        <option value="out_for_delivery" <?php echo ($currentStatus === 'out_for_delivery') ? 'selected' : ''; ?>>Out for Delivery</option>
-                        <option value="completed" <?php echo ($currentStatus === 'completed') ? 'selected' : ''; ?>>Completed</option>
-                        <option value="cancelled" <?php echo ($currentStatus === 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
+                        <?php
+                        // Get unique statuses from bookings
+                        $uniqueStatuses = [];
+                        if (!empty($bookings)) {
+                            foreach ($bookings as $booking) {
+                                $status = $booking['status'] ?? 'pending';
+                                if (!in_array($status, $uniqueStatuses)) {
+                                    $uniqueStatuses[] = $status;
+                                }
+                            }
+                            sort($uniqueStatuses);
+                            
+                            // Status display names
+                            $statusDisplayNames = [
+                                'pending' => 'Pending',
+                                'for_pickup' => 'For Pickup',
+                                'picked_up' => 'Picked Up',
+                                'to_inspect' => 'To Inspect',
+                                'for_inspection' => 'For Inspection',
+                                'for_repair' => 'For Repair',
+                                'under_repair' => 'Under Repair',
+                                'for_quality_check' => 'For Quality Check',
+                                'ready_for_pickup' => 'Ready for Pickup',
+                                'out_for_delivery' => 'Out for Delivery',
+                                'completed' => 'Completed',
+                                'paid' => 'Paid',
+                                'closed' => 'Closed',
+                                'cancelled' => 'Cancelled'
+                            ];
+                            
+                            foreach ($uniqueStatuses as $status) {
+                                $displayName = $statusDisplayNames[$status] ?? ucfirst(str_replace('_', ' ', $status));
+                                $selected = ($currentStatus === $status) ? 'selected' : '';
+                                echo "<option value=\"{$status}\" {$selected}>{$displayName}</option>";
+                            }
+                        }
+                        ?>
                     </select>
-                    <label style="margin-left: 20px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                        <input type="checkbox" id="selectAllReservations" style="margin-right: 6px; vertical-align: middle;" />
-                        Select All
-                    </label>
                 </div>
             </div>
             <div class="col-md-6 text-md-right">
@@ -283,7 +361,6 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;"></th>
-                        <th style="width: 40px;"></th>
                         <th>SERVICE</th>
                         <th>SERVICE OPTION</th>
                         <th>DATE</th>
@@ -295,31 +372,24 @@
                     <?php foreach ($bookings as $index => $booking): ?>
                     <tr class="booking-row" data-booking-id="<?php echo $booking['id']; ?>">
                         <td>
-                            <input type="checkbox" class="booking-checkbox" value="<?php echo $booking['id']; ?>">
-                        </td>
-                        <td>
                             <?php 
                             // Priority flag based on status
                             $flagColors = [
-                                'pending' => '#A0522D',
-                                'approved' => '#8B4513',
-                                'in_queue' => '#6c757d',
-                                'under_repair' => '#654321',
+                                'pending' => '#4CAF50',
+                                'under_repair' => '#0F3C5F',
                                 'for_quality_check' => '#17a2b8',
                                 'ready_for_pickup' => '#74b9ff',
                                 'out_for_delivery' => '#f39c12',
                                 'completed' => '#00b894',
                                 'cancelled' => '#95a5a6',
                                 // Legacy statuses (for backward compatibility)
-                                'accepted' => '#8B4513',
-                                'confirmed' => '#8B4513',
-                                'in_progress' => '#654321',
-                                'ongoing' => '#654321',
+                                'accepted' => '#1F4E79',
+                                'confirmed' => '#1F4E79',
+                                'ongoing' => '#0F3C5F',
                                 'for_pickup' => '#74b9ff',
-                                'rejected' => '#e74c3c',
                                 'declined' => '#e74c3c'
                             ];
-                            $flagColor = $flagColors[$booking['status']] ?? '#8B4513';
+                            $flagColor = $flagColors[$booking['status']] ?? '#1F4E79';
                             ?>
                             <i class="fas fa-flag" style="color: <?php echo $flagColor; ?>;" title="Priority: <?php echo ucfirst($booking['status']); ?>"></i>
                         </td>
@@ -330,7 +400,7 @@
                                     <i class="fas fa-tag fa-sm mr-1"></i>
                                     <?php echo htmlspecialchars($booking['category_name'] ?? 'General'); ?>
                                     <?php if (!empty($booking['service_type'])): ?>
-                                    <span class="badge badge-info ml-1" style="font-size: 0.7rem;">
+                                    <span class="text-info font-weight-bold ml-1" style="font-size: 0.75rem;">
                                         <?php echo htmlspecialchars($booking['service_type']); ?>
                                     </span>
                                     <?php endif; ?>
@@ -349,8 +419,8 @@
                             ];
                             $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['class' => 'badge-secondary', 'icon' => 'question', 'text' => ucfirst($serviceOption)];
                             ?>
-                            <span class="badge <?php echo $optionConfig['class']; ?>" style="font-weight: 600; font-size: 0.85rem; padding: 0.5rem 0.75rem;">
-                                <i class="fas fa-<?php echo $optionConfig['icon']; ?> mr-1"></i>
+                            <span class="text-dark font-weight-bold" style="font-size: 0.85rem;">
+                                <i class="fas fa-<?php echo $optionConfig['icon']; ?> mr-1 text-secondary"></i>
                                 <?php echo htmlspecialchars($optionConfig['text']); ?>
                             </span>
                         </td>
@@ -370,11 +440,12 @@
                                 'for_pickup' => ['class' => 'badge-info', 'icon' => 'truck-loading', 'text' => 'For Pickup'],
                                 'picked_up' => ['class' => 'badge-info', 'icon' => 'box-open', 'text' => 'Picked Up'],
                                 'for_inspection' => ['class' => 'badge-info', 'icon' => 'search', 'text' => 'For Inspection'],
+                                'to_inspect' => ['class' => 'badge-warning', 'icon' => 'clipboard-check', 'text' => 'To Inspect'],
+                                'inspect_completed' => ['class' => 'badge-success', 'icon' => 'check-circle', 'text' => 'Inspect Completed'],
+                                'inspection_completed_waiting_approval' => ['class' => 'badge-warning', 'icon' => 'hourglass-half', 'text' => 'Inspection Completed Waiting Approval'],
+                                'preview_receipt_sent' => ['class' => 'badge-info', 'icon' => 'envelope-open-text', 'text' => 'Preview Receipt Sent'],
                                 // 'for_quotation' status removed
                                 // Work in progress statuses
-                                'approved' => ['class' => 'badge-success', 'icon' => 'check-circle', 'text' => 'Approved'],
-                                'in_queue' => ['class' => 'badge-info', 'icon' => 'list', 'text' => 'In Queue'],
-                                'in_progress' => ['class' => 'badge-primary', 'icon' => 'spinner', 'text' => 'In Progress'],
                                 'under_repair' => ['class' => 'badge-primary', 'icon' => 'tools', 'text' => 'Under Repair'],
                                 'for_quality_check' => ['class' => 'badge-info', 'icon' => 'search', 'text' => 'For Quality Check'],
                                 // Completion statuses
@@ -390,7 +461,6 @@
                                 'confirmed' => ['class' => 'badge-success', 'icon' => 'check-circle', 'text' => 'Approved'],
                                 'ongoing' => ['class' => 'badge-primary', 'icon' => 'spinner', 'text' => 'Under Repair'],
                                 'for_pickup' => ['class' => 'badge-success', 'icon' => 'box', 'text' => 'Ready for Pickup'],
-                                'rejected' => ['class' => 'badge-danger', 'icon' => 'times-circle', 'text' => 'Rejected'],
                                 'declined' => ['class' => 'badge-danger', 'icon' => 'times-circle', 'text' => 'Declined'],
                                 'admin_review' => ['class' => 'badge-warning', 'icon' => 'eye', 'text' => 'Admin Review']
                             ];
@@ -445,19 +515,26 @@
                                 $config['icon'] = 'clock';
                             }
                             ?>
-                            <span class="badge badge-status <?php echo htmlspecialchars($config['class']); ?>" style="font-size: 0.85rem !important; font-weight: 600 !important; padding: 0.5rem 0.875rem !important; display: inline-flex !important; align-items: center !important; white-space: nowrap !important;">
-                                <i class="fas fa-<?php echo htmlspecialchars($config['icon']); ?> mr-1"></i>
-                                <strong><?php echo htmlspecialchars($config['text']); ?></strong>
+                            <span class="text-dark font-weight-bold d-inline-flex align-items-center" style="font-size: 0.85rem;">
+                                <i class="fas fa-<?php echo htmlspecialchars($config['icon']); ?> mr-2 text-<?php echo str_replace('badge-', '', $config['class']); ?>"></i>
+                                <?php echo htmlspecialchars($config['text']); ?>
                             </span>
                         </td>
                         <td>
-                            <div class="btn-group" role="group" style="flex-wrap: wrap; gap: 3px;">
                                 <?php
                                 $status = strtolower($booking['status'] ?? 'pending');
                                 $bookingId = $booking['id'];
                                 $paymentStatus = strtolower($booking['payment_status'] ?? 'unpaid');
                                 
-                                // Always show View Details button
+                            // No actions when status is under_repair - customer must wait for repair completion
+                            if ($status === 'under_repair'): ?>
+                                <span class="text-muted" style="font-size: 0.85rem;">
+                                    <i class="fas fa-info-circle mr-1"></i>Waiting for repair completion
+                                </span>
+                            <?php else: ?>
+                            <div class="btn-group" role="group" style="flex-wrap: wrap; gap: 3px;">
+                                <?php
+                                // Show View Details button (except for under_repair)
                                 ?>
                                 <button type="button" 
                                         class="btn btn-sm btn-info btn-action" 
@@ -467,8 +544,38 @@
                                 </button>
                                 
                                 <?php
-                                // Show Update button for pending, approved, in_queue, and under_repair
-                                if (in_array($status, ['pending', 'approved', 'in_queue', 'under_repair'])): ?>
+                                // Show Approve Receipt button when receipt is sent
+                                // Show Approve button for inspection_completed_waiting_approval, inspect_completed or preview_receipt_sent status
+                                // inspection_completed_waiting_approval is set when admin sends preview receipt (delivery workflow)
+                                $quotationSent = isset($booking['quotation_sent']) && $booking['quotation_sent'] == 1;
+                                $showApproveButton = false;
+                                
+                                if ($status === 'inspection_completed_waiting_approval') {
+                                    // Show approve button for inspection_completed_waiting_approval status (delivery workflow)
+                                    $showApproveButton = true;
+                                } elseif ($status === 'inspect_completed') {
+                                    // Always show approve button for inspect_completed status (new workflow)
+                                    $showApproveButton = true;
+                                } elseif ($status === 'preview_receipt_sent') {
+                                    // Show for preview_receipt_sent status (backward compatibility)
+                                    $showApproveButton = true;
+                                } elseif ($quotationSent && in_array($status, ['to_inspect', 'for_inspection'])) {
+                                    // Show for backward compatibility (legacy)
+                                    $showApproveButton = true;
+                                }
+                                
+                                if ($showApproveButton): ?>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-success btn-action" 
+                                            onclick="viewPreviewReceipt(<?php echo $bookingId; ?>)" 
+                                            title="Approve Receipt - Review preview receipt and approve">
+                                        <i class="fas fa-check-circle"></i> Approve
+                                    </button>
+                                <?php endif; ?>
+                                
+                                <?php
+                                // Show Update button for pending, ready_for_pickup, and for_pickup (removed under_repair)
+                                if (in_array($status, ['pending', 'ready_for_pickup', 'for_pickup'])): ?>
                                     <button type="button" 
                                             class="btn btn-sm btn-warning btn-action" 
                                             onclick="openUpdateBookingModal(<?php echo $bookingId; ?>)" 
@@ -478,8 +585,8 @@
                                 <?php endif; ?>
                                 
                                 <?php
-                                // Show Cancel button only for pending and approved
-                                if (in_array($status, ['pending', 'approved'])): ?>
+                                // Show Cancel button for pending, approved, ready_for_pickup, and for_pickup
+                                if (in_array($status, ['pending', 'approved', 'ready_for_pickup', 'for_pickup'])): ?>
                                     <button type="button" 
                                             class="btn btn-sm btn-danger btn-action" 
                                             onclick="confirmCancelReservation(<?php echo $bookingId; ?>)" 
@@ -488,6 +595,7 @@
                                     </button>
                                 <?php endif; ?>
                             </div>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -508,10 +616,10 @@
         <!-- Repair Reservations Section -->
         <?php if (!empty($repairReservations)): ?>
         <div class="card booking-card mt-4">
-            <div style="height: 4px; background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);"></div>
+            <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);"></div>
             <div class="card-header">
                 <h3 class="mb-0" style="font-size: 1.5rem; font-weight: 700; color: #2c3e50;">
-                    <i class="fas fa-tools mr-2" style="color: #8B4513;"></i>Repair Reservations
+                    <i class="fas fa-tools mr-2" style="color: #1F4E79;"></i>Repair Reservations
                 </h3>
             </div>
             <div class="card-body p-0">
@@ -627,7 +735,7 @@
                                         
                                         <?php
                                         // 3️⃣ Ongoing / In Progress Repair
-                                        elseif (in_array($repairStatus, ['in_progress', 'ongoing'])): ?>
+                                        elseif (in_array($repairStatus, ['ongoing'])): ?>
                                             <button type="button" 
                                                     class="btn btn-sm btn-primary btn-action" 
                                                     onclick="trackProgress(<?php echo $repairId; ?>)" 
@@ -762,7 +870,7 @@
 <div class="modal fade" id="updateBookingModal" tabindex="-1" aria-labelledby="updateBookingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #8B4513 0%, #654321 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1F4E79 0%, #0F3C5F 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="updateBookingModalLabel">
                     <i class="fas fa-edit mr-2"></i>Update Booking Details
                 </h5>
@@ -822,6 +930,102 @@
     </div>
 </div>
 
+<!-- Preview Receipt Modal -->
+<div class="modal fade" id="previewReceiptModal" tabindex="-1" aria-labelledby="previewReceiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 800px; margin-left: 250px;">
+        <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title" id="previewReceiptModalLabel">
+                    <i class="fas fa-receipt mr-2"></i>Preview Receipt - Review Before Approval
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Please review the preview receipt below.</strong> Once you approve, your item will move to "Under Repair" status and repair work will begin.
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><strong>Booking Information</strong></h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Booking ID:</strong> <span id="preview_receipt_booking_id">-</span></p>
+                                <p class="mb-2"><strong>Customer:</strong> <span id="preview_receipt_customer_name">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Service:</strong> <span id="preview_receipt_service">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-cut mr-2"></i><strong>Materials Used</strong></h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Leather Quality:</strong> <span id="preview_receipt_leather_quality">-</span></p>
+                        <p class="mb-2"><strong>Leather/Color:</strong> <span id="preview_receipt_leather_color">-</span></p>
+                        <p class="mb-2"><strong>Fabric Type:</strong> <span id="preview_receipt_fabric_type">-</span></p>
+                        <p class="mb-2"><strong>Yards/Meters:</strong> <span id="preview_receipt_material_meters">-</span> @ <span id="preview_receipt_price_per_meter">₱0.00</span> = <span id="preview_receipt_material_cost" class="text-success">₱0.00</span></p>
+                        <p class="mb-2"><strong>Foam Replacement:</strong> <span id="preview_receipt_foam_replacement">-</span> <span id="preview_receipt_foam_cost" class="text-success"></span></p>
+                        <p class="mb-2"><strong>Accessories:</strong> <span id="preview_receipt_accessories">-</span> <span id="preview_receipt_accessories_cost" class="text-success"></span></p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><strong>Payment Breakdown</strong></h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-bordered mb-0">
+                            <tbody>
+                                <tr>
+                                    <td><strong>Material Subtotal:</strong></td>
+                                    <td class="text-right"><span id="preview_receipt_material_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr id="preview_receipt_color_price_row" style="display: none;">
+                                    <td><strong>Color Price:</strong></td>
+                                    <td class="text-right"><span id="preview_receipt_color_price">₱0.00</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Labor Fee Subtotal:</strong></td>
+                                    <td class="text-right"><span id="preview_receipt_labor">₱0.00</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Subtotal (Before VAT):</strong></td>
+                                    <td class="text-right"><span id="preview_receipt_subtotal">₱0.00</span></td>
+                                </tr>
+                                <tr class="table-success" style="font-size: 1.2rem; font-weight: bold;">
+                                    <td><strong>FINAL TOTAL AMOUNT:</strong></td>
+                                    <td class="text-right"><span id="preview_receipt_total" style="font-weight: bold;">₱0.00</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: none; padding: 1rem 1.5rem 1.5rem;">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
+                    <i class="fas fa-times mr-1"></i>Close
+                </button>
+                <button type="button" class="btn btn-danger" id="rejectFromPreviewBtn" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
+                    <i class="fas fa-times-circle mr-1"></i>Reject Receipt
+                </button>
+                <button type="button" class="btn btn-success" id="approveFromPreviewBtn" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
+                    <i class="fas fa-check-circle mr-1"></i>Approve Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Success Modal -->
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -846,7 +1050,7 @@
 <div class="modal fade" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="bulkActionModalLabel">
                     <i class="fas fa-tasks mr-2"></i>Confirm Bulk Action
                 </h5>
@@ -856,7 +1060,7 @@
             </div>
             <div class="modal-body text-center py-4">
                 <div class="mb-3">
-                    <i class="fas fa-question-circle" style="font-size: 4rem; color: #8B4513;"></i>
+                    <i class="fas fa-question-circle" style="font-size: 4rem; color: #1F4E79;"></i>
                 </div>
                 <p class="text-muted mb-4" id="bulkActionMessage">
                     Are you sure you want to perform this action on <strong id="bulkActionCount">0</strong> selected reservation(s)?
@@ -866,7 +1070,7 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
                     Cancel
                 </button>
-                <button type="button" class="btn btn-primary" id="confirmBulkActionBtn" style="border-radius: 8px; padding: 0.5rem 1.5rem; background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); border: none;">
+                <button type="button" class="btn btn-primary" id="confirmBulkActionBtn" style="border-radius: 8px; padding: 0.5rem 1.5rem; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); border: none;">
                     <i class="fas fa-check mr-1"></i>Confirm
                 </button>
             </div>
@@ -875,12 +1079,7 @@
 </div>
 
 <style>
-/* Enhanced checkbox styling */
-.booking-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
+/* Checkbox styling removed */
 
 .booking-row:hover {
     background-color: rgba(139, 69, 19, 0.05);
@@ -905,7 +1104,7 @@
 /* Fallback styles if Bootstrap JS isn't present */
 .modal { z-index: 1055; }
 .modal.show { display: block; }
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); }
+    .modal-backdrop { position: fixed; inset: 0; background: transparent; opacity: 0; pointer-events: none; }
 
 /* Print styles for booking details modal */
 @media print {
@@ -931,31 +1130,31 @@
 
 /* Override Bootstrap primary colors with brown */
 .btn-primary {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    border-color: #1F4E79 !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
+    border-color: #4CAF50 !important;
     color: white !important;
 }
 
 .btn-info {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    border-color: #1F4E79 !important;
     color: white !important;
 }
 
 .btn-info:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
+    border-color: #4CAF50 !important;
     color: white !important;
 }
 
 .text-primary {
-    color: #8B4513 !important;
+    color: #1F4E79 !important;
 }
 </style>
 
@@ -973,91 +1172,300 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 <?php unset($_SESSION['error']); endif; ?>
 
-// Select All Reservations
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof jQuery === 'undefined') {
-        // Skip jQuery-dependent UX wiring when jQuery isn't present
-        return;
-    }
-    $('#selectAllReservations').on('change', function() {
-        const isChecked = $(this).is(':checked');
-        $('.booking-checkbox').prop('checked', isChecked);
-        
-        // Toggle row highlighting
-        if (isChecked) {
-            $('.booking-row').addClass('selected');
-        } else {
-            $('.booking-row').removeClass('selected');
-        }
-    });
-    
-    // Individual checkbox
-    $('.booking-checkbox').on('change', function() {
-        if ($(this).is(':checked')) {
-            $(this).closest('.booking-row').addClass('selected');
-        } else {
-            $(this).closest('.booking-row').removeClass('selected');
-            $('#selectAllReservations').prop('checked', false);
-        }
-        
-        // Check if all are selected
-        const total = $('.booking-checkbox').length;
-        const checked = $('.booking-checkbox:checked').length;
-        if (total === checked && total > 0) {
-            $('#selectAllReservations').prop('checked', true);
-        }
-    });
-    
-    // Bulk Action Handler
-    $('#bulkActionDropdown').on('change', function() {
-        const action = $(this).val();
-        const selectedReservations = $('.booking-checkbox:checked');
-        
-        if (!action) return;
-        
-        if (selectedReservations.length === 0) {
-            showNotification('warning', 'Please select at least one reservation');
-            $(this).val('');
-            return;
-        }
-        
-        const count = selectedReservations.length;
-        $('#bulkActionCount').text(count);
-        
-        if (action === 'cancel') {
-            $('#bulkActionMessage').html(`Are you sure you want to <strong class="text-danger">CANCEL</strong> ${count} selected reservation(s)?`);
-        } else if (action === 'print') {
-            $('#bulkActionMessage').html(`Generate receipt for ${count} selected reservation(s)?`);
-        } else {
-            $('#bulkActionMessage').html(`Perform action on ${count} selected reservation(s)?`);
-        }
-        
-        $('#bulkActionModal').modal('show');
-        $(this).val('');
-    });
-    
-    // Confirm Bulk Action
-    $('#confirmBulkActionBtn').on('click', function() {
-        const selectedIds = [];
-        $('.booking-checkbox:checked').each(function() {
-            selectedIds.push($(this).val());
-        });
-        
-        // Here you would make an AJAX call to process the bulk action
-        // console.log('Processing bulk action for IDs:', selectedIds);
-        
-        $('#bulkActionModal').modal('hide');
-        
-        // Show success
-        setTimeout(function() {
-            $('#successMessage').text('Bulk action completed successfully!');
-            $('#successModal').modal('show');
-        }, 300);
-    });
-});
-
 // Confirm Cancel Reservation Function
 let reservationToCancel = null;
+
+// View Preview Receipt before approval
+function viewPreviewReceipt(bookingId) {
+    // Store booking ID for approval
+    window.currentPreviewBookingId = bookingId;
+    
+    // Fetch preview receipt data
+    fetch(`<?php echo BASE_URL; ?>customer/getPreviewReceipt/${bookingId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.receipt) {
+            const receipt = data.receipt;
+            
+            // Populate preview receipt modal
+            document.getElementById('preview_receipt_booking_id').textContent = 'Booking #' + bookingId;
+            document.getElementById('preview_receipt_customer_name').textContent = receipt.customer?.name || 'N/A';
+            document.getElementById('preview_receipt_service').textContent = receipt.service?.name || 'N/A';
+            
+            // Materials Used - match admin's format exactly
+            const materials = receipt.materials || [];
+            const payment = receipt.payment || {};
+            
+            // Get quality type (Standard/Premium) - from booking data
+            // Priority: color_type > fabric_type > leather_type > default 'standard'
+            const qualityType = (receipt.booking?.colorType || receipt.booking?.fabricType || receipt.booking?.leatherType || 'standard').toLowerCase();
+            const qualityText = qualityType === 'premium' ? 'Premium' : 'Standard';
+            document.getElementById('preview_receipt_leather_quality').textContent = qualityText;
+            document.getElementById('preview_receipt_fabric_type').textContent = qualityText;
+            
+            // Get color name, code, and price - format: "blue (INV-003) - ₱200.00/meter"
+            let colorDisplay = '-';
+            const colorName = receipt.booking?.colorName || null;
+            const colorCode = receipt.booking?.colorCode || null;
+            
+            // Get price per meter from materials or payment data
+            let pricePerMeter = 0;
+            if (materials.length > 0 && materials[0].price) {
+                pricePerMeter = parseFloat(materials[0].price || 0);
+            } else if (payment.materialSubtotal && materials.length > 0 && materials[0].quantity) {
+                // Calculate from material cost and quantity
+                pricePerMeter = parseFloat(payment.materialSubtotal) / parseFloat(materials[0].quantity || 1);
+            }
+            
+            if (colorName && colorName !== '-' && pricePerMeter > 0) {
+                if (colorCode && colorCode.trim() !== '') {
+                    colorDisplay = `${colorName} (${colorCode}) - ₱${pricePerMeter.toFixed(2)}/meter`;
+            } else {
+                    colorDisplay = `${colorName} - ₱${pricePerMeter.toFixed(2)}/meter`;
+            }
+            } else if (materials.length > 0 && materials[0].name) {
+                // Fallback: extract from material name
+                const materialName = materials[0].name;
+                if (pricePerMeter > 0) {
+                    colorDisplay = `${materialName} - ₱${pricePerMeter.toFixed(2)}/meter`;
+                } else {
+                    colorDisplay = materialName;
+                }
+            }
+            document.getElementById('preview_receipt_leather_color').textContent = colorDisplay;
+            
+            // Get material meters, price per meter, and cost
+            const meters = materials.length > 0 ? (materials[0].quantity || 0) : 0;
+            const materialCost = materials.length > 0 ? parseFloat(materials[0].total || 0) : parseFloat(payment.fabricCost || 0);
+            
+            // If price per meter is 0, try to calculate from material cost and meters
+            if (pricePerMeter === 0 && meters > 0 && materialCost > 0) {
+                pricePerMeter = materialCost / meters;
+            }
+            
+            document.getElementById('preview_receipt_material_meters').textContent = meters || '0';
+            document.getElementById('preview_receipt_price_per_meter').textContent = '₱' + pricePerMeter.toFixed(2);
+            document.getElementById('preview_receipt_material_cost').textContent = '₱' + materialCost.toFixed(2);
+            
+            // Foam replacement
+            const foamCost = parseFloat(payment.foamCost || 0);
+            if (foamCost > 0) {
+                document.getElementById('preview_receipt_foam_replacement').textContent = '₱' + foamCost.toFixed(2);
+                document.getElementById('preview_receipt_foam_cost').textContent = '';
+    } else {
+                document.getElementById('preview_receipt_foam_replacement').textContent = 'No foam replacement';
+                document.getElementById('preview_receipt_foam_cost').textContent = '';
+            }
+            
+            // Accessories
+            const accessoriesCost = parseFloat(payment.miscMaterialsCost || 0);
+            if (accessoriesCost > 0) {
+                document.getElementById('preview_receipt_accessories').textContent = '₱' + accessoriesCost.toFixed(2);
+                document.getElementById('preview_receipt_accessories_cost').textContent = '';
+            } else {
+                document.getElementById('preview_receipt_accessories').textContent = 'None';
+                document.getElementById('preview_receipt_accessories_cost').textContent = '';
+            }
+            
+            // Payment breakdown - use the EXACT values from admin's calculation
+            // Do NOT recalculate - use the stored values that admin sent
+            // (payment already declared above)
+            
+            // Use exact stored values from admin (these are what admin calculated and saved)
+            const laborFee = parseFloat(payment.laborFee || 0);
+            const fabricCost = parseFloat(payment.fabricCost || 0);
+            const colorPrice = parseFloat(payment.colorPrice || 0);
+            const materialSubtotal = parseFloat(payment.materialSubtotal || fabricCost); // Material subtotal (fabric cost only)
+            
+            // Display Material Subtotal (fabric cost)
+            document.getElementById('preview_receipt_material_subtotal').textContent = '₱' + materialSubtotal.toFixed(2);
+            
+            // Display Color Price (separate line item, matching admin format)
+            const colorPriceRow = document.getElementById('preview_receipt_color_price_row');
+            const colorPriceElement = document.getElementById('preview_receipt_color_price');
+            if (colorPrice > 0) {
+                if (colorPriceRow) colorPriceRow.style.display = '';
+                if (colorPriceElement) colorPriceElement.textContent = '₱' + colorPrice.toFixed(2);
+            } else {
+                if (colorPriceRow) colorPriceRow.style.display = 'none';
+            }
+            
+            // Display Labor Fee Subtotal
+            document.getElementById('preview_receipt_labor').textContent = '₱' + laborFee.toFixed(2);
+            
+            // Use stored subtotal from admin (Material Subtotal + Color Price + Labor Fee)
+            // Do NOT recalculate - use admin's exact calculation
+            const subtotal = parseFloat(payment.subtotal || (materialSubtotal + colorPrice + laborFee));
+            document.getElementById('preview_receipt_subtotal').textContent = '₱' + subtotal.toFixed(2);
+            
+            // Use the EXACT totalAmount/grandTotal from admin's calculation (stored grand_total)
+            // This is the preview receipt total that the admin computed and sent - DO NOT RECALCULATE
+            const totalAmount = parseFloat(payment.totalAmount || payment.grandTotal || subtotal);
+            document.getElementById('preview_receipt_total').textContent = '₱' + totalAmount.toFixed(2);
+            
+            // Set up approve button
+            const approveBtn = document.getElementById('approveFromPreviewBtn');
+            approveBtn.onclick = function() {
+                approveReceipt(bookingId);
+            };
+            
+            // Set up reject button
+            const rejectBtn = document.getElementById('rejectFromPreviewBtn');
+            rejectBtn.onclick = function() {
+                rejectReceipt(bookingId);
+            };
+            
+            // Show modal
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#previewReceiptModal').modal('show');
+            } else {
+                const modalEl = document.getElementById('previewReceiptModal');
+                if (modalEl) new bootstrap.Modal(modalEl).show();
+        }
+    } else {
+            alert('Failed to load preview receipt: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error loading preview receipt:', error);
+        alert('Error loading preview receipt. Please try again.');
+    });
+}
+
+// Approve Preview Receipt
+function approveReceipt(bookingId) {
+    // Use stored booking ID if available (from preview modal)
+    const finalBookingId = bookingId || window.currentPreviewBookingId;
+    
+    if (!finalBookingId) {
+        alert('Error: Booking ID not found');
+        return;
+    }
+    
+    // Confirm approval
+    if (!confirm('Are you sure you want to approve this preview receipt? Once approved, your item will move to "Under Repair" status and repair work will begin.')) {
+        return;
+    }
+    
+    let acceptUrl = "<?php echo rtrim(BASE_URL, '/'); ?>/customer/approvePreviewReceipt";
+    console.log("Sending approval request to:", acceptUrl);
+    
+    // Show loading state
+    const approveBtn = event?.target?.closest('button') || document.getElementById('approveFromPreviewBtn');
+    const originalText = approveBtn ? approveBtn.innerHTML : '';
+    if (approveBtn) {
+        approveBtn.disabled = true;
+        approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Approving...';
+    }
+    
+    fetch(acceptUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: "booking_id=" + finalBookingId
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Server response:", data);
+        if (data.success) {
+            // Close preview modal if open
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#previewReceiptModal').modal('hide');
+            }
+            alert("Preview receipt approved successfully! Your item will now move to 'Under Repair' status.");
+            location.reload();
+        } else {
+            alert("Error: " + (data.message || 'Failed to approve receipt'));
+            if (approveBtn) {
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = originalText;
+            }
+        }
+    })
+    .catch(error => {
+        console.error("Request failed:", error);
+        alert("Failed to approve receipt. Please try again.");
+        if (approveBtn) {
+            approveBtn.disabled = false;
+            approveBtn.innerHTML = originalText;
+        }
+    });
+}
+
+// Reject Preview Receipt
+function rejectReceipt(bookingId) {
+    // Use stored booking ID if available (from preview modal)
+    const finalBookingId = bookingId || window.currentPreviewBookingId;
+    
+    if (!finalBookingId) {
+        alert('Error: Booking ID not found');
+        return;
+    }
+    
+    // Confirm rejection
+    if (!confirm('Are you sure you want to reject this preview receipt? This will cancel your booking and you will need to create a new reservation if you want to proceed.')) {
+        return;
+    }
+    
+    // Double confirmation
+    if (!confirm('⚠️ FINAL CONFIRMATION\n\nRejecting this receipt will permanently cancel your booking. This action cannot be undone.\n\nDo you want to proceed with cancellation?')) {
+        return;
+    }
+    
+    let rejectUrl = "<?php echo rtrim(BASE_URL, '/'); ?>/customer/rejectPreviewReceipt";
+    console.log("Sending rejection request to:", rejectUrl);
+    
+    // Show loading state
+    const rejectBtn = event?.target?.closest('button') || document.getElementById('rejectFromPreviewBtn');
+    const originalText = rejectBtn ? rejectBtn.innerHTML : '';
+    if (rejectBtn) {
+        rejectBtn.disabled = true;
+        rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejecting...';
+    }
+    
+    fetch(rejectUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: "booking_id=" + finalBookingId
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Server response:", data);
+        if (data.success) {
+            // Close preview modal if open
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#previewReceiptModal').modal('hide');
+            }
+            alert("Preview receipt rejected. Your booking has been cancelled.");
+            location.reload();
+        } else {
+            alert("Error: " + (data.message || 'Failed to reject receipt'));
+            if (rejectBtn) {
+                rejectBtn.disabled = false;
+                rejectBtn.innerHTML = originalText;
+            }
+        }
+    })
+    .catch(error => {
+        console.error("Request failed:", error);
+        alert("Failed to reject receipt. Please try again.");
+        if (rejectBtn) {
+            rejectBtn.disabled = false;
+            rejectBtn.innerHTML = originalText;
+        }
+    });
+}
 
 function confirmCancelReservation(reservationId) {
     reservationToCancel = reservationId;
@@ -1160,7 +1568,7 @@ function viewReservationDetails(reservationId) {
             if (!backdrop) {
                 backdrop = document.createElement('div');
                 backdrop.id = 'temp-modal-backdrop';
-                backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1050;';
+                backdrop.style.cssText = 'position:fixed;inset:0;background:transparent;opacity:0;pointer-events:none;z-index:1050;';
                 document.body.appendChild(backdrop);
             }
         }
@@ -1175,16 +1583,54 @@ function viewReservationDetails(reservationId) {
     const modalBody = modalEl.querySelector('.modal-body');
     if (modalBody) {
         const originalContent = modalBody.innerHTML;
-        modalBody.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-3x mb-3" style="color: #8B4513;"></i><p>Loading reservation details...</p></div>';
+        modalBody.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-3x mb-3" style="color: #1F4E79;"></i><p>Loading reservation details...</p></div>';
         
-        // Fetch reservation details
+        // First, fetch booking details to check status
         fetch('<?php echo BASE_URL; ?>customer/getBookingDetails/' + reservationId)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Restore modal body content first, then populate
+                    const booking = data.data;
+                    const status = (booking.status || '').toLowerCase();
+                    const paymentStatus = (booking.payment_status || '').toLowerCase();
+                    
+                    // Check if booking is completed and paid - show official receipt
+                    const isCompletedAndPaid = (
+                        status === 'delivered_and_paid' || 
+                        status === 'completed' ||
+                        (status === 'completed' && (paymentStatus === 'paid' || paymentStatus === 'paid_full_cash' || paymentStatus === 'paid_on_delivery_cod'))
+                    );
+                    
+                    if (isCompletedAndPaid) {
+                        // Fetch official receipt data
+                        fetch('<?php echo BASE_URL; ?>customer/getOfficialReceipt/' + reservationId)
+                            .then(response => response.json())
+                            .then(receiptData => {
+                                if (receiptData.success && receiptData.receipt) {
+                                    // Update modal title
+                                    const modalTitle = modalEl.querySelector('#bookingDetailsModalLabel');
+                                    if (modalTitle) {
+                                        modalTitle.innerHTML = '<i class="fas fa-receipt mr-2"></i>Official Receipt';
+                                    }
+                                    // Populate with official receipt content
+                                    populateOfficialReceiptModal(receiptData.receipt);
+                                } else {
+                                    // Fallback to booking details if receipt fails
                     modalBody.innerHTML = originalContent;
-                    populateBookingDetailsModal(data.data);
+                                    populateBookingDetailsModal(booking);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error loading official receipt:', error);
+                                // Fallback to booking details
+                                modalBody.innerHTML = originalContent;
+                                populateBookingDetailsModal(booking);
+                            });
+                    } else {
+                        // Regular booking details for non-completed bookings
+                        modalBody.innerHTML = originalContent;
+                        populateBookingDetailsModal(booking);
+                    }
                 } else {
                     modalBody.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Failed to load reservation details.') + '</div>';
                 }
@@ -1199,12 +1645,46 @@ function viewReservationDetails(reservationId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    populateBookingDetailsModal(data.data);
+                    const booking = data.data;
+                    const status = (booking.status || '').toLowerCase();
+                    const paymentStatus = (booking.payment_status || '').toLowerCase();
+                    
+                    // Check if booking is completed and paid
+                    const isCompletedAndPaid = (
+                        status === 'delivered_and_paid' || 
+                        status === 'completed' ||
+                        (status === 'completed' && (paymentStatus === 'paid' || paymentStatus === 'paid_full_cash' || paymentStatus === 'paid_on_delivery_cod'))
+                    );
+                    
+                    if (isCompletedAndPaid) {
+                        // Fetch official receipt
+                        fetch('<?php echo BASE_URL; ?>customer/getOfficialReceipt/' + reservationId)
+                            .then(response => response.json())
+                            .then(receiptData => {
+                                if (receiptData.success && receiptData.receipt) {
+                                    populateOfficialReceiptModal(receiptData.receipt);
                     if (typeof jQuery !== 'undefined') {
                         jQuery('#bookingDetailsModal').modal('show');
                     } else {
                         const modal = new bootstrap.Modal(modalEl);
                         modal.show();
+                                    }
+                                } else {
+                                    populateBookingDetailsModal(booking);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                populateBookingDetailsModal(booking);
+                            });
+                    } else {
+                        populateBookingDetailsModal(booking);
+                        if (typeof jQuery !== 'undefined') {
+                            jQuery('#bookingDetailsModal').modal('show');
+                        } else {
+                            const modal = new bootstrap.Modal(modalEl);
+                            modal.show();
+                        }
                     }
                 } else {
                     alert(data.message || 'Failed to load reservation details.');
@@ -1215,6 +1695,184 @@ function viewReservationDetails(reservationId) {
                 alert('An error occurred while loading reservation details.');
             });
     }
+}
+
+// Populate Official Receipt Modal
+function populateOfficialReceiptModal(receipt) {
+    const modalBody = document.querySelector('#bookingDetailsModal .modal-body');
+    if (!modalBody) return;
+    
+    // Update modal title
+    const modalTitle = document.querySelector('#bookingDetailsModalLabel');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-receipt mr-2"></i>Official Receipt';
+    }
+    
+    // Build official receipt HTML
+    let receiptHtml = `
+        <div class="text-center mb-4" style="border-bottom: 3px solid #2c3e50; padding-bottom: 20px;">
+            <h2 style="color: #2c3e50; font-weight: 700; margin-bottom: 10px;">UpholCare</h2>
+            <h4 style="color: #4e73df; font-weight: 600; margin-bottom: 10px;">Upholstery Services</h4>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">Complete Address</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">Contact Number: Contact Number</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">Email: Email</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">TIN Number: TIN Number</p>
+            <p class="text-muted mb-2" style="font-size: 0.9rem;">BIR Permit Number: BIR Permit Number</p>
+            <h3 style="color: #28a745; font-weight: 700; margin-top: 15px; text-transform: uppercase;">Official Receipt</h3>
+            <p style="font-size: 1.1rem; font-weight: 600; color: #2c3e50; margin-top: 10px;">
+                Official Receipt Number: <strong>${receipt.receiptNumber || 'N/A'}</strong>
+            </p>
+            <p style="font-size: 1rem; color: #6c757d; margin-top: 5px;">
+                Date Issued: ${receipt.dateIssued || 'N/A'}
+            </p>
+        </div>
+        
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Customer Information</h6>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Customer Name:</strong></div>
+                <div class="col-md-8">${receipt.customer?.name || 'N/A'}</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Address:</strong></div>
+                <div class="col-md-8">${receipt.customer?.address || 'N/A'}</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Contact Number:</strong></div>
+                <div class="col-md-8">${receipt.customer?.phone || 'N/A'}</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Booking Number:</strong></div>
+                <div class="col-md-8">${receipt.booking?.bookingNumber || 'N/A'}</div>
+            </div>
+        </div>
+        
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Item / Service Details</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered" style="margin-bottom: 0;">
+                    <thead style="background: #4e73df; color: white;">
+                        <tr>
+                            <th>Description of Service</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+    
+    // Add service items
+    if (receipt.services && receipt.services.length > 0) {
+        receipt.services.forEach(item => {
+            receiptHtml += `
+                <tr>
+                    <td>${item.description || 'N/A'}</td>
+                    <td style="text-align: center;">${item.quantity || 1}</td>
+                    <td style="text-align: right;">₱${parseFloat(item.unitPrice || 0).toFixed(2)}</td>
+                    <td style="text-align: right;">₱${parseFloat(item.total || 0).toFixed(2)}</td>
+                </tr>`;
+        });
+    }
+    
+    // Add materials
+    if (receipt.item?.materials && receipt.item.materials.length > 0) {
+        receipt.item.materials.forEach(material => {
+            receiptHtml += `
+                <tr>
+                    <td>${material.name || 'N/A'}</td>
+                    <td style="text-align: center;">${material.quantity || 0} ${material.unit || ''}</td>
+                    <td style="text-align: right;">₱${parseFloat(material.price || 0).toFixed(2)}</td>
+                    <td style="text-align: right;">₱${parseFloat(material.total || 0).toFixed(2)}</td>
+                </tr>`;
+        });
+    }
+    
+    receiptHtml += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Summary of Charges</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;"><strong>Subtotal</strong></td>
+                            <td style="text-align: right; font-weight: 600;">₱${parseFloat(receipt.payment?.subtotal || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;">Pick-Up Fee (if applicable)</td>
+                            <td style="text-align: right;">₱${parseFloat(receipt.payment?.pickupFee || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;">Delivery Fee (if applicable)</td>
+                            <td style="text-align: right;">₱${parseFloat(receipt.payment?.deliveryFee || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr style="background: #28a745; color: white; font-size: 1.2rem;">
+                            <td style="font-weight: 700; border-color: #28a745;"><strong>TOTAL AMOUNT DUE</strong></td>
+                            <td style="text-align: right; font-weight: 700; border-color: #28a745;"><strong>₱${parseFloat(receipt.payment?.totalAmount || 0).toFixed(2)}</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;"><strong>TOTAL AMOUNT PAID</strong></td>
+                            <td style="text-align: right; font-weight: 600;"><strong>₱${parseFloat(receipt.payment?.totalPaid || receipt.payment?.totalAmount || 0).toFixed(2)}</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; background: #f8f9fc;"><strong>BALANCE</strong></td>
+                            <td style="text-align: right; font-weight: 600;">₱${parseFloat(receipt.payment?.balance || 0).toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="section mb-4">
+            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e3e6f0;">Payment Details</h6>
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Mode of Payment:</strong></div>
+                <div class="col-md-8">${receipt.payment?.mode || 'Cash'}</div>
+            </div>
+            ${receipt.payment?.referenceNumber ? `
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Reference Number:</strong></div>
+                <div class="col-md-8">${receipt.payment.referenceNumber}</div>
+            </div>
+            ` : ''}
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Date/Time of Payment:</strong></div>
+                <div class="col-md-8">${receipt.payment?.paymentDate || 'N/A'} – ${receipt.payment?.paymentTime || 'N/A'}</div>
+            </div>
+            ${receipt.payment?.deliveryDate ? `
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Delivery Date:</strong></div>
+                <div class="col-md-8">${receipt.payment.deliveryDate}</div>
+            </div>
+            ` : ''}
+        </div>
+        
+        <div class="section mb-4" style="margin-top: 40px;">
+            <div class="row">
+                <div class="col-md-6 text-center">
+                    <div style="border-top: 2px solid #2c3e50; margin-top: 50px; padding-top: 5px;">
+                        <strong>Customer Signature</strong>
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div style="border-top: 2px solid #2c3e50; margin-top: 50px; padding-top: 5px;">
+                        <strong>Authorized Signature</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mb-0" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e3e6f0; text-align: center; color: #6c757d; font-size: 0.9rem;">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Thank you for trusting UpholCare!</strong> Please keep this receipt for your records.
+        </div>
+    `;
+    
+    modalBody.innerHTML = receiptHtml;
 }
 
 function populateBookingDetailsModal(b) {
@@ -1280,6 +1938,12 @@ function populateBookingDetailsModal(b) {
         }
     }
     
+    // Reset modal title
+    const modalTitle = document.querySelector('#bookingDetailsModalLabel');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-receipt mr-2"></i>Reservation Details';
+    }
+    
     // Populate all fields
     // Booking number removed - no longer displayed
     setText('bd_created_at', formatDate(b.created_at));
@@ -1313,7 +1977,7 @@ function printBookingReceipt() {
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; }
                 .modal-content { background: white; }
-                .modal-header { background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white; padding: 1.5rem; border-radius: 8px 8px 0 0; }
+                .modal-header { background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; padding: 1.5rem; border-radius: 8px 8px 0 0; }
                 .modal-body { padding: 2rem; }
                 .modal-footer { display: none; }
                 .close { display: none; }
@@ -1323,7 +1987,7 @@ function printBookingReceipt() {
                 hr { border-color: #e3e6f0; margin: 1.5rem 0; }
                 .badge { padding: 0.25rem 0.5rem; border-radius: 4px; }
                 .badge-success { background-color: #28a745; color: white; }
-                .badge-info { background-color: #8B4513; color: white; }
+                .badge-info { background-color: #1F4E79; color: white; }
             </style>
         </head>
         <body>
@@ -1348,7 +2012,7 @@ function printBookingReceipt() {
 <div class="modal fade" id="repairReceiptModal" tabindex="-1" aria-labelledby="repairReceiptModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="repairReceiptModalLabel">
                     <i class="fas fa-receipt mr-2"></i>Repair Reservation Receipt
                 </h5>
@@ -1438,11 +2102,34 @@ function printBookingReceipt() {
             </div>
         </div>
     </div>
+</div>
+
+<!-- Reservation Modal -->
+<div class="modal fade" id="reservationModal" tabindex="-1" role="dialog" aria-labelledby="reservationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content overflow-hidden border-0" style="border-radius: 1rem; box-shadow: 0 1rem 3rem rgba(0,0,0,0.2);">
+            <div class="modal-header border-0 p-4" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
+                <h5 class="modal-title font-weight-bold" id="reservationModalLabel">
+                    <i class="fas fa-tools mr-2"></i>Create Repair Reservation
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" id="reservationModalBody">
+                <div class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                    <p class="text-muted">Loading reservation form...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Booking Details Modal -->
 <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="bookingDetailsModalLabel">
                     <i class="fas fa-receipt mr-2"></i>Reservation Details
                 </h5>
@@ -1629,6 +2316,58 @@ function contactRider(bookingId) {
 }
 
 // 8️⃣ Completed Actions
+// Open Reservation Modal
+function openReservationModal() {
+    // Show modal
+    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal === 'function') {
+        jQuery('#reservationModal').modal('show');
+    } else {
+        const modalEl = document.getElementById('reservationModal');
+        if (modalEl) new bootstrap.Modal(modalEl).show();
+    }
+    
+    // Reset body with spinner
+    document.getElementById('reservationModalBody').innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3" style="color: #1F4E79 !important;"></i>
+            <p class="text-muted">Loading reservation form...</p>
+        </div>
+    `;
+    
+    // Fetch partial content
+    fetch('<?php echo BASE_URL; ?>customer/newRepairReservationPartial')
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('reservationModalBody').innerHTML = html;
+            
+            // Re-execute scripts in the loaded HTML
+            const doc = document.getElementById('reservationModalBody');
+            const scripts = doc.getElementsByTagName('script');
+            for (let i = 0; i < scripts.length; i++) {
+                try {
+                    const scriptVar = scripts[i].innerText || scripts[i].textContent;
+                    const newScript = document.createElement('script');
+                    newScript.text = scriptVar;
+                    document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                } catch (e) {
+                    console.error('Error executing script:', e);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('reservationModalBody').innerHTML = `
+                <div class="alert alert-danger m-4">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    Error loading form. Please try again.
+                </div>
+            `;
+        });
+}
+
 function downloadReceipt(bookingId) {
     window.open('<?php echo BASE_URL; ?>customer/downloadReceipt/' + bookingId, '_blank');
 }
@@ -1758,10 +2497,10 @@ function refreshBookingStatuses() {
                         }
                     }
                     
-                    // Final fallback: use nth-child(6) - the STATUS column (6th column in the table)
-                    // Table structure: Checkbox(1), Flag(2), Service(3), Service Option(4), Date(5), STATUS(6), Actions(7)
+                    // Final fallback: use nth-child(5) - the STATUS column (5th column in the table)
+                    // Table structure: Flag(1), Service(2), Service Option(3), Date(4), STATUS(5), Actions(6)
                     if (!statusCell) {
-                        const candidateCell = row.querySelector('td:nth-child(6)');
+                        const candidateCell = row.querySelector('td:nth-child(5)');
                         if (candidateCell) {
                             statusCell = candidateCell;
                         } else {
@@ -1823,10 +2562,6 @@ function refreshBookingStatuses() {
                     // Status mapping - use normalized status (lowercase) for lookup
                     const statusConfig = {
                         'pending': {class: 'badge-warning', icon: 'clock', text: 'Pending'},
-                        'approved': {class: 'badge-success', icon: 'check-circle', text: 'Approved'},
-                        'Approved': {class: 'badge-success', icon: 'check-circle', text: 'Approved'}, // Handle uppercase
-                        'APPROVED': {class: 'badge-success', icon: 'check-circle', text: 'Approved'}, // Handle all caps
-                        'in_queue': {class: 'badge-info', icon: 'list', text: 'In Queue'},
                         'under_repair': {class: 'badge-primary', icon: 'tools', text: 'Under Repair'},
                         'for_quality_check': {class: 'badge-info', icon: 'search', text: 'For Quality Check'},
                         'ready_for_pickup': {class: 'badge-success', icon: 'box', text: 'Ready for Pickup'},
@@ -1835,9 +2570,12 @@ function refreshBookingStatuses() {
                         'cancelled': {class: 'badge-secondary', icon: 'ban', text: 'Cancelled'},
                         'accepted': {class: 'badge-success', icon: 'check-circle', text: 'Approved'},
                         'confirmed': {class: 'badge-success', icon: 'check-circle', text: 'Approved'},
-                        'in_progress': {class: 'badge-primary', icon: 'spinner', text: 'Under Repair'},
                         'ongoing': {class: 'badge-primary', icon: 'spinner', text: 'Under Repair'},
-                        'admin_review': {class: 'badge-warning', icon: 'eye', text: 'Admin Review'}
+                        'admin_review': {class: 'badge-warning', icon: 'eye', text: 'Admin Review'},
+                        'inspect_completed': {class: 'badge-success', icon: 'check-circle', text: 'Inspect Completed'},
+                        'preview_receipt_sent': {class: 'badge-info', icon: 'envelope-open-text', text: 'Preview Receipt Sent'},
+                        'to_inspect': {class: 'badge-warning', icon: 'clipboard-check', text: 'To Inspect'},
+                        'for_inspection': {class: 'badge-info', icon: 'search', text: 'For Inspection'}
                     };
                     
                     // Get config or create default - use normalized status for lookup

@@ -13,7 +13,7 @@
     
     <style>
         body {
-            background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -35,7 +35,7 @@
         }
         
         .login-header {
-            background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
             color: white;
             padding: 40px 30px;
             text-align: center;
@@ -94,7 +94,7 @@
         }
         
         .btn-login {
-            background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -230,6 +230,12 @@
                     <button type="submit" class="btn btn-login">
                         <i class="fas fa-sign-in-alt"></i> Login to Control Panel
                     </button>
+                    
+                    <div class="text-center mt-3">
+                        <a href="<?= BASE_URL ?>control-panel/forgotPassword" class="text-muted" style="text-decoration: none; font-size: 14px;">
+                            <i class="fas fa-key"></i> Forgot Password?
+                        </a>
+                    </div>
                 </form>
                 
                 <div class="security-badge">

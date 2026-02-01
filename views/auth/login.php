@@ -19,8 +19,41 @@
 
     <style>
         .login-container {
-            background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+            background-image: url('<?php echo BASE_URL; ?>assets/images/1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #1F4E79;
             min-height: 100vh;
+            position: relative;
+        }
+
+        .login-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.5) 0%, rgba(22, 33, 62, 0.45) 50%, rgba(15, 52, 96, 0.5) 100%);
+            z-index: 0;
+        }
+
+        .login-container::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 0;
+        }
+
+        .login-container .container {
+            position: relative;
+            z-index: 1;
         }
         .card-login {
             border: none;
@@ -62,6 +95,12 @@
         .password-toggle:focus {
             outline: none;
         }
+
+        @media (max-width: 768px) {
+            .login-container {
+                background-attachment: scroll;
+            }
+        }
     </style>
 </head>
 
@@ -78,7 +117,7 @@
                     <div class="card-body p-0">
                         <!-- Nested Row within Card Body -->
                         <div class="row">
-                            <div class="col-lg-6 d-none d-lg-block" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); display: flex; align-items: center; justify-content: center;">
+                            <div class="col-lg-6 d-none d-lg-block" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); display: flex; align-items: center; justify-content: center;">
                                 <div class="text-center text-white p-5">
                                     <i class="fas fa-couch fa-5x mb-4"></i>
                                     <h2 class="font-weight-bold"><?php echo APP_NAME; ?></h2>
@@ -157,7 +196,7 @@
                                     </form>
                                     <hr>
                                     <div class="text-center">
-                                        <a class="small" href="<?php echo BASE_URL; ?>auth/forgotPassword">Forgot Password?</a>
+                                        <a class="small" href="#" data-toggle="modal" data-target="#forgotPasswordModal">Forgot Password?</a>
                                     </div>
                                     <div class="text-center">
                                         <a class="small" href="<?php echo BASE_URL; ?>auth/roleSelection">Create an Account!</a>
@@ -182,6 +221,36 @@
 
         </div>
 
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Forgot Password?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-4">We get it, stuff happens. Just enter your email address below and we'll send you a link to reset your password!</p>
+                    <form class="user" method="POST" action="<?php echo BASE_URL; ?>auth/processForgotPassword">
+                        <div class="form-group">
+                            <input type="email" class="form-control form-control-user"
+                                id="exampleInputEmail" aria-describedby="emailHelp"
+                                placeholder="Enter Email Address..." name="email" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-user btn-block">
+                            Reset Password
+                        </button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap core JavaScript-->

@@ -19,7 +19,7 @@
 
     <style>
         .register-container {
-            background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);
+            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
             min-height: 100vh;
             padding: 2rem 0;
         }
@@ -38,7 +38,7 @@
         <div class="card card-register o-hidden border-0 shadow-lg my-5">
             <div class="card-body p-0">
                 <div class="row">
-                    <div class="col-lg-5 d-none d-lg-block" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); display: flex; align-items: center; justify-content: center;">
+                    <div class="col-lg-5 d-none d-lg-block" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); display: flex; align-items: center; justify-content: center;">
                         <div class="text-center text-white p-5">
                             <i class="fas fa-user-plus fa-5x mb-4"></i>
                             <h2 class="font-weight-bold">Join Us!</h2>

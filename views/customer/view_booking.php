@@ -45,19 +45,19 @@
 
 /* Override Bootstrap primary colors with brown */
 .btn-primary {
-    background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%) !important;
-    border-color: #8B4513 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    border-color: #1F4E79 !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
-    border-color: #A0522D !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
+    border-color: #4CAF50 !important;
     color: white !important;
 }
 
 .text-primary {
-    color: #8B4513 !important;
+    color: #1F4E79 !important;
 }
 </style>
 
@@ -101,10 +101,10 @@
 <?php if ($booking): ?>
 <!-- Booking Details Card -->
 <div class="card booking-detail-card">
-    <div style="height: 4px; background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%);"></div>
+    <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);"></div>
     
     <!-- Booking Header -->
-    <div class="detail-section" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+    <div class="detail-section" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h3 class="mb-2" style="color: white;">
@@ -157,13 +157,13 @@
     </div>
 
     <!-- Booking Number Section (Prominently Displayed) -->
-    <div class="detail-section text-center" style="background: #f8f9fc; border-left: 4px solid #8B4513;">
+    <div class="detail-section text-center" style="background: #f8f9fc; border-left: 4px solid #1F4E79;">
         <div class="mb-2">
             <small class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
                 <i class="fas fa-ticket-alt mr-1"></i>Booking Number Assigned by Admin
             </small>
         </div>
-        <h2 class="mb-0" style="color: #8B4513; font-weight: 700; font-family: monospace; font-size: 2rem;">
+        <h2 class="mb-0" style="color: #1F4E79; font-weight: 700; font-family: monospace; font-size: 2rem;">
             <?php if (!empty($booking['booking_number'])): ?>
                 <?php echo htmlspecialchars($booking['booking_number']); ?>
             <?php else: ?>
@@ -506,7 +506,7 @@
 <div class="modal fade" id="updateServiceOptionModal" tabindex="-1" role="dialog" aria-labelledby="updateServiceOptionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #654321 0%, #8B4513 50%, #A0522D 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
                 <h5 class="modal-title" id="updateServiceOptionModalLabel">
                     <i class="fas fa-edit mr-2"></i>Update Service Option & Address
                 </h5>
