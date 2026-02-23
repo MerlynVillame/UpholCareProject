@@ -7,16 +7,43 @@
 document.body.classList.add('customer-profile');
 </script>
 
+<style>
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.welcome-text {
+    color: #0F3C5F;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
+}
+</style>
+
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+<div class="welcome-container shadow-sm">
     <div>
-        <h1 class="h3 mb-0 text-gray-800">My Profile</h1>
-        <p class="mb-0">Manage your account information.</p>
+        <div class="welcome-text">
+            <i class="fas fa-user-circle mr-2" style="color: #0F3C5F;"></i>
+            My Profile
+        </div>
+        <p class="mb-0 text-muted small">Manage your account information.</p>
     </div>
     <div>
         <!-- Single Mode Toggle Button -->
-        <button type="button" class="btn btn-outline-primary" id="modeToggleBtn" onclick="toggleMode()">
-            <i class="fas fa-home"></i> <span id="modeToggleText">Local Mode</span>
+        <button type="button" class="btn btn-outline-primary" id="modeToggleBtn" onclick="toggleMode()" style="border-radius: 50px; font-weight: 600; padding: 0.5rem 1.5rem; font-size: 0.85rem;">
+            <i class="fas fa-home mr-1"></i> <span id="modeToggleText">Local Mode</span>
         </button>
     </div>
 </div>
@@ -149,58 +176,91 @@ document.body.classList.add('customer-profile');
 
     <!-- Business Mode Content (Hidden by default) -->
     <div class="col-lg-12" id="businessModeContent" style="display: none;">
-        <!-- Business Information -->
+        <!-- Business Information / Registration status -->
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-success">
-                    <i class="fas fa-briefcase"></i> Business Information
+                    <i class="fas fa-briefcase"></i> Business Profile
                 </h6>
+                <?php if ($businessProfile): ?>
+                    <?php 
+                    $statusClass = 'badge-warning';
+                    if ($businessProfile['status'] === 'approved') $statusClass = 'badge-success';
+                    if ($businessProfile['status'] === 'rejected') $statusClass = 'badge-danger';
+                    ?>
+                    <span class="badge <?php echo $statusClass; ?> py-2 px-3">
+                        Status: <?php echo ucfirst($businessProfile['status']); ?>
+                    </span>
+                <?php endif; ?>
             </div>
             <div class="card-body">
-                <form method="POST" action="<?php echo BASE_URL; ?>customer/updateBusinessProfile">
+                <?php if ($businessProfile && $businessProfile['status'] === 'approved'): ?>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> Your business profile is approved. You can now make business reservations.
+                    </div>
+                <?php elseif ($businessProfile && $businessProfile['status'] === 'pending'): ?>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock"></i> Your business registration is under review by the Super Admin.
+                    </div>
+                <?php elseif ($businessProfile && $businessProfile['status'] === 'rejected'): ?>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle"></i> Your registration was rejected. Reason: <?php echo htmlspecialchars($businessProfile['rejected_reason'] ?? 'Not specified'); ?>
+                        <br>You can update your information and resubmit below.
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Register your business to access corporate booking features and priority processing.
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" action="<?php echo BASE_URL; ?>customer/updateBusinessProfile" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="business_name">Business Name</label>
-                                <input type="text" class="form-control" id="business_name" name="business_name" placeholder="Enter your business name">
+                                <label for="business_name">Business Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="business_name" name="business_name" 
+                                       value="<?php echo htmlspecialchars($businessProfile['business_name'] ?? ''); ?>" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="business_type">Business Type</label>
-                                <select class="form-control" id="business_type" name="business_type">
+                                <label for="business_type_id">Business Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="business_type_id" name="business_type_id" required>
                                     <option value="">Select Business Type</option>
-                                    <option value="furniture_store">Furniture Store</option>
-                                    <option value="interior_design">Interior Design</option>
-                                    <option value="hotel_restaurant">Hotel/Restaurant</option>
-                                    <option value="office_space">Office Space</option>
-                                    <option value="retail_store">Retail Store</option>
-                                    <option value="other">Other</option>
+                                    <?php foreach ($businessTypes as $type): ?>
+                                        <option value="<?php echo $type['id']; ?>" <?php echo (isset($businessProfile['business_type_id']) && $businessProfile['business_type_id'] == $type['id']) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($type['type_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="business_phone">Business Phone</label>
-                                <input type="text" class="form-control" id="business_phone" name="business_phone" placeholder="Business contact number">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="business_email">Business Email</label>
-                                <input type="email" class="form-control" id="business_email" name="business_email" placeholder="Business email address">
-                            </div>
-                        </div>
-                    </div>
                     <div class="form-group">
-                        <label for="business_address">Business Address</label>
-                        <textarea class="form-control" id="business_address" name="business_address" rows="3" placeholder="Complete business address"></textarea>
+                        <label for="business_address">Business Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="business_address" name="business_address" rows="3" required><?php echo htmlspecialchars($businessProfile['business_address'] ?? ''); ?></textarea>
                     </div>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Save Business Information
-                    </button>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="permit_file">Business Permit (PDF, JPG, PNG) <span class="text-danger">*</span></label>
+                                <?php if (!empty($businessProfile['permit_file'])): ?>
+                                    <div class="mb-2">
+                                        <small class="text-success"><i class="fas fa-file-alt"></i> Current permit: <a href="<?php echo BASE_URL . $businessProfile['permit_file']; ?>" target="_blank">View File</a></small>
+                                    </div>
+                                <?php endif; ?>
+                                <input type="file" class="form-control-file" id="permit_file" name="permit_file" <?php echo empty($businessProfile['permit_file']) ? 'required' : ''; ?> accept=".pdf,.jpg,.jpeg,.png">
+                                <small class="text-muted">Upload a valid business permit or DTI registration for verification.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> <?php echo empty($businessProfile) ? 'Submit Registration' : 'Update & Resubmit'; ?>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -221,7 +281,7 @@ document.body.classList.add('customer-profile');
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             Total Business Bookings</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="businessBookingsCount">0</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="businessBookingsCount"><?php echo $businessStats['totalBookings'] ?? '0'; ?></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
@@ -237,7 +297,7 @@ document.body.classList.add('customer-profile');
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                             Business Revenue</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="businessRevenue">₱0.00</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="businessRevenue"><?php echo $businessStats['totalRevenueFormatted'] ?? '₱0.00'; ?></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-peso-sign fa-2x text-gray-300"></i>
@@ -253,7 +313,7 @@ document.body.classList.add('customer-profile');
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Pending Orders</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingBusinessOrders">0</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingBusinessOrders"><?php echo $businessStats['pendingOrders'] ?? '0'; ?></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-hourglass-half fa-2x text-gray-300"></i>
@@ -269,7 +329,7 @@ document.body.classList.add('customer-profile');
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Active Projects</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeProjects">0</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeProjectsCount"><?php echo $businessStats['activeProjects'] ?? '0'; ?></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-tasks fa-2x text-gray-300"></i>
@@ -292,23 +352,17 @@ document.body.classList.add('customer-profile');
                 </div>
                 
                 <div class="row">
-                    <div class="col-md-4">
-                        <a href="<?php echo BASE_URL; ?>customer/newBusinessReservation" class="btn btn-success btn-block mb-3">
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-success btn-block mb-3" data-toggle="modal" data-target="#businessReservationModal">
                             <i class="fas fa-plus"></i> New Business Reservation
                             <small class="d-block">(Admin Processed)</small>
-                        </a>
+                        </button>
                     </div>
-                    <div class="col-md-4">
-                        <a href="<?php echo BASE_URL; ?>customer/businessHistory" class="btn btn-warning btn-block mb-3">
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-warning btn-block mb-3" data-toggle="modal" data-target="#businessHistoryModal">
                             <i class="fas fa-history"></i> Business History
                             <small class="d-block">(Complete History)</small>
-                        </a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="<?php echo BASE_URL; ?>customer/businessBookings" class="btn btn-info btn-block mb-3">
-                            <i class="fas fa-list"></i> View Business Bookings
-                            <small class="d-block">(Admin Processed)</small>
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -326,13 +380,32 @@ document.body.classList.add('customer-profile');
                             </tr>
                         </thead>
                         <tbody id="businessTransactionsBody">
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">
-                                    <i class="fas fa-briefcase fa-2x mb-2"></i>
-                                    <p>No business transactions yet</p>
-                                    <small>Start by creating a business booking</small>
-                                </td>
-                            </tr>
+                            <?php if (!empty($recentBusinessTransactions)): ?>
+                                <?php foreach ($recentBusinessTransactions as $transaction): ?>
+                                    <?php 
+                                    $statusBadge = 'badge-info';
+                                    if ($transaction['status'] === 'pending') $statusBadge = 'badge-warning';
+                                    if (in_array($transaction['status'], ['completed', 'delivered_and_paid'])) $statusBadge = 'badge-success';
+                                    if ($transaction['status'] === 'cancelled') $statusBadge = 'badge-secondary';
+                                    ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($transaction['business_name'] ?? 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($transaction['service_name'] ?? 'N/A'); ?></td>
+                                        <td>₱<?php echo number_format($transaction['total_amount'], 2); ?></td>
+                                        <td><span class="badge <?php echo $statusBadge; ?>"><?php echo ucfirst($transaction['status']); ?></span></td>
+                                        <td><?php echo date('Y-m-d', strtotime($transaction['created_at'])); ?></td>
+                                        <td>
+                                            <a href="<?php echo BASE_URL; ?>customer/viewBooking/<?php echo $transaction['id']; ?>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" class="text-center">No recent business transactions found.</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -456,41 +529,19 @@ function switchToBusinessMode() {
 
 // Load business data
 function loadBusinessData() {
-    // This would typically fetch data from the server
-    // For now, we'll simulate some data
-    document.getElementById('businessBookingsCount').textContent = '12';
-    document.getElementById('businessRevenue').textContent = '₱45,600.00';
-    document.getElementById('pendingBusinessOrders').textContent = '3';
-    document.getElementById('activeProjects').textContent = '5';
-    
-    // Load business transactions (simulated)
-    const transactionsBody = document.getElementById('businessTransactionsBody');
-    transactionsBody.innerHTML = `
-        <tr>
-            <td>Office Furniture Project</td>
-            <td>Sofa Reupholstering</td>
-            <td>₱8,500.00</td>
-            <td><span class="badge badge-warning">In Progress</span></td>
-            <td>2024-01-15</td>
-            <td><a href="#" class="btn btn-sm btn-info">View</a></td>
-        </tr>
-        <tr>
-            <td>Hotel Lobby Renovation</td>
-            <td>Car Seat Repair</td>
-            <td>₱12,000.00</td>
-            <td><span class="badge badge-success">Completed</span></td>
-            <td>2024-01-10</td>
-            <td><a href="#" class="btn btn-sm btn-info">View</a></td>
-        </tr>
-        <tr>
-            <td>Restaurant Seating</td>
-            <td>Mattress Services</td>
-            <td>₱6,200.00</td>
-            <td><span class="badge badge-info">Pending</span></td>
-            <td>2024-01-20</td>
-            <td><a href="#" class="btn btn-sm btn-info">View</a></td>
-        </tr>
-    `;
+    // Fetch real statistics from the server
+    fetch('<?php echo BASE_URL; ?>customer/getBusinessStats')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                const data = result.data;
+                document.getElementById('businessBookingsCount').textContent = data.totalBookings;
+                document.getElementById('businessRevenue').textContent = data.totalRevenue;
+                document.getElementById('pendingBusinessOrders').textContent = data.pendingOrders;
+                document.getElementById('activeProjectsCount').textContent = data.activeProjects;
+            }
+        })
+        .catch(error => console.error('Error loading business stats:', error));
 }
 
 // Initialize page based on stored mode
@@ -931,12 +982,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Default images fallback */
 #coverPhoto {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     min-height: 200px;
 }
 
 #profileImage {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     border: 4px solid #fff;
 }
 
@@ -993,6 +1044,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 </style>
+
+<?php require_once ROOT . DS . 'views' . DS . 'customer' . DS . 'modals' . DS . 'business_reservation_modal.php'; ?>
+<?php require_once ROOT . DS . 'views' . DS . 'customer' . DS . 'modals' . DS . 'business_history_modal.php'; ?>
 
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>
 

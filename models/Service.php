@@ -117,7 +117,7 @@ class Service extends Model {
     }
     
     /**
-     * Get all services with category information (for admin)
+     * Get all services with category information (for admin) - excludes archived + inactive
      */
     public function getAllServices() {
         $sql = "SELECT s.*, 
@@ -125,6 +125,7 @@ class Service extends Model {
                 sc.id as category_id
                 FROM {$this->table} s
                 LEFT JOIN service_categories sc ON s.category_id = sc.id
+                WHERE s.status = 'active'
                 ORDER BY s.created_at DESC";
         
         $stmt = $this->db->prepare($sql);
@@ -175,11 +176,90 @@ class Service extends Model {
     }
     
     /**
+     * Archive service (move to archived)
+     */
+    public function archiveService($serviceId) {
+        return $this->update($serviceId, ['status' => 'archived']);
+    }
+    
+    /**
+     * Restore archived service back to active
+     */
+    public function restoreService($serviceId) {
+        return $this->update($serviceId, ['status' => 'active']);
+    }
+    
+    /**
+     * Get all archived services with category information
+     * Includes 'archived', legacy 'inactive', NULL, and empty-string statuses
+     */
+    public function getArchivedServices() {
+        $sql = "SELECT s.*, 
+                sc.category_name,
+                sc.id as category_id
+                FROM {$this->table} s
+                LEFT JOIN service_categories sc ON s.category_id = sc.id
+                WHERE s.status IN ('archived', 'inactive')
+                   OR s.status IS NULL
+                   OR s.status = ''
+                ORDER BY s.created_at DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+    
+    /**
+     * Migrate all inactive / NULL / empty services to archived status
+     */
+    public function migrateInactiveToArchived() {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} 
+             SET status = 'archived' 
+             WHERE status = 'inactive' 
+                OR status IS NULL 
+                OR status = ''"
+        );
+        return $stmt->execute();
+    }
+    
+    /**
      * Get all service categories (including inactive for admin)
      */
     public function getAllCategories() {
         $stmt = $this->db->prepare("SELECT * FROM service_categories ORDER BY category_name ASC");
         $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get services by store
+     */
+    public function getServicesByStore($storeId) {
+        $sql = "SELECT s.*, 
+                sc.category_name
+                FROM {$this->table} s
+                LEFT JOIN service_categories sc ON s.category_id = sc.id
+                WHERE s.store_id = ? AND s.status = 'active'
+                ORDER BY sc.category_name, s.service_name";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$storeId]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get categories by store (categories that have active services in this store)
+     */
+    public function getCategoriesByStore($storeId) {
+        $sql = "SELECT DISTINCT sc.id, sc.category_name as name, sc.description
+                FROM service_categories sc
+                INNER JOIN {$this->table} s ON s.category_id = sc.id
+                WHERE s.store_id = ? AND s.status = 'active' AND sc.status = 'active'
+                ORDER BY sc.category_name ASC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$storeId]);
         return $stmt->fetchAll();
     }
 }

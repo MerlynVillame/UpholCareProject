@@ -178,6 +178,17 @@ class Booking extends Model {
     }
     
     /**
+     * Get total spent by a specific customer
+     */
+    public function getTotalSpent($customerId) {
+        $stmt = $this->db->prepare("SELECT SUM(total_amount) as total FROM {$this->table} 
+                                    WHERE user_id = ? AND payment_status = 'paid' AND is_archived = 0");
+        $stmt->execute([$customerId]);
+        $result = $stmt->fetch();
+        return $result['total'] ?? 0;
+    }
+    
+    /**
      * Get total bookings count
      */
     public function getTotalBookingsCount($customerId) {
@@ -270,6 +281,26 @@ class Booking extends Model {
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all business bookings for a user
+     */
+    public function getBusinessBookings($userId) {
+        $sql = "SELECT b.*, s.service_name, s.service_type, sc.category_name,
+                cb.business_name,
+                COALESCE(b.status, 'pending') as status,
+                COALESCE(b.payment_status, 'unpaid') as payment_status
+                FROM {$this->table} b
+                LEFT JOIN services s ON b.service_id = s.id
+                LEFT JOIN service_categories sc ON s.category_id = sc.id
+                LEFT JOIN customer_businesses cb ON b.customer_business_id = cb.id
+                WHERE b.user_id = ? AND b.booking_type IN ('business', 'business_reservation')
+                ORDER BY b.created_at DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$userId]);
         return $stmt->fetchAll();
     }
 }

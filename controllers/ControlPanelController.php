@@ -9,10 +9,12 @@ require_once ROOT . DS . 'core' . DS . 'Controller.php';
 class ControlPanelController extends Controller {
     
     protected $db;
+    private $businessModel;
     
     public function __construct() {
         // Base Controller doesn't have a constructor, so we don't call parent::__construct()
         $this->db = Database::getInstance()->getConnection();
+        $this->businessModel = $this->model('CustomerBusiness');
     }
     
     /**
@@ -56,34 +58,69 @@ class ControlPanelController extends Controller {
             $this->redirect('control-panel/login');
         }
         
-        // Check credentials
-        $stmt = $this->db->prepare("SELECT * FROM control_panel_admins WHERE email = ? AND status = 'active'");
+        // Check credentials (including inactive check)
+        $stmt = $this->db->prepare("SELECT * FROM control_panel_admins WHERE email = ?");
         $stmt->execute([$email]);
         $admin = $stmt->fetch();
         
+        // Email exists validation
         if (!$admin) {
             $this->logLoginAttempt(null, 'control_panel', $email, null, $ipAddress, $userAgent, 'failed', 'Invalid email');
             $_SESSION['error'] = 'Invalid email or password.';
             $this->redirect('control-panel/login');
+            return;
+        }
+
+        // Status check
+        if ($admin['status'] !== 'active') {
+            $this->logLoginAttempt($admin['id'], 'control_panel', $email, $admin['fullname'], $ipAddress, $userAgent, 'failed', 'Account inactive');
+            $_SESSION['error'] = 'Your account has been deactivated. Please contact support.';
+            $this->redirect('control-panel/login');
+            return;
+        }
+
+        // Check if account is locked
+        if ($admin['locked_until'] && strtotime($admin['locked_until']) > time()) {
+            $lockTimeRemaining = ceil((strtotime($admin['locked_until']) - time()) / 60);
+            $this->logLoginAttempt($admin['id'], 'control_panel', $email, $admin['fullname'], $ipAddress, $userAgent, 'failed', "Account locked until {$admin['locked_until']}");
+            $_SESSION['error'] = "Account temporarily locked. Please try again in {$lockTimeRemaining} minutes.";
+            $this->redirect('control-panel/login');
+            return;
         }
         
         // Verify password
         if (!password_verify($password, $admin['password'])) {
-            $this->logLoginAttempt($admin['id'], 'control_panel', $email, $admin['fullname'], $ipAddress, $userAgent, 'failed', 'Invalid password');
-            $_SESSION['error'] = 'Invalid email or password.';
+            $fails = ($admin['failed_login_attempts'] ?? 0) + 1;
+            $updates = "failed_login_attempts = ?";
+            $params = [$fails];
+            
+            $lockMsg = '';
+            if ($fails >= 5) {
+                $lockedUntil = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+                $updates .= ", locked_until = ?";
+                $params[] = $lockedUntil;
+                $lockMsg = ' Account locked for 15 minutes.';
+            }
+            $params[] = $admin['id'];
+            
+            $updateStmt = $this->db->prepare("UPDATE control_panel_admins SET $updates WHERE id = ?");
+            $updateStmt->execute($params);
+
+            $this->logLoginAttempt($admin['id'], 'control_panel', $email, $admin['fullname'], $ipAddress, $userAgent, 'failed', 'Invalid password.' . $lockMsg);
+            $_SESSION['error'] = 'Invalid email or password.' . ($fails >= 3 ? " Attempt {$fails} of 5." : "");
             $this->redirect('control-panel/login');
+            return;
         }
         
-        // Login successful
+        // Login successful - Reset fails
+        $resetStmt = $this->db->prepare("UPDATE control_panel_admins SET failed_login_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = ?");
+        $resetStmt->execute([$admin['id']]);
+
         $_SESSION['control_panel_admin'] = [
             'id' => $admin['id'],
             'email' => $admin['email'],
             'fullname' => $admin['fullname']
         ];
-        
-        // Update last login
-        $stmt = $this->db->prepare("UPDATE control_panel_admins SET last_login = NOW() WHERE id = ?");
-        $stmt->execute([$admin['id']]);
         
         // Log successful login
         $this->logLoginAttempt($admin['id'], 'control_panel', $email, $admin['fullname'], $ipAddress, $userAgent, 'success', null);
@@ -129,6 +166,9 @@ class ControlPanelController extends Controller {
         $userType = $_GET['type'] ?? 'all';
         $status = $_GET['status'] ?? 'all';
         $limit = (int)($_GET['limit'] ?? 100);
+        $startDate = $_GET['start_date'] ?? null;
+        $endDate = $_GET['end_date'] ?? null;
+        $search = $_GET['search'] ?? null;
         
         $data['title'] = 'Login Logs';
         $data['page_title'] = 'Login Logs';
@@ -137,10 +177,13 @@ class ControlPanelController extends Controller {
         $data['admin'] = $_SESSION['control_panel_admin'];
         $data['is_super_admin'] = $this->isSuperAdmin();
         $data['pending_count'] = 0;
-        $data['login_logs'] = $this->getLoginLogs($userType, $status, $limit);
+        $data['login_logs'] = $this->getLoginLogs($userType, $status, $limit, $startDate, $endDate, $search);
         $data['filter_type'] = $userType;
         $data['filter_status'] = $status;
         $data['filter_limit'] = $limit;
+        $data['filter_start_date'] = $startDate;
+        $data['filter_end_date'] = $endDate;
+        $data['filter_search'] = $search;
         
         $this->view('control_panel/login_logs', $data);
     }
@@ -202,8 +245,11 @@ class ControlPanelController extends Controller {
      */
     private function getRecentLogins($limit = 50) {
         $stmt = $this->db->prepare("
-            SELECT * FROM login_logs 
-            ORDER BY login_time DESC 
+            SELECT l.*, a.role as admin_role, u.role as user_role 
+            FROM login_logs l 
+            LEFT JOIN control_panel_admins a ON (l.email = a.email)
+            LEFT JOIN users u ON (l.email = u.email AND (u.role = 'customer' OR u.role = 'admin'))
+            ORDER BY l.login_time DESC 
             LIMIT ?
         ");
         $stmt->execute([$limit]);
@@ -213,21 +259,43 @@ class ControlPanelController extends Controller {
     /**
      * Get login logs with filters
      */
-    private function getLoginLogs($userType = 'all', $status = 'all', $limit = 100) {
-        $sql = "SELECT * FROM login_logs WHERE 1=1";
+    private function getLoginLogs($userType = 'all', $status = 'all', $limit = 100, $startDate = null, $endDate = null, $search = null) {
+        $sql = "SELECT l.*, a.role as admin_role, u.role as user_role 
+                FROM login_logs l 
+                LEFT JOIN control_panel_admins a ON (l.email = a.email)
+                LEFT JOIN users u ON (l.email = u.email AND (u.role = 'customer' OR u.role = 'admin'))
+                WHERE 1=1";
         $params = [];
         
         if ($userType !== 'all') {
-            $sql .= " AND user_type = ?";
+            $sql .= " AND l.user_type = ?";
             $params[] = $userType;
         }
         
         if ($status !== 'all') {
-            $sql .= " AND login_status = ?";
+            $sql .= " AND l.login_status = ?";
             $params[] = $status;
         }
+
+        if ($startDate) {
+            $sql .= " AND DATE(l.login_time) >= ?";
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= " AND DATE(l.login_time) <= ?";
+            $params[] = $endDate;
+        }
+
+        if ($search) {
+            $sql .= " AND (l.email LIKE ? OR l.fullname LIKE ? OR l.ip_address LIKE ?)";
+            $searchTerm = "%$search%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
         
-        $sql .= " ORDER BY login_time DESC LIMIT ?";
+        $sql .= " ORDER BY l.login_time DESC LIMIT ?";
         $params[] = $limit;
         
         $stmt = $this->db->prepare($sql);
@@ -240,8 +308,7 @@ class ControlPanelController extends Controller {
      */
     public function logLoginAttempt($userId, $userType, $email, $fullname, $ipAddress, $userAgent, $status, $failureReason = null) {
         try {
-            // For control panel admins, set user_id to NULL since they're in a different table
-            $userIdToLog = ($userType === 'control_panel') ? null : $userId;
+            $userIdToLog = $userId;
             
         $stmt = $this->db->prepare("
             INSERT INTO login_logs 
@@ -337,6 +404,14 @@ class ControlPanelController extends Controller {
             $pendingCustomers = 0;
         }
         
+        // Get pending business registrations count
+        try {
+            $stmt = $this->db->query("SELECT COUNT(*) as count FROM customer_businesses WHERE status = 'pending'");
+            $pendingBusinesses = $stmt->fetch()['count'] ?? 0;
+        } catch (Exception $e) {
+            $pendingBusinesses = 0;
+        }
+        
         // Get pending compliance reports count
         try {
             $complianceStats = $this->getComplianceReportsStats();
@@ -345,11 +420,66 @@ class ControlPanelController extends Controller {
             $data['stats']['pending_compliance_reports'] = 0;
         }
         
-        $data['pending_count'] = $adminPending + $pendingCustomers;
+        $data['pending_count'] = $adminPending + $pendingCustomers + $pendingBusinesses;
         $data['pending_customers_count'] = $pendingCustomers;
+        $data['pending_businesses_count'] = $pendingBusinesses;
         
         $this->view('control_panel/super_admin_dashboard', $data);
     }
+    
+/**
+ * Get Notifications for Super Admin (AJAX)
+ */
+public function getNotifications() {
+    $this->requireSuperAdmin();
+    
+    // Get stats for pending items
+    $stats = $this->getSuperAdminStats();
+    $pendingAdmins = count($this->getPendingAdmins());
+    
+    try {
+        $stmt = $this->db->query("SELECT COUNT(*) as count FROM users WHERE role = 'customer' AND status = 'inactive'");
+        $pendingCustomers = $stmt->fetch()['count'] ?? 0;
+    } catch (Exception $e) {
+        $pendingCustomers = 0;
+    }
+    
+    $totalPending = $pendingAdmins + $pendingCustomers;
+    
+    $notifications = [];
+    
+    // Only return the system notification if there's actual work
+    if ($totalPending > 0) {
+        $notifications[] = [
+            'id' => 'system_alert',
+            'type' => 'warning',
+            'title' => 'System Review Required',
+            'message' => "You have $totalPending pending registration(s) to review.",
+            'time_ago' => 'Action Needed',
+            'is_read' => false,
+            'related_type' => 'system',
+            'related_id' => null
+        ];
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => true,
+        'unread_count' => count($notifications),
+        'notifications' => $notifications
+    ]);
+    exit;
+}
+
+/**
+ * Mark Notification as Read (Dummy for System Alerts)
+ */
+public function markNotificationRead() {
+    $this->requireSuperAdmin();
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true]);
+    exit;
+}
     
     /**
      * Get Super Admin Statistics
@@ -397,33 +527,17 @@ class ControlPanelController extends Controller {
             $stats['pending_bookings'] = 0;
         }
         
-        // Total revenue (from bookings)
-        try {
-            $stmt = $this->db->query("SELECT COALESCE(SUM(total_amount), 0) as revenue FROM bookings WHERE payment_status = 'paid'");
-            $stats['total_revenue'] = $stmt->fetch()['revenue'];
-        } catch (Exception $e) {
-            $stats['total_revenue'] = 0;
-        }
-        
-        // Today's revenue
-        try {
-            $stmt = $this->db->query("SELECT COALESCE(SUM(total_amount), 0) as revenue FROM bookings WHERE payment_status = 'paid' AND DATE(created_at) = CURDATE()");
-            $stats['today_revenue'] = $stmt->fetch()['revenue'];
-        } catch (Exception $e) {
-            $stats['today_revenue'] = 0;
-        }
-        
-        // This month's revenue
-        try {
-            $stmt = $this->db->query("SELECT COALESCE(SUM(total_amount), 0) as revenue FROM bookings WHERE payment_status = 'paid' AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
-            $stats['month_revenue'] = $stmt->fetch()['revenue'];
-        } catch (Exception $e) {
-            $stats['month_revenue'] = 0;
-        }
-        
         // Total super admins
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM control_panel_admins WHERE role = 'super_admin' AND status = 'active'");
         $stats['total_super_admins'] = $stmt->fetch()['count'];
+        
+        // Pending business registrations
+        try {
+            $stmt = $this->db->query("SELECT COUNT(*) as count FROM customer_businesses WHERE status = 'pending'");
+            $stats['pending_business_registrations'] = $stmt->fetch()['count'];
+        } catch (Exception $e) {
+            $stats['pending_business_registrations'] = 0;
+        }
         
         return $stats;
     }
@@ -1099,10 +1213,10 @@ class ControlPanelController extends Controller {
         $viewType = $_GET['view'] ?? 'active'; // 'active' or 'pending'
         $status = $_GET['status'] ?? 'all';
         
-        $data['title'] = 'Admin Accounts';
-        $data['page_title'] = 'Admin Accounts';
-        $data['page_subtitle'] = 'Monitor all admin accounts';
-        $data['page_icon'] = 'fas fa-user-shield';
+        $data['title'] = 'Admin Registrations';
+        $data['page_title'] = 'Admin Registrations';
+        $data['page_subtitle'] = 'Review and approve administrator access requests';
+        $data['page_icon'] = 'fas fa-user-clock';
         $data['admin'] = $_SESSION['control_panel_admin'];
         $data['is_super_admin'] = true;
         $data['view_type'] = $viewType;
@@ -1334,6 +1448,154 @@ class ControlPanelController extends Controller {
         }
         
         $this->redirect('control-panel/customerAccounts');
+    }
+    
+    /**
+     * Business Registrations Management
+     */
+    public function businessRegistrations() {
+        $this->requireSuperAdmin();
+        
+        // Load the CustomerBusiness model
+        require_once ROOT . DS . 'models' . DS . 'CustomerBusiness.php';
+        $businessModel = new CustomerBusiness();
+        
+        // Get filter status from query params
+        $filterStatus = $_GET['status'] ?? 'all';
+        $filterStatus = ($filterStatus === 'all') ? null : $filterStatus;
+        
+        // Get all business registrations
+        $registrations = $businessModel->getAllForReview($filterStatus);
+        
+        // Get stats for super admin dashboard
+        $stats = $this->getSuperAdminStats();
+        
+        $data = [
+            'title' => 'Business Registrations',
+            'admin' => $_SESSION['control_panel_admin'],
+            'is_super_admin' => true,
+            'registrations' => $registrations,
+            'filter_status' => $_GET['status'] ?? 'all',
+            'stats' => $stats,
+            'pending_count' => $stats['pending_admin_registrations'] + ($stats['pending_customer_accounts'] ?? 0),
+            'pending_customers_count' => $stats['pending_customer_accounts'] ?? 0,
+            'pending_businesses_count' => $stats['pending_business_registrations'] ?? 0
+        ];
+        
+        $this->view('control_panel/business_registrations', $data);
+    }
+    
+    /**
+     * Approve Business Registration
+     */
+    public function approveBusiness($id) {
+        $this->requireSuperAdmin();
+        
+        if (!$id) {
+            $_SESSION['error'] = 'Invalid business ID.';
+            $this->redirect('control-panel/businessRegistrations');
+        }
+        
+        try {
+            // Load the CustomerBusiness model
+            require_once ROOT . DS . 'models' . DS . 'CustomerBusiness.php';
+            $businessModel = new CustomerBusiness();
+            
+            // Get business details before approval
+            $stmt = $this->db->prepare("SELECT * FROM customer_businesses WHERE id = ?");
+            $stmt->execute([$id]);
+            $business = $stmt->fetch();
+            
+            if (!$business) {
+                $_SESSION['error'] = 'Business registration not found.';
+                $this->redirect('control-panel/businessRegistrations');
+            }
+            
+            // Approve the business
+            $adminId = $_SESSION['control_panel_admin']['id'];
+            $businessModel->approve($id, $adminId);
+            
+            // Log super admin activity
+            $stmt = $this->db->prepare("
+                INSERT INTO super_admin_activity 
+                (super_admin_id, super_admin_name, action_type, target_admin_name, description) 
+                VALUES (?, ?, 'business_approved', ?, ?)
+            ");
+            $stmt->execute([
+                $_SESSION['control_panel_admin']['id'],
+                $_SESSION['control_panel_admin']['fullname'],
+                $business['business_name'],
+                "Approved business registration: {$business['business_name']}"
+            ]);
+            
+            $_SESSION['success'] = 'Business registration approved successfully.';
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Failed to approve business: ' . $e->getMessage();
+        }
+        
+        $this->redirect('control-panel/businessRegistrations');
+    }
+    
+    /**
+     * Reject Business Registration
+     */
+    public function rejectBusiness($id) {
+        $this->requireSuperAdmin();
+        
+        if (!$id) {
+            $_SESSION['error'] = 'Invalid business ID.';
+            $this->redirect('control-panel/businessRegistrations');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $_SESSION['error'] = 'Invalid request method.';
+            $this->redirect('control-panel/businessRegistrations');
+        }
+        
+        $reason = trim($_POST['reason'] ?? '');
+        
+        if (empty($reason)) {
+            $_SESSION['error'] = 'Rejection reason is required.';
+            $this->redirect('control-panel/businessRegistrations');
+        }
+        
+        try {
+            // Load the CustomerBusiness model
+            require_once ROOT . DS . 'models' . DS . 'CustomerBusiness.php';
+            $businessModel = new CustomerBusiness();
+            
+            // Get business details before rejection
+            $stmt = $this->db->prepare("SELECT * FROM customer_businesses WHERE id = ?");
+            $stmt->execute([$id]);
+            $business = $stmt->fetch();
+            
+            if (!$business) {
+                $_SESSION['error'] = 'Business registration not found.';
+                $this->redirect('control-panel/businessRegistrations');
+            }
+            
+            // Reject the business
+            $businessModel->reject($id, $reason);
+            
+            // Log super admin activity
+            $stmt = $this->db->prepare("
+                INSERT INTO super_admin_activity 
+                (super_admin_id, super_admin_name, action_type, target_admin_name, description) 
+                VALUES (?, ?, 'business_rejected', ?, ?)
+            ");
+            $stmt->execute([
+                $_SESSION['control_panel_admin']['id'],
+                $_SESSION['control_panel_admin']['fullname'],
+                $business['business_name'],
+                "Rejected business registration: {$business['business_name']}. Reason: {$reason}"
+            ]);
+            
+            $_SESSION['success'] = 'Business registration rejected.';
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Failed to reject business: ' . $e->getMessage();
+        }
+        
+        $this->redirect('control-panel/businessRegistrations');
     }
     
     /**

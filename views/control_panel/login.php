@@ -1,144 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="<?= APP_DESC; ?>">
+    <meta name="author" content="">
+
     <title><?= $data['title'] ?? 'Control Panel Login' ?> - UphoCare</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
+    <!-- Custom fonts for this template-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+
     <style>
-        body {
-            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
         .login-container {
-            max-width: 450px;
-            width: 100%;
-            padding: 20px;
+            background-image: url('<?= BASE_URL; ?>assets/images/1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #1F4E79;
+            min-height: 100vh;
+            position: relative;
         }
-        
-        .login-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+
+        .login-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.5) 0%, rgba(22, 33, 62, 0.45) 50%, rgba(15, 52, 96, 0.5) 100%);
+            z-index: 0;
         }
-        
-        .login-header {
-            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
+
+        .login-container::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 0;
         }
-        
-        .login-header i {
-            font-size: 60px;
-            margin-bottom: 15px;
+
+        .login-container .container {
+            position: relative;
+            z-index: 1;
         }
-        
-        .login-header h2 {
-            margin: 0;
-            font-weight: 600;
-            font-size: 28px;
-        }
-        
-        .login-header p {
-            margin: 10px 0 0 0;
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .login-body {
-            padding: 40px 30px;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-        }
-        
-        .form-control {
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 12px 15px;
-            font-size: 15px;
-            transition: all 0.3s;
-        }
-        
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
-        .input-group-text {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-right: none;
-            border-radius: 10px 0 0 10px;
-        }
-        
-        .input-group .form-control {
-            border-left: none;
-            border-radius: 0 10px 10px 0;
-        }
-        
-        .btn-login {
-            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
-            color: white;
+        .card-login {
             border: none;
-            border-radius: 10px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            transition: transform 0.2s;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.1);
         }
-        
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .alert {
-            border-radius: 10px;
-            border: none;
-        }
-        
-        .back-link {
+        .logo-section {
             text-align: center;
-            margin-top: 20px;
+            margin-bottom: 2rem;
         }
-        
-        .back-link a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
+        .logo-section h1 {
+            color: #5a5c69;
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
         }
-        
-        .back-link a:hover {
-            text-decoration: underline;
-        }
-        
-        .security-badge {
-            text-align: center;
-            margin-top: 15px;
-            color: #666;
-            font-size: 13px;
-        }
-        
-        .security-badge i {
-            color: #28a745;
+        .logo-section p {
+            color: #858796;
+            font-size: 0.9rem;
         }
         .password-wrapper {
             position: relative;
@@ -161,99 +95,110 @@
         .password-toggle:focus {
             outline: none;
         }
-        .input-group.password-wrapper {
-            position: relative;
-        }
-        .input-group.password-wrapper .form-control {
-            padding-right: 45px;
-            border-radius: 0 10px 10px 0;
-        }
-        .input-group.password-wrapper .password-toggle {
-            right: 10px;
+
+        @media (max-width: 768px) {
+            .login-container {
+                background-attachment: scroll;
+            }
         }
     </style>
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <i class="fas fa-shield-alt"></i>
-                <h2>Control Panel</h2>
-                <p>Secure Access Only</p>
-            </div>
-            
-            <div class="login-body">
-                <?php if (isset($_SESSION['error'])): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <?= $_SESSION['error']; unset($_SESSION['error']); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if (isset($_SESSION['success'])): ?>
-                    <div class="alert alert-success" role="alert">
-                        <i class="fas fa-check-circle"></i>
-                        <?= $_SESSION['success']; unset($_SESSION['success']); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <form action="<?= BASE_URL ?>/control-panel/processLogin" method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">
-                            <i class="fas fa-envelope"></i> Email Address
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-user"></i>
-                            </span>
-                            <input type="email" class="form-control" id="email" name="email" 
-                                   placeholder="Enter your email" required autofocus>
+
+<body class="login-container">
+
+    <div class="container">
+
+        <!-- Outer Row -->
+        <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+
+            <div class="col-xl-10 col-lg-12 col-md-9">
+
+                <div class="card card-login o-hidden border-0 shadow-lg my-5">
+                    <div class="card-body p-0">
+                        <!-- Nested Row within Card Body -->
+                        <div class="row">
+                            <div class="col-lg-6 d-none d-lg-block" style="background: linear-gradient(135deg, #2C3E50 0%, #0F3C5F 100%); display: flex; align-items: center; justify-content: center;">
+                                <div class="text-center text-white p-5">
+                                    <i class="fas fa-shield-alt fa-5x mb-4"></i>
+                                    <h2 class="font-weight-bold">Control Panel</h2>
+                                    <p class="lead">Secure Access Only</p>
+                                    <p>Centralized System Management & Monitoring</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <div class="logo-section">
+                                        <h1>UphoCare</h1>
+                                        <p>Please login to your control panel account.</p>
+                                    </div>
+
+                                    <?php if (isset($_SESSION['error'])): ?>
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-exclamation-triangle"></i> <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+                                        <button type="button" class="close" data-dismiss="alert">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <?php endif; ?>
+
+                                    <?php if (isset($_SESSION['success'])): ?>
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-check-circle"></i> <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+                                        <button type="button" class="close" data-dismiss="alert">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <?php endif; ?>
+
+                                    <form class="user" method="POST" action="<?= BASE_URL; ?>control-panel/processLogin">
+                                        <div class="form-group">
+                                            <input type="email" class="form-control form-control-user"
+                                                id="email" name="email" placeholder="Enter Email Address..." required autofocus>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="password-wrapper">
+                                                <input type="password" class="form-control form-control-user"
+                                                    id="password" name="password" placeholder="Password" required>
+                                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-user btn-block" style="background: linear-gradient(135deg, #3498DB 0%, #2C3E50 100%); border: none;">
+                                            <i class="fas fa-sign-in-alt"></i> Login to Control Panel
+                                        </button>
+                                    </form>
+                                    <hr>
+                                    <div class="text-center">
+                                        <a class="small" href="<?= BASE_URL ?>control-panel/forgotPassword">Forgot Password?</a>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <a class="text-muted small" href="<?= BASE_URL ?>">
+                                            <i class="fas fa-arrow-left"></i> Back to Main Site
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="mt-4 p-3 text-center" style="background-color: #f8f9fc; border-radius: 0.5rem;">
+                                        <small class="text-muted"><i class="fas fa-lock"></i> Secured with SSL Encryption</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="mb-4">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock"></i> Password
-                        </label>
-                        <div class="input-group password-wrapper">
-                            <span class="input-group-text">
-                                <i class="fas fa-key"></i>
-                            </span>
-                            <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Enter your password" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-login">
-                        <i class="fas fa-sign-in-alt"></i> Login to Control Panel
-                    </button>
-                    
-                    <div class="text-center mt-3">
-                        <a href="<?= BASE_URL ?>control-panel/forgotPassword" class="text-muted" style="text-decoration: none; font-size: 14px;">
-                            <i class="fas fa-key"></i> Forgot Password?
-                        </a>
-                    </div>
-                </form>
-                
-                <div class="security-badge">
-                    <i class="fas fa-lock"></i> Secured with SSL Encryption
                 </div>
+
             </div>
+
         </div>
-        
-        <div class="back-link">
-            <a href="<?= BASE_URL ?>">
-                <i class="fas fa-arrow-left"></i> Back to Main Site
-            </a>
-        </div>
+
     </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
+    <!-- Core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
+
     <script>
         function togglePassword(fieldId) {
             const passwordField = document.getElementById(fieldId);
@@ -270,6 +215,9 @@
             }
         }
     </script>
+
 </body>
+
 </html>
+
 

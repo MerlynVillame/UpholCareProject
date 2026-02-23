@@ -5,115 +5,103 @@
 <style>
 /* Enhanced Catalog Page Styles */
 .catalog-header {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
-    padding: 3rem 2rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
     border-radius: 1rem;
-    margin-bottom: 2rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.catalog-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-}
-
-.catalog-header h1 {
-    font-size: 2.5rem;
+.catalog-header-text {
+    color: #0F3C5F;
     font-weight: 700;
-    margin-bottom: 0.5rem;
-    position: relative;
-}
-
-.catalog-header p {
-    font-size: 1.1rem;
-    opacity: 0.95;
-    position: relative;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
 }
 
 /* Search and Filter Section */
 .search-filter-section {
     background: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
 }
 
 .search-box {
     position: relative;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 550px;
 }
 
 .search-box input {
     width: 100%;
-    padding: 1rem 1rem 1rem 3rem;
-    border: 2px solid #e3e6f0;
-    border-radius: 0.75rem;
-    font-size: 1rem;
-    transition: all 0.3s;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: #f8f9fc;
 }
 
 .search-box input:focus {
-    border-color: #1F4E79;
+    background: white;
+    border-color: #0F3C5F;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+    box-shadow: 0 4px 15px rgba(15, 60, 95, 0.1);
 }
 
 .search-box i {
     position: absolute;
-    left: 1rem;
+    left: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #6c757d;
+    color: #9499ad;
+    font-size: 0.95rem;
 }
 
 .filter-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.6rem;
 }
 
 .filter-tag {
     padding: 0.5rem 1.25rem;
     background: #f8f9fc;
-    border: 2px solid #e3e6f0;
-    border-radius: 2rem;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
     cursor: pointer;
-    transition: all 0.3s;
-    font-size: 0.9rem;
-    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5a5c69;
 }
 
 .filter-tag:hover {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
-    color: white;
-    border-color: #1F4E79;
+    background: #eaecf4;
     transform: translateY(-2px);
+    border-color: #d1d3e2;
+    color: #0F3C5F;
 }
 
 .filter-tag.active {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     color: white;
     border-color: transparent;
-    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.4);
+    box-shadow: 0 4px 12px rgba(15, 60, 95, 0.3);
 }
 
-.results-count {
-    text-align: center;
-    padding: 1rem;
-    background: #f8f9fc;
-    border-radius: 0.75rem;
-    margin-bottom: 2rem;
-    color: #6c757d;
-}
+
 
 .category-section {
     margin-bottom: 4rem;
@@ -147,7 +135,7 @@
     left: 0;
     width: 100px;
     height: 3px;
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
 }
 
 .category-badge {
@@ -208,7 +196,7 @@
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     transform: scaleX(0);
     transition: transform 0.4s ease;
 }
@@ -219,7 +207,7 @@
 
 .color-swatch {
     width: 100%;
-    height: 180px;
+    height: 80px;
     border-bottom: 2px solid #e3e6f0;
     position: relative;
     display: flex;
@@ -239,14 +227,14 @@
 }
 
 .color-card-body {
-    padding: 2rem;
+    padding: 0.75rem;
 }
 
 .color-name {
-    font-size: 1.35rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: #2c3e50;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.15rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -254,24 +242,24 @@
 
 .color-name i {
     color: #1F4E79;
-    margin-right: 0.75rem;
-    font-size: 1.25rem;
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .color-code {
     color: #6c757d;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
+    font-size: 0.65rem;
+    margin-bottom: 0.5rem;
     font-family: 'Courier New', monospace;
 }
 
 .color-info {
     display: flex;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 1.25rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
     background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     border: 1px solid #e3e6f0;
 }
 
@@ -281,18 +269,18 @@
 }
 
 .price-label {
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     font-weight: 600;
 }
 
 .price-amount {
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1.2;
@@ -302,29 +290,29 @@
     flex: 1;
     text-align: center;
     border-left: 2px solid #e3e6f0;
-    padding-left: 1.25rem;
+    padding-left: 0.75rem;
 }
 
 .stock-label {
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     color: #6c757d;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
 }
 
 .stock-value {
-    font-size: 1.5rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: #1F4E79;
 }
 
 .fabric-badge {
     display: inline-block;
-    padding: 0.35rem 0.85rem;
+    padding: 0.25rem 0.6rem;
     border-radius: 2rem;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -433,22 +421,27 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    background: linear-gradient(135deg, #1F4E79 0%) !important;
     border-color: #1F4E79 !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
-    border-color: #4CAF50 !important;
+    background: linear-gradient(135deg, #1F4E79 0%) !important;
+    border-color: #0F3C5F !important;
     color: white !important;
 }
 </style>
 
 <!-- Catalog Header -->
-<div class="catalog-header text-center">
-    <h1><i class="fas fa-palette mr-3"></i>Fabric/Color Catalog</h1>
-    <p>Browse our extensive collection of fabrics and colors. Find the perfect match for your upholstery needs.</p>
+<div class="catalog-header shadow-sm">
+    <div>
+        <div class="catalog-header-text">
+            <i class="fas fa-palette mr-2" style="color: #0F3C5F;"></i>
+            Fabric/Color Catalog
+        </div>
+        <p class="mb-0 text-muted small">Browse our extensive collection of fabrics and colors. Find the perfect match for your upholstery needs.</p>
+    </div>
 </div>
 
 <?php if (empty($colors)): ?>
@@ -483,9 +476,7 @@
                 </div>
             <?php endforeach; ?>
         </div>
-        <div class="results-count" id="resultsCount">
-            Showing all <?php echo count($colors); ?> colors
-        </div>
+        <!-- Results count removed as per request -->
     </div>
 
     <!-- Color Categories -->
@@ -520,13 +511,21 @@
                 
                 <div class="row">
                     <?php foreach ($standardColors as $color): 
-                        // Get price from price_per_meter or price_per_unit (whichever exists)
-                        $basePrice = floatval($color['price_per_meter'] ?? $color['price_per_unit'] ?? $color['standard_price'] ?? 0);
-                        $status = $color['status'] ?? 'in-stock';
+                        // Get price and quantity
+                        $basePrice = floatval($color['display_price'] ?? $color['price_per_meter'] ?? $color['price_per_unit'] ?? $color['standard_price'] ?? 0);
                         $quantity = floatval($color['quantity'] ?? 0);
                         $storeName = $color['store_name'] ?? 'All Stores';
+                        
+                        // Determine status dynamically based on quantity
+                        if ($quantity <= 0) {
+                            $status = 'out-of-stock';
+                        } elseif ($quantity < 5) {
+                            $status = 'low-stock';
+                        } else {
+                            $status = 'in-stock';
+                        }
                     ?>
-                        <div class="col-lg-3 col-md-4 col-sm-6 mb-4 px-3 color-item" 
+                        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-2 px-1 color-item" 
                              data-name="<?php echo strtolower(htmlspecialchars($color['color_name'] ?? '')); ?>" 
                              data-code="<?php echo strtolower(htmlspecialchars($color['color_code'] ?? '')); ?>"
                              data-fabric-type="standard"
@@ -556,7 +555,9 @@
                                         
                                         <div class="color-stock">
                                             <div class="stock-label">Stock</div>
-                                            <div class="stock-value"><?php echo number_format($quantity, 2); ?></div>
+                                            <div class="stock-value text-<?php echo ($status === 'in-stock') ? 'success' : (($status === 'low-stock') ? 'warning' : 'danger'); ?>">
+                                                <?php echo number_format($quantity, 2); ?>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -568,8 +569,18 @@
                                         <?php else: ?>
                                             <span class="fabric-badge badge-out-of-stock">Out of Stock</span>
                                         <?php endif; ?>
-                                        <?php if ($storeName !== 'All Stores'): ?>
-                                            <div class="store-badge"><?php echo htmlspecialchars($storeName); ?></div>
+                                    </div>
+
+                                    <div class="mt-2">
+                                        <?php if ($status === 'in-stock'): ?>
+                                            <button type="button" class="btn btn-primary btn-block btn-sm shadow-sm select-book-btn" 
+                                                    onclick="openReservationModal('<?php echo $color['store_location_id']; ?>', null, null, '<?php echo $color['id']; ?>', 'standard')">
+                                                <i class="fas fa-calendar-check mr-1"></i> Select & Book
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-secondary btn-block btn-sm shadow-sm" disabled>
+                                                <i class="fas fa-times-circle mr-1"></i> Not Available Now
+                                            </button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -595,15 +606,23 @@
                 
                 <div class="row">
                     <?php foreach ($premiumColors as $color): 
-                        // Get price from display_price (calculated in model) or fallback to individual columns
+                        // Get price and quantity
                         $basePrice = floatval($color['display_price'] ?? $color['price_per_meter'] ?? $color['price_per_unit'] ?? $color['standard_price'] ?? 0);
                         $premiumPrice = floatval($color['premium_price'] ?? 0);
                         $totalPrice = $basePrice + $premiumPrice;
-                        $status = $color['status'] ?? 'in-stock';
                         $quantity = floatval($color['quantity'] ?? 0);
                         $storeName = $color['store_name'] ?? 'All Stores';
+                        
+                        // Determine status dynamically based on quantity
+                        if ($quantity <= 0) {
+                            $status = 'out-of-stock';
+                        } elseif ($quantity < 5) {
+                            $status = 'low-stock';
+                        } else {
+                            $status = 'in-stock';
+                        }
                     ?>
-                        <div class="col-lg-3 col-md-4 col-sm-6 mb-4 px-3 color-item" 
+                        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-2 px-1 color-item" 
                              data-name="<?php echo strtolower(htmlspecialchars($color['color_name'] ?? '')); ?>" 
                              data-code="<?php echo strtolower(htmlspecialchars($color['color_code'] ?? '')); ?>"
                              data-fabric-type="premium"
@@ -633,7 +652,9 @@
                                         
                                         <div class="color-stock">
                                             <div class="stock-label">Stock</div>
-                                            <div class="stock-value"><?php echo number_format($quantity, 2); ?></div>
+                                            <div class="stock-value text-<?php echo ($status === 'in-stock') ? 'success' : (($status === 'low-stock') ? 'warning' : 'danger'); ?>">
+                                                <?php echo number_format($quantity, 2); ?>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -645,8 +666,18 @@
                                         <?php else: ?>
                                             <span class="fabric-badge badge-out-of-stock">Out of Stock</span>
                                         <?php endif; ?>
-                                        <?php if ($storeName !== 'All Stores'): ?>
-                                            <div class="store-badge"><?php echo htmlspecialchars($storeName); ?></div>
+                                    </div>
+
+                                    <div class="mt-2">
+                                        <?php if ($status === 'in-stock'): ?>
+                                            <button type="button" class="btn btn-primary btn-block btn-sm shadow-sm select-book-btn" 
+                                                    onclick="openReservationModal('<?php echo $color['store_location_id']; ?>', null, null, '<?php echo $color['id']; ?>', 'premium')">
+                                                <i class="fas fa-calendar-check mr-1"></i> Select & Book
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-secondary btn-block btn-sm shadow-sm" disabled>
+                                                <i class="fas fa-times-circle mr-1"></i> Not Available Now
+                                            </button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -657,7 +688,6 @@
             </div>
         <?php endif; ?>
     </div>
-    
 <?php endif; ?>
 
 </div>
@@ -779,6 +809,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<?php require_once ROOT . DS . 'views' . DS . 'customer' . DS . 'repair_reservation_modal_wrapper.php'; ?>
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>
 
 

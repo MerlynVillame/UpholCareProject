@@ -1,5 +1,5 @@
             <!-- Footer -->
-            <footer class="sticky-footer bg-white">
+            <footer class="sticky-footer bg-white shadow-sm">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
                         <span>Copyright &copy; <?php echo APP_NAME; ?> <?php echo date('Y'); ?></span>
@@ -71,14 +71,14 @@
     </div>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery/jquery.min.js"></script>
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/jquery.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/jquery.easing.min.js"></script>
 
     <!-- Custom scripts for all pages-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/js/sb-admin-2.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/sb-admin-2.min.js"></script>
     
     <!-- Custom Dialog System (Replaces alert, confirm, prompt) -->
     <script>
@@ -559,9 +559,8 @@
 
     <!-- Page level plugins -->
     <!-- Chart.js is loaded per-page where needed (v3.9.1) -->
-    <!-- <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/chart.js/Chart.min.js"></script> -->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/jquery.dataTables.min.js"></script>
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/dataTables.bootstrap4.min.js"></script>
     
     <!-- Safe DataTables Initialization -->
     <script>
@@ -1060,9 +1059,19 @@
     function loadNotifications() {
         // Only load if user is logged in (customer or admin)
         <?php if (isset($user) && isset($user['role'])): ?>
-        var role = '<?php echo $user['role']; ?>';
-        var url = role === 'admin' ? '<?php echo BASE_URL; ?>admin/getNotifications' : '<?php echo BASE_URL; ?>customer/getNotifications';
+        var role = '<?php echo $user['role'] ?? ($_SESSION['control_panel_admin']['role'] ?? ''); ?>';
+        var url = '';
+        
+        if (role === 'super_admin' || role === 'system_admin') {
+            url = '<?php echo BASE_URL; ?>control-panel/getNotifications';
+        } else if (role === 'admin') {
+            url = '<?php echo BASE_URL; ?>admin/getNotifications';
+        } else {
+            url = '<?php echo BASE_URL; ?>customer/getNotifications';
+        }
+        
         var markReadUrl = role === 'admin' ? '<?php echo BASE_URL; ?>admin/markNotificationRead' : '<?php echo BASE_URL; ?>customer/markNotificationRead';
+        if (role === 'super_admin' || role === 'system_admin') markReadUrl = '<?php echo BASE_URL; ?>control-panel/markNotificationRead';
         
         $.ajax({
             url: url + '?t=' + new Date().getTime(),

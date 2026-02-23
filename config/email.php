@@ -28,8 +28,8 @@ define('EMAIL_SMTP_HOST', 'smtp.gmail.com');
 define('EMAIL_SMTP_PORT', 587);
 define('EMAIL_SMTP_USERNAME', 'merlyn.batonghinog@gmail.com'); // ⚠️ CHANGE THIS: Your Gmail address (e.g., merlyn.lagrimas122021@gmail.com)
 define('EMAIL_SMTP_PASSWORD', 'kfkvbpcrsxpqoakl'); // ⚠️ CHANGE THIS: Your Gmail App Password (16 characters, no spaces)
-define('EMAIL_FROM_ADDRESS', 'noreply@uphocare.com');
-define('EMAIL_FROM_NAME', 'UphoCare System');
+define('EMAIL_FROM_ADDRESS', 'noreply@upholcare.com');
+define('EMAIL_FROM_NAME', 'UpholCare System');
 
 // Email Settings
 define('EMAIL_ENABLED', true); // Set to false to disable email notifications

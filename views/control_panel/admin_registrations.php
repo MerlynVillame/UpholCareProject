@@ -1,702 +1,413 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $data['title'] ?? 'Admin Registrations' ?> - UphoCare</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+﻿<?php 
+// Prepare data for layouts
+$title = $data['title'] ?? 'Admin Registrations';
+$user = $data['admin'] ?? [];
 
-        body {
-            background-color: #f8f9fc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
+require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'header.php'; 
+require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'control_panel_sidebar.php'; 
+require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; 
+?>
 
-        .main-content-wrapper {
-            margin-left: 280px;
-            width: calc(100% - 280px);
-            transition: all 0.3s ease;
-            min-height: 100vh;
-            position: relative;
-        }
-
-        .top-navbar {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 15px 30px;
-            margin: 0;
-            margin-bottom: 30px;
-            width: 100%;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            left: 0;
-            right: 0;
-        }
-
-        .top-navbar-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .page-subtitle {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin: 5px 0 0 0;
-        }
-
-        .top-navbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #2c3e50;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .content-area {
-            padding: 0 30px 30px 30px;
-            width: 100%;
-            max-width: 100%;
-        }
-        
-        .table-card {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        
-        .filter-section {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
-        .badge-status {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-        
-        .action-buttons {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 6px;
-            align-items: center;
-            white-space: nowrap;
-            justify-content: flex-start;
-        }
-        
-        .action-buttons .btn {
-            flex-shrink: 0;
-            white-space: nowrap;
-            padding: 6px 12px;
-            font-size: 0.875rem;
-            border-radius: 5px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        
-        .action-buttons .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
-        .action-buttons .btn-info {
-            background-color: #0dcaf0;
-            border-color: #0dcaf0;
-            color: white;
-        }
-        
-        .action-buttons .btn-success {
-            background-color: #198754;
-            border-color: #198754;
-            color: white;
-        }
-        
-        .action-buttons .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-        
-        .action-buttons .btn-warning {
-            background-color: #ffc107;
-            border-color: #ffc107;
-            color: #000;
-        }
-        
-        .action-buttons .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-            color: white;
-        }
-        
-        .action-buttons .badge {
-            flex-shrink: 0;
-            margin-left: 5px;
-            padding: 5px 10px;
-            font-size: 0.75rem;
-        }
-        
-        /* Ensure table cells don't break buttons */
-        table td:last-child {
-            white-space: nowrap;
-        }
-        
-        @media (max-width: 1400px) {
-            .action-buttons {
-                flex-wrap: wrap;
-                gap: 4px;
-            }
-            
-            .action-buttons .btn {
-                font-size: 0.8rem;
-                padding: 5px 10px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .content-area {
-                padding: 0 15px 15px 15px;
-            }
-
-            .top-navbar {
-                padding: 15px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <?php include ROOT . DS . 'views' . DS . 'control_panel' . DS . 'layouts' . DS . 'sidebar.php'; ?>
-    
-    <div class="main-content-wrapper">
-        <!-- Top Navbar -->
-        <div class="top-navbar">
-            <div class="top-navbar-content">
-                <div>
-                    <h1 class="page-title">
-                        <i class="fas fa-user-plus"></i> Admin Registrations
-                    </h1>
-                    <p class="page-subtitle">Review and manage admin registration requests</p>
-                </div>
-                <div class="top-navbar-actions">
-                    <div class="user-info">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 14px;"><?= htmlspecialchars($data['admin']['fullname'] ?? 'Admin') ?></div>
-                            <div style="font-size: 12px; color: #7f8c8d;">Super Admin</div>
-                        </div>
-                    </div>
-                    <a href="<?= BASE_URL ?>control-panel/logout" class="btn btn-outline-danger btn-sm">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
+<!-- Modern Page Header Container -->
+<div class="card border-0 module-card mb-4" style="background: white;">
+    <div class="card-body py-3 px-4">
+        <div class="d-sm-flex align-items-center justify-content-between">
+            <div>
+                <h1 class="h4 mb-0 font-weight-bold" style="color: #2C3E50;">Admin Registrations</h1>
+                <p class="text-muted smaller mb-0">Management of administrative membership requests.</p>
+            </div>
+            <div class="d-none d-md-block">
+                <div class="bg-light rounded-pill px-3 py-1 border d-flex align-items-center">
+                    <i class="fas fa-users-cog mr-2 text-info small"></i>
+                    <span class="smaller font-weight-bold text-dark">Access Governance</span>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Content Area -->
-        <div class="content-area">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-3">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="<?= BASE_URL ?>control-panel/superAdminDashboard">Dashboard</a></li>
-                <li class="breadcrumb-item active">Admin Registrations</li>
-            </ol>
-        </nav>
-        
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <h5 class="mb-3"><i class="fas fa-filter"></i> Filters</h5>
-            <form method="GET" action="<?= BASE_URL ?>control-panel/adminRegistrations" class="row g-3">
-                <div class="col-md-4">
-                    <label for="status" class="form-label">Status</label>
-                    <select name="status" id="status" class="form-select">
-                        <option value="all" <?= $data['filter_status'] === 'all' ? 'selected' : '' ?>>All Statuses</option>
-                        <option value="pending" <?= $data['filter_status'] === 'pending' ? 'selected' : '' ?>>Pending (All)</option>
-                        <option value="pending_verification" <?= $data['filter_status'] === 'pending_verification' ? 'selected' : '' ?>>Waiting for Verification</option>
+<!-- Context Tile -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #2C3E50 0%, #1A252F 100%); color: white;">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center">
+            <div class="bg-white-soft p-3 rounded-circle mr-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-shield-alt text-white"></i>
+            </div>
+            <div>
+                <h6 class="font-weight-bold mb-1">Registration Governance</h6>
+                <p class="mb-0 opacity-75 smaller">Review and adjudicate inbound administrator requests. Approved accounts will receive a secure verification challenge.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-white-soft { background: rgba(255,255,255,0.1); }
+    .opacity-75 { opacity: 0.75; }
+</style>
+
+<!-- Modern Filter Section -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-body py-3 px-4">
+        <form method="GET" action="<?= BASE_URL ?>control-panel/adminRegistrations" class="row align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text bg-white border-0 text-muted font-weight-bold px-0 mr-2">Lifecycle Stage:</span>
+                    </div>
+                    <select name="status" id="status" class="form-control border-0 bg-light rounded" style="font-weight: 600;">
+                        <option value="all" <?= $data['filter_status'] === 'all' ? 'selected' : '' ?>>All Registrations</option>
+                        <option value="pending" <?= $data['filter_status'] === 'pending' ? 'selected' : '' ?>>Pending Review</option>
+                        <option value="pending_verification" <?= $data['filter_status'] === 'pending_verification' ? 'selected' : '' ?>>Awaiting Verification</option>
                         <option value="approved" <?= $data['filter_status'] === 'approved' ? 'selected' : '' ?>>Approved</option>
                         <option value="rejected" <?= $data['filter_status'] === 'rejected' ? 'selected' : '' ?>>Rejected</option>
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="fas fa-search"></i> Apply Filters
-                    </button>
-                    <a href="<?= BASE_URL ?>control-panel/adminRegistrations" class="btn btn-secondary">
-                        <i class="fas fa-redo"></i> Reset
-                    </a>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Success/Error Messages -->
-        <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle"></i> <?= $_SESSION['success'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <?php unset($_SESSION['success']); ?>
-        <?php endif; ?>
-        
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle"></i> <?= $_SESSION['error'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="col-md-auto ml-auto">
+                <button type="submit" class="btn btn-primary btn-sm px-4 font-weight-bold shadow-sm" style="border-radius: 8px;">
+                    Apply Focus
+                </button>
+                <a href="<?= BASE_URL ?>control-panel/adminRegistrations" class="btn btn-light btn-sm px-3 ml-2 border" style="border-radius: 8px;">
+                    Clear
+                </a>
             </div>
-            <?php unset($_SESSION['error']); ?>
-        <?php endif; ?>
-        
-        <!-- Admin Registrations Table -->
-        <div class="card table-card">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0">
-                    <i class="fas fa-users"></i> Admin Registrations 
-                    <span class="badge bg-primary"><?= count($data['registrations']) ?> Total</span>
-                </h5>
-                <p class="text-muted mb-0 mt-2">
-                    <small><i class="fas fa-info-circle"></i> These are admin accounts that are pending and waiting for your acceptance. Use <strong>Accept</strong> to approve and generate a verification code, or <strong>Reject</strong> to decline the registration.</small>
-                </p>
-            </div>
-            <div class="card-body">
-                <?php if (empty($data['registrations'])): ?>
-                    <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">No admin registrations found.</p>
-                    </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Full Name</th>
-                                    <th>Email</th>
-                                    <th>Username</th>
-                                    <th>Phone</th>
-                                    <th>Status</th>
-                                    <th>Registered On</th>
-                                    <th>Processed On</th>
-                                    <th style="min-width: 280px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($data['registrations'] as $index => $reg): ?>
-                                    <tr>
-                                        <td><?= $index + 1 ?></td>
-                                        <td>
-                                            <strong><?= htmlspecialchars($reg['fullname']) ?></strong>
-                                        </td>
-                                        <td><?= htmlspecialchars($reg['email']) ?></td>
-                                        <td><?= htmlspecialchars($reg['username']) ?></td>
-                                        <td><?= htmlspecialchars($reg['phone'] ?? 'N/A') ?></td>
-                                        <td>
-                                            <?php 
-                                            // Handle NULL or empty status - treat as pending
-                                            $status = $reg['registration_status'] ?? 'pending';
-                                            if (empty($status) || $status === null) {
-                                                $status = 'pending';
-                                            }
-                                            ?>
-                                            <?php if ($status === 'pending_verification'): ?>
-                                                <span class="badge badge-status bg-info text-white">
-                                                    <i class="fas fa-envelope"></i> Code Sent - Waiting for Admin Verification
-                                                </span>
-                                            <?php elseif ($status === 'pending'): ?>
-                                                <span class="badge badge-status bg-warning text-dark">
-                                                    <i class="fas fa-clock"></i> Pending - Waiting for Acceptance
-                                                </span>
-                                            <?php elseif ($status === 'approved'): ?>
-                                                <span class="badge badge-status bg-success">
-                                                    <i class="fas fa-check"></i> Approved
-                                                </span>
-                                            <?php elseif ($status === 'rejected'): ?>
-                                                <span class="badge badge-status bg-danger">
-                                                    <i class="fas fa-times"></i> Rejected
-                                                </span>
-                                            <?php else: ?>
-                                                <!-- Default: Show as pending if status is unknown -->
-                                                <span class="badge badge-status bg-warning text-dark">
-                                                    <i class="fas fa-clock"></i> Pending - Waiting for Acceptance
-                                                </span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><?= date('M d, Y H:i', strtotime($reg['created_at'])) ?></td>
-                                        <td>
-                                            <?php if ($reg['approved_at']): ?>
-                                                <?= date('M d, Y H:i', strtotime($reg['approved_at'])) ?>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            // Handle NULL or empty status - treat as pending
-                                            $status = $reg['registration_status'] ?? 'pending';
-                                            if (empty($status) || $status === null) {
-                                                $status = 'pending';
-                                            }
-                                            ?>
-                                            
-                                            <div class="action-buttons">
-                                                <!-- View Details Button (Always Available) -->
-                                                <button class="btn btn-sm btn-info" 
-                                                        onclick="viewAdminDetails(<?= htmlspecialchars(json_encode($reg), ENT_QUOTES) ?>)"
-                                                        title="View Details">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                
-                                                <?php if ($status === 'pending_verification'): ?>
-                                                    <?php if ($reg['verification_code_sent_at'] ?? false): ?>
-                                                        <!-- View Verification Code -->
-                                                        <button class="btn btn-sm btn-warning" 
-                                                                onclick="viewVerificationCode(<?= $reg['id'] ?>, '<?= htmlspecialchars($reg['email']) ?>')"
-                                                                title="View Verification Code">
-                                                            <i class="fas fa-key"></i> View Code
-                                                        </button>
-                                                        <!-- Resend Code -->
-                                                        <a href="<?= BASE_URL ?>control-panel/sendVerificationCode/<?= $reg['id'] ?>" 
-                                                           class="btn btn-sm btn-outline-primary"
-                                                           onclick="return confirm('Resend verification code to <?= htmlspecialchars($reg['email']) ?>?')"
-                                                           title="Resend Verification Code">
-                                                            <i class="fas fa-redo"></i> Resend
-                                                        </a>
-                                                        <span class="badge bg-secondary">
-                                                            <i class="fas fa-check-circle"></i> Code Sent
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <!-- Send Verification Code -->
-                                                        <a href="<?= BASE_URL ?>control-panel/sendVerificationCode/<?= $reg['id'] ?>" 
-                                                           class="btn btn-sm btn-primary"
-                                                           onclick="return confirm('Send verification code to <?= htmlspecialchars($reg['email']) ?>?')"
-                                                           title="Send Verification Code">
-                                                            <i class="fas fa-envelope"></i> Send Code
-                                                        </a>
-                                                    <?php endif; ?>
-                                                    <!-- Reject -->
-                                                    <button class="btn btn-sm btn-danger" 
-                                                            onclick="rejectAdmin(<?= $reg['id'] ?>)"
-                                                            title="Reject this admin account">
-                                                        <i class="fas fa-times-circle"></i> Reject
-                                                    </button>
-                                                    
-                                                <?php elseif ($status === 'pending' || empty($status) || $status === null): ?>
-                                                    <!-- Accept Account Button -->
-                                                    <a href="<?= BASE_URL ?>control-panel/approveAdmin/<?= $reg['id'] ?>" 
-                                                       class="btn btn-sm btn-success"
-                                                       onclick="return confirm('Accept this admin account? A verification code will be automatically generated so the admin can complete their registration and log in.')"
-                                                       title="Accept this admin account">
-                                                        <i class="fas fa-check-circle"></i> Accept
-                                                    </a>
-                                                    
-                                                    <!-- Reject Account Button -->
-                                                    <button class="btn btn-sm btn-danger" 
-                                                            onclick="rejectAdmin(<?= $reg['id'] ?>)"
-                                                            title="Reject this admin account">
-                                                        <i class="fas fa-times-circle"></i> Reject
-                                                    </button>
-                                                    
-                                                <?php elseif ($status === 'approved'): ?>
-                                                    <!-- View Verification Code (if exists) -->
-                                                    <?php if (!empty($reg['verification_code'])): ?>
-                                                        <button class="btn btn-sm btn-warning" 
-                                                                onclick="viewVerificationCode(<?= $reg['id'] ?>, '<?= htmlspecialchars($reg['email']) ?>')"
-                                                                title="View Verification Code">
-                                                            <i class="fas fa-key"></i> View Code
-                                                        </button>
-                                                    <?php endif; ?>
-                                                    
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check"></i> Approved
-                                                    </span>
-                                                    
-                                                <?php elseif ($status === 'rejected'): ?>
-                                                    <!-- View Rejection Reason -->
-                                                    <?php if (!empty($reg['rejection_reason'])): ?>
-                                                        <button class="btn btn-sm btn-info" 
-                                                                onclick="showRejectionReason('<?= htmlspecialchars($reg['rejection_reason'], ENT_QUOTES) ?>')"
-                                                                title="View Rejection Reason">
-                                                            <i class="fas fa-info-circle"></i> View Reason
-                                                        </button>
-                                                    <?php endif; ?>
-                                                <?php else: ?>
-                                                    <!-- Default: Show Accept/Reject for unknown status -->
-                                                    <a href="<?= BASE_URL ?>control-panel/approveAdmin/<?= $reg['id'] ?>" 
-                                                       class="btn btn-sm btn-success"
-                                                       onclick="return confirm('Accept this admin account? A verification code will be automatically generated so the admin can complete their registration and log in.')"
-                                                       title="Accept this admin account">
-                                                        <i class="fas fa-check-circle"></i> Accept
-                                                    </a>
-                                                    
-                                                    <button class="btn btn-sm btn-danger" 
-                                                            onclick="rejectAdmin(<?= $reg['id'] ?>)"
-                                                            title="Reject this admin account">
-                                                        <i class="fas fa-times-circle"></i> Reject
-                                                    </button>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-        </div>
+        </form>
     </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- View Details Modal -->
-    <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-labelledby="viewDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="viewDetailsModalLabel">
-                        <i class="fas fa-user-shield"></i> Admin Registration Details
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="viewDetailsContent">
-                    <!-- Content will be populated by JavaScript -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
+</div>
+
+<!-- Modern Data Explorer -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-header py-3 bg-white border-0 d-flex align-items-center">
+        <div class="bg-primary-soft p-2 rounded mr-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-users text-primary small"></i>
         </div>
+        <h6 class="m-0 font-weight-bold text-dark">Administrative Candidates <span class="text-muted font-weight-normal ml-2 small">(<?= count($data['registrations']) ?> entries)</span></h6>
     </div>
-    
-    <!-- View Verification Code Modal -->
-    <div class="modal fade" id="viewCodeModal" tabindex="-1" aria-labelledby="viewCodeModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title" id="viewCodeModalLabel">
-                        <i class="fas fa-key"></i> Verification Code
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="viewCodeContent">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Loading verification code...</p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        function rejectAdmin(id) {
-            const reason = prompt('Enter rejection reason:');
-            if (reason && reason.trim()) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '<?= BASE_URL ?>control-panel/rejectAdmin/' + id;
-                
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'reason';
-                input.value = reason.trim();
-                
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-        
-        function showRejectionReason(reason) {
-            alert('Rejection Reason:\n\n' + reason);
-        }
-        
-        function viewAdminDetails(reg) {
-            const modal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
-            const content = document.getElementById('viewDetailsContent');
-            
-            const statusBadges = {
-                'pending_verification': '<span class="badge bg-info">Waiting for Verification</span>',
-                'pending': '<span class="badge bg-warning text-dark">Pending Approval</span>',
-                'approved': '<span class="badge bg-success">Approved</span>',
-                'rejected': '<span class="badge bg-danger">Rejected</span>'
-            };
-            
-            const statusBadge = statusBadges[reg.registration_status] || '<span class="badge bg-secondary">Unknown</span>';
-            
-            content.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-user"></i> Full Name:</strong>
-                        <p class="mb-0">${reg.fullname || 'N/A'}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-envelope"></i> Email:</strong>
-                        <p class="mb-0">${reg.email || 'N/A'}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-user-circle"></i> Username:</strong>
-                        <p class="mb-0">${reg.username || 'N/A'}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-phone"></i> Phone:</strong>
-                        <p class="mb-0">${reg.phone || 'N/A'}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-info-circle"></i> Status:</strong>
-                        <p class="mb-0">${statusBadge}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-calendar"></i> Registered On:</strong>
-                        <p class="mb-0">${reg.created_at ? new Date(reg.created_at).toLocaleString() : 'N/A'}</p>
-                    </div>
-                    ${reg.approved_at ? `
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-check-circle"></i> Approved On:</strong>
-                        <p class="mb-0">${new Date(reg.approved_at).toLocaleString()}</p>
-                    </div>
-                    ` : ''}
-                    ${reg.verification_code_sent_at ? `
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-key"></i> Code Sent On:</strong>
-                        <p class="mb-0">${new Date(reg.verification_code_sent_at).toLocaleString()}</p>
-                    </div>
-                    ` : ''}
-                    ${reg.verification_code_verified_at ? `
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-check"></i> Code Verified On:</strong>
-                        <p class="mb-0">${new Date(reg.verification_code_verified_at).toLocaleString()}</p>
-                    </div>
-                    ` : ''}
-                    ${reg.verification_attempts ? `
-                    <div class="col-md-6 mb-3">
-                        <strong><i class="fas fa-exclamation-triangle"></i> Verification Attempts:</strong>
-                        <p class="mb-0">${reg.verification_attempts} / 5</p>
-                    </div>
-                    ` : ''}
-                    ${reg.rejection_reason ? `
-                    <div class="col-12 mb-3">
-                        <strong><i class="fas fa-times-circle"></i> Rejection Reason:</strong>
-                        <p class="mb-0 alert alert-danger">${reg.rejection_reason}</p>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-            
-            modal.show();
-        }
-        
-        function viewVerificationCode(id, email) {
-            const modal = new bootstrap.Modal(document.getElementById('viewCodeModal'));
-            const content = document.getElementById('viewCodeContent');
-            
-            // Show loading state
-            content.innerHTML = `
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading verification code...</p>
-                </div>
-            `;
-            
-            modal.show();
-            
-            // Fetch verification code via AJAX
-            fetch('<?= BASE_URL ?>control-panel/getVerificationCode/' + id)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const sentDate = data.sent_at ? new Date(data.sent_at).toLocaleString() : 'N/A';
-                        content.innerHTML = `
-                            <div class="text-center">
-                                <p><strong>Email:</strong> ${data.email}</p>
-                                <p><strong>Admin Name:</strong> ${data.fullname}</p>
-                                <hr>
-                                <div class="alert alert-warning">
-                                    <h4 class="alert-heading"><i class="fas fa-key"></i> Verification Code</h4>
-                                    <div style="font-size: 2.5rem; font-weight: bold; letter-spacing: 10px; color: #856404; font-family: 'Courier New', monospace; margin: 20px 0;">
-                                        ${data.code}
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="adminRegistrationsTable" width="100%" cellspacing="0">
+                <thead class="bg-light text-gray-600" style="font-size: 0.7rem;">
+                    <tr>
+                        <th class="border-0 px-4">#</th>
+                        <th class="border-0 font-weight-bold text-uppercase">Identification</th>
+                        <th class="border-0 font-weight-bold text-uppercase">Credentials</th>
+                        <th class="border-0 font-weight-bold text-uppercase">Lifecycle Stage</th>
+                        <th class="border-0 font-weight-bold text-uppercase">Access Flow</th>
+                        <th class="border-0 text-center px-4 font-weight-bold text-uppercase">Action</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 0.85rem;">
+                    <?php if (!empty($data['registrations'])): ?>
+                        <?php foreach ($data['registrations'] as $index => $reg): 
+                            $status = $reg['registration_status'] ?? 'pending';
+                            if (empty($status)) $status = 'pending';
+                        ?>
+                            <tr>
+                                <td class="px-4 py-3 align-middle text-muted small"><?= $index + 1 ?></td>
+                                <td class="py-3 align-middle">
+                                    <div class="font-weight-bold text-dark"><?= htmlspecialchars($reg['fullname']) ?></div>
+                                    <div class="smaller text-muted mt-1"><?= htmlspecialchars($reg['email']) ?></div>
+                                    <?php if (!empty($reg['employee_id'])): ?>
+                                        <div class="mt-1">
+                                            <span class="badge badge-warning text-dark" style="font-size: 0.7rem;">
+                                                <i class="fas fa-id-badge mr-1"></i><?= htmlspecialchars($reg['employee_id']) ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-3 align-middle">
+                                    <code class="bg-light px-2 py-1 rounded smaller text-primary"><?= htmlspecialchars($reg['username']) ?></code>
+                                </td>
+                                <td class="py-3 align-middle">
+                                    <?php if ($status === 'pending_verification'): ?>
+                                        <div class="d-flex align-items-center text-info">
+                                            <i class="fas fa-envelope-open-text mr-2 small"></i>
+                                            <span class="font-weight-bold smaller">Verification Sent</span>
+                                        </div>
+                                    <?php elseif ($status === 'approved'): ?>
+                                        <div class="d-flex align-items-center text-success">
+                                            <i class="fas fa-check-circle mr-2 small"></i>
+                                            <span class="font-weight-bold smaller">Governance Approved</span>
+                                        </div>
+                                    <?php elseif ($status === 'rejected'): ?>
+                                        <div class="d-flex align-items-center text-danger">
+                                            <i class="fas fa-times-circle mr-2 small"></i>
+                                            <span class="font-weight-bold smaller">Access Denied</span>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="d-flex align-items-center text-warning">
+                                            <div class="spinner-grow spinner-grow-sm mr-2" style="width: 8px; height: 8px;"></div>
+                                            <span class="font-weight-bold smaller">Awaiting Triage</span>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-3 align-middle">
+                                    <div class="smaller text-dark font-weight-bold">Registered</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;"><?= date('M d, Y', strtotime($reg['created_at'])) ?></div>
+                                </td>
+                                <td class="text-center px-4 py-3 align-middle">
+                                    <div class="btn-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                                        <!-- View Details Always Available -->
+                                        <button class="btn btn-sm btn-light border px-3" onclick='viewAdminDetails(<?= json_encode($reg) ?>)' title="View Full Profile">
+                                            <i class="fas fa-eye fa-xs"></i>
+                                        </button>
+                                        
+                                        <?php if ($status === 'pending_verification'): ?>
+                                            <button class="btn btn-sm btn-info px-3 border-left" onclick="viewVerificationCode(<?= $reg['id'] ?>)" title="View Code">
+                                                <i class="fas fa-key fa-xs"></i>
+                                            </button>
+                                            <a href="<?= BASE_URL ?>control-panel/sendVerificationCode/<?= $reg['id'] ?>" 
+                                               class="btn btn-sm btn-light border-left px-3 text-primary"
+                                               onclick="return confirm('Resend verification code?')" title="Resend Code">
+                                                <i class="fas fa-redo fa-xs"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-danger px-3 border-left" onclick="rejectAdmin(<?= $reg['id'] ?>)" title="Reject Account">
+                                                <i class="fas fa-times fa-xs"></i>
+                                            </button>
+                                        <?php elseif ($status === 'pending'): ?>
+                                            <button class="btn btn-sm btn-success px-3 border-left" onclick='viewAdminDetails(<?= json_encode($reg) ?>)' title="Review & Approve">
+                                                <i class="fas fa-check fa-xs mr-1"></i> Review
+                                            </button>
+                                            <button class="btn btn-sm btn-danger px-3 border-left" onclick="rejectAdmin(<?= $reg['id'] ?>)" title="Reject Account">
+                                                <i class="fas fa-times fa-xs"></i>
+                                            </button>
+                                        <?php elseif ($status === 'rejected' && !empty($reg['rejection_reason'])): ?>
+                                            <button class="btn btn-sm btn-light border-left px-3 text-danger font-weight-bold" onclick="showRejectionReason('<?= addslashes(htmlspecialchars($reg['rejection_reason'])) ?>')" title="Show Rejection Reason">
+                                                Reason
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
-                                    <p class="mb-0"><small>Code sent on: ${sentDate}</small></p>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-light mb-3"></i>
+                                <p class="text-muted mb-0">The registration funnel is currently empty for this lens.</p>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title font-weight-bold">Admin Registration Details</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="viewDetailsContent"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="viewCodeModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title font-weight-bold">Verification Code</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body text-center" id="viewCodeContent"></div>
+        </div>
+    </div>
+</div>
+
+<?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>
+
+<script>
+function rejectAdmin(id) {
+    const reason = window.prompt('Enter rejection reason:');
+    if (reason && reason.trim()) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?= BASE_URL ?>control-panel/rejectAdmin/' + id;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'reason';
+        input.value = reason.trim();
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function showRejectionReason(reason) {
+    alert('Rejection Reason: ' + reason);
+}
+
+function viewAdminDetails(reg) {
+    const status = reg.registration_status || 'pending';
+    const baseUrl = '<?= BASE_URL ?>';
+    
+    let content = `
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h6 class="text-primary font-weight-bold border-bottom pb-2">
+                    <i class="fas fa-user mr-2"></i>Personal Information
+                </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Full Name</label>
+                <div class="font-weight-bold text-gray-800">${reg.fullname || 'N/A'}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Email</label>
+                <div class="font-weight-bold text-gray-800">${reg.email || 'N/A'}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Username</label>
+                <div class="font-weight-bold text-gray-800">${reg.username || 'N/A'}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Phone</label>
+                <div class="font-weight-bold text-gray-800">${reg.phone || 'N/A'}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">
+                    <i class="fas fa-id-badge text-warning mr-1"></i>Employee ID / Admin ID
+                </label>
+                <div class="font-weight-bold ${reg.employee_id ? 'text-primary' : 'text-danger'}">
+                    ${reg.employee_id ? '<span class="badge badge-primary px-2 py-1" style="font-size:0.9rem; letter-spacing:1px;">' + reg.employee_id + '</span>' : '<span class="badge badge-danger px-2 py-1">Not Provided</span>'}
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Registration ID</label>
+                <div class="font-weight-bold text-gray-800"><code>#${reg.id || 'N/A'}</code></div>
+            </div>
+
+            <div class="col-12 mb-4 mt-2">
+                <h6 class="text-primary font-weight-bold border-bottom pb-2">
+                    <i class="fas fa-building mr-2"></i>Business Information
+                </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Business Name</label>
+                <div class="font-weight-bold text-gray-800">${reg.business_name || 'N/A'}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Registered On</label>
+                <div class="font-weight-bold text-gray-800">${reg.created_at}</div>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Business Address</label>
+                <div class="font-weight-bold text-gray-800">
+                    ${reg.business_address || 'N/A'}${reg.business_city ? ', ' + reg.business_city : ''}${reg.business_province ? ', ' + reg.business_province : ''}
+                </div>
+            </div>
+
+            <div class="col-12 mb-4 mt-2">
+                <h6 class="text-primary font-weight-bold border-bottom pb-2">
+                    <i class="fas fa-file-alt mr-2"></i>Requirements Verification
+                </h6>
+            </div>
+            <div class="col-md-12 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-2 d-block">Submitted Business Permit (Required)</label>
+                ${reg.business_permit_path ? `
+                    <div class="card bg-light border-left-primary shadow-sm">
+                        <div class="card-body py-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-pdf fa-2x text-danger mr-3"></i>
+                                <div>
+                                    <div class="font-weight-bold text-gray-800 mb-0">${reg.business_permit_filename || 'Business_Permit.pdf'}</div>
+                                    <div class="small text-muted">Uploaded on ${reg.created_at}</div>
                                 </div>
-                                <p class="text-muted">
-                                    <small>This code can be viewed by the admin on the verification page.</small>
-                                </p>
                             </div>
-                        `;
-                    } else {
-                        content.innerHTML = `
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle"></i> ${data.message}
-                            </div>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    content.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle"></i> Failed to load verification code. Please try again.
+                            <a href="${baseUrl}${reg.business_permit_path}" target="_blank" class="btn btn-primary btn-sm rounded-pill shadow-sm">
+                                <i class="fas fa-external-link-alt mr-1"></i> Open Permit
+                            </a>
                         </div>
-                    `;
-                    console.error('Error:', error);
-                });
-        }
-    </script>
-</body>
-</html>
+                    </div>
+                ` : `
+                    <div class="alert alert-warning py-2 mb-0 small">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> No business permit file found for this registration.
+                    </div>
+                `}
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label class="small font-weight-bold text-gray-500 mb-2 d-block"><i class="fas fa-id-card text-warning mr-1"></i> Submitted Valid ID (Required)</label>
+                ${reg.valid_id_path ? `<div class="card shadow-sm" style="border-left:4px solid #ffc107;background:#fffdf6"><div class="card-body py-3"><div class="d-flex align-items-center justify-content-between mb-2"><div class="d-flex align-items-center"><i class="fas fa-id-card fa-2x text-warning mr-3"></i><div><div class="font-weight-bold text-gray-800 mb-0">${reg.valid_id_filename||'Valid_ID.jpg'}</div><div class="small text-muted">Uploaded on ${reg.created_at}</div></div></div><a href="${baseUrl}${reg.valid_id_path}" target="_blank" class="btn btn-warning btn-sm rounded-pill shadow-sm" style="color:#fff"><i class="fas fa-external-link-alt mr-1"></i> Full Size</a></div><div style="border-radius:8px;overflow:hidden;border:2px solid #ffc107;max-height:200px"><img src="${baseUrl}${reg.valid_id_path}" alt="Valid ID" style="width:100%;max-height:200px;object-fit:cover;display:block;cursor:zoom-in" onclick="window.open('${baseUrl}${reg.valid_id_path}','_blank')" title="Click to open full size"></div><div class="small text-muted mt-1"><i class="fas fa-search-plus mr-1"></i> Click image to view full size</div></div></div>` : `<div class="alert alert-danger py-2 mb-0 small"><i class="fas fa-exclamation-triangle mr-2"></i> <strong>No valid ID submitted.</strong> Consider rejecting this registration.</div>`}
+            </div>
+
+            ${status === 'pending' ? `
+                <div class="col-12 mt-4 px-3 py-3 rounded bg-gray-100 border">
+                    <div class="custom-control custom-checkbox mb-3">
+                        <input type="checkbox" class="custom-control-input" id="verifyRequirementsCheck" onchange="toggleApprovalButtons(this)">
+                        <label class="custom-control-label font-weight-bold text-dark" for="verifyRequirementsCheck">
+                            I have carefully reviewed the submitted <strong>business permit</strong> and <strong>valid ID</strong>, and verified that all information is correct and legitimate.
+                        </label>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-danger mr-2" onclick="rejectAdmin(${reg.id})">
+                            <i class="fas fa-times-circle mr-1"></i> Reject Registration
+                        </button>
+                        <a href="${baseUrl}control-panel/approveAdmin/${reg.id}" 
+                           id="btnApproveInsideModal"
+                           class="btn btn-success disabled"
+                           style="pointer-events: none;"
+                           onclick="return confirm('Accept this admin account after verifying requirements?')">
+                            <i class="fas fa-check-circle mr-1"></i> Accept & Approve
+                        </a>
+                    </div>
+                </div>
+            ` : `
+                <div class="col-12 mt-2">
+                    <label class="small font-weight-bold text-gray-500 mb-0">Current Status</label>
+                    <div class="font-weight-bold ${status === 'approved' ? 'text-success' : (status === 'rejected' ? 'text-danger' : 'text-info')}">
+                        ${status.toUpperCase()}
+                    </div>
+                </div>
+            `}
+
+            ${reg.rejection_reason ? `
+            <div class="col-12 mt-3">
+                <label class="small font-weight-bold text-gray-500 mb-0">Rejection Reason</label>
+                <div class="alert alert-danger py-2 mt-1 small">${reg.rejection_reason}</div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    $('#viewDetailsContent').html(content);
+    $('#viewDetailsModal').modal('show');
+}
+
+function toggleApprovalButtons(checkbox) {
+    const btnApprove = document.getElementById('btnApproveInsideModal');
+    if (checkbox.checked) {
+        btnApprove.classList.remove('disabled');
+        btnApprove.style.pointerEvents = 'auto';
+    } else {
+        btnApprove.classList.add('disabled');
+        btnApprove.style.pointerEvents = 'none';
+    }
+}
+
+function viewVerificationCode(id) {
+    $('#viewCodeContent').html('<div class="spinner-border spinner-border-sm text-primary"></div>');
+    $('#viewCodeModal').modal('show');
+    
+    fetch('<?= BASE_URL ?>control-panel/getVerificationCode/' + id)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                $('#viewCodeContent').html(`
+                    <div class="h3 font-weight-bold text-primary tracking-widest my-3" style="letter-spacing: 5px;">
+                        ${data.code}
+                    </div>
+                    <p class="small text-muted mb-0">Sent to: ${data.email}</p>
+                `);
+            } else {
+                $('#viewCodeContent').html(`<div class="text-danger small">${data.message}</div>`);
+            }
+        });
+}
+</script>
 

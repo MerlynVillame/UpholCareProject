@@ -22,6 +22,11 @@ session_start();
 define('ROOT', dirname(__FILE__));
 define('DS', DIRECTORY_SEPARATOR);
 
+// Include composer autoloader if exists
+if (file_exists(ROOT . DS . 'vendor' . DS . 'autoload.php')) {
+    require_once ROOT . DS . 'vendor' . DS . 'autoload.php';
+}
+
 // Autoloader
 spl_autoload_register(function ($class) {
     // Try controllers, models, core, helpers directories
@@ -64,7 +69,7 @@ $url = explode('/', $url);
 // Handle hyphenated controller names (e.g., control-panel -> ControlPanel)
 $controllerBase = !empty($url[0]) ? $url[0] : 'home';
 $controllerBase = str_replace('-', ' ', $controllerBase);
-$controllerBase = str_replace(' ', '', ucwords($controllerBase));
+$controllerBase = str_replace(' ', '', ucwords(strtolower($controllerBase)));
 $controllerName = $controllerBase . 'Controller';
 
 $method = isset($url[1]) && !empty($url[1]) ? $url[1] : 'index';

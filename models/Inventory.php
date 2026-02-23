@@ -498,6 +498,71 @@ class Inventory extends Model {
         return $result;
     }
     
+    
+    /**
+     * Get inventory item by ID
+     */
+    public function getById($id) {
+        $sql = "SELECT * FROM {$this->table} WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+    
+    /**
+     * Find inventory item by color name (case-insensitive)
+     * Used for duplicate validation
+     */
+    public function findByColorName($colorName, $storeLocationId = null) {
+        try {
+            $sql = "SELECT * FROM {$this->table} WHERE LOWER(color_name) = LOWER(?)";
+            $params = [$colorName];
+            
+            // Check if store_location_id column exists
+            $checkColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'store_location_id'");
+            $hasStoreLocationColumn = $checkColumn->rowCount() > 0;
+            
+            if ($hasStoreLocationColumn && $storeLocationId) {
+                $sql .= " AND store_location_id = ?";
+                $params[] = $storeLocationId;
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            error_log("Error in findByColorName: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Find inventory item by color code (case-insensitive)
+     * Used for duplicate validation
+     */
+    public function findByColorCode($colorCode, $storeLocationId = null) {
+        try {
+            $sql = "SELECT * FROM {$this->table} WHERE LOWER(color_code) = LOWER(?)";
+            $params = [$colorCode];
+            
+            // Check if store_location_id column exists
+            $checkColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'store_location_id'");
+            $hasStoreLocationColumn = $checkColumn->rowCount() > 0;
+            
+            if ($hasStoreLocationColumn && $storeLocationId) {
+                $sql .= " AND store_location_id = ?";
+                $params[] = $storeLocationId;
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            error_log("Error in findByColorCode: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     /**
      * Delete inventory item
      */
@@ -505,6 +570,58 @@ class Inventory extends Model {
         $sql = "DELETE FROM {$this->table} WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$id]);
+    }
+    
+    /**
+     * Get service statistics with real booking data
+     * Returns services with total bookings, today's bookings, and calculated slot availability
+     */
+    public function getServiceStatistics($storeId) {
+        try {
+            // Get all services for the store with real booking data
+            $sql = "SELECT 
+                        s.id,
+                        s.service_name,
+                        s.service_type,
+                        s.description,
+                        s.price,
+                        COALESCE(s.daily_capacity, 10) as daily_capacity,
+                        COUNT(DISTINCT b.id) as total_bookings,
+                        COUNT(DISTINCT CASE 
+                            WHEN DATE(b.created_at) = CURDATE() 
+                            AND b.status NOT IN ('cancelled', 'completed', 'delivered_and_paid') 
+                            THEN b.id 
+                        END) as today_bookings
+                    FROM services s
+                    LEFT JOIN bookings b ON s.id = b.service_id AND b.is_archived = 0
+                    WHERE s.store_id = ? AND s.status = 'active'
+                    GROUP BY s.id, s.service_name, s.service_type, s.description, s.price, s.daily_capacity
+                    ORDER BY total_bookings DESC";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$storeId]);
+            $services = $stmt->fetchAll();
+            
+            // Calculate slots left for each service
+            foreach ($services as &$service) {
+                $dailyCapacity = intval($service['daily_capacity']);
+                $todayBookings = intval($service['today_bookings']);
+                $service['slots_left'] = max(0, $dailyCapacity - $todayBookings);
+                
+                // Determine if this is the most popular service
+                $service['is_most_popular'] = false;
+            }
+            
+            // Mark the first service as most popular if it has bookings
+            if (!empty($services) && intval($services[0]['total_bookings']) > 0) {
+                $services[0]['is_most_popular'] = true;
+            }
+            
+            return $services;
+        } catch (Exception $e) {
+            error_log("Error in getServiceStatistics: " . $e->getMessage());
+            return [];
+        }
     }
 }
 

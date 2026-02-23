@@ -74,9 +74,56 @@ class AuthController extends Controller {
             $this->redirect('home#login');
         }
         
-        // Authenticate
-        $user = $this->userModel->authenticate($email, $password);
-        
+        // 1. Find user first (to check lock status and valid email)
+        $user = $this->userModel->findByEmail($email);
+        if (!$user) {
+            $user = $this->userModel->findByUsername($email);
+        }
+
+        // Email exists validation 
+        if (!$user) {
+            LoginLogger::logFailure(null, 'unknown', $email, null, 'Invalid email address or password');
+            $_SESSION['error'] = 'Invalid email address or password';
+            $this->redirect('home#login');
+            return;
+        }
+
+        // 2. Check if account is locked
+        if ($user['locked_until'] && strtotime($user['locked_until']) > time()) {
+            $lockTimeRemaining = ceil((strtotime($user['locked_until']) - time()) / 60);
+            LoginLogger::logFailure($user['id'], $user['role'], $email, $user['fullname'] ?? 'User', "Account locked until {$user['locked_until']}");
+            $_SESSION['error'] = "Your account is temporarily locked due to multiple failed login attempts. Please try again in {$lockTimeRemaining} minutes.";
+            $this->redirect('home#login');
+            return;
+        }
+
+        // 3. Verify password
+        if (!password_verify($password, $user['password'])) {
+            // Increment failed attempts
+            $fails = ($user['failed_login_attempts'] ?? 0) + 1;
+            $updates = ['failed_login_attempts' => $fails];
+            
+            $lockMsg = '';
+            if ($fails >= 5) {
+                $lockedUntil = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+                $updates['locked_until'] = $lockedUntil;
+                $lockMsg = ' Account locked for 15 minutes.';
+            }
+            
+            $this->userModel->updateUser($user['id'], $updates);
+            
+            LoginLogger::logFailure($user['id'], $user['role'], $email, $user['fullname'] ?? 'User', 'Invalid password.' . $lockMsg);
+            $_SESSION['error'] = 'Invalid email address or password.' . ($fails >= 3 ? " Attempt {$fails} of 5 before lockout." : "");
+            $this->redirect('home#login');
+            return;
+        }
+
+        // 4. Success - Reset failed attempts and continue
+        $this->userModel->updateUser($user['id'], [
+            'failed_login_attempts' => 0,
+            'locked_until' => null
+        ]);
+
         if ($user) {
             // PRIORITY CHECK 1: For admins, FIRST check if account status is 'inactive' (BANNED)
             // This is the PRIMARY check - if admin account is banned (status = 'inactive'), block login immediately
@@ -271,12 +318,18 @@ class AuthController extends Controller {
             // Update last login
             $this->userModel->updateLastLogin($user['id']);
             
+            // Log successful login to system audit trail
+            LoginLogger::logSuccess($user['id'], $user['role'], $user['email'], $user['fullname'] ?? $user['full_name'] ?? 'User');
+            
             // Log successful login with role
             error_log("SUCCESS: User {$user['email']} ({$user['role']}) logged in successfully");
             
             // Redirect to dashboard
             $this->redirectToDashboard();
         } else {
+            // Log failed login attempt
+            LoginLogger::logFailure(null, 'unknown', $email, null, 'Invalid email address or password');
+            
             $_SESSION['error'] = 'Invalid email address or password';
             $this->redirect('home#login');
         }
@@ -368,6 +421,7 @@ class AuthController extends Controller {
         $confirmPassword = $_POST['confirm_password'] ?? '';
         $fullName = trim($_POST['full_name'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
+        $employeeId = trim($_POST['employee_id'] ?? '');
         $agreeTerms = isset($_POST['agree_terms']) ? true : true; // Default to true if not in post but required by design
         
         // Business Information
@@ -407,6 +461,11 @@ class AuthController extends Controller {
             if (!preg_match('/^[0-9]{11}$/', $phone)) {
                 $errors[] = 'Phone number must be exactly 11 digits';
             }
+        }
+        
+        // Employee ID validation
+        if (empty($employeeId)) {
+            $errors[] = 'Employee ID / Admin ID is required';
         }
         
         // Business Information Validation
@@ -470,6 +529,7 @@ class AuthController extends Controller {
             'full_name' => $fullName,
             'email' => $email,
             'phone' => $phone,
+            'employee_id' => $employeeId,
             'business_name' => $businessName,
             'business_address' => $businessAddress,
             'business_city' => $businessCity,
@@ -513,6 +573,46 @@ class AuthController extends Controller {
             
             // Store relative path for database
             $businessPermitPath = 'assets/uploads/business_permits/' . $uniqueFilename;
+        }
+        
+        // Handle admin valid ID image upload
+        $validIdPath = null;
+        $validIdFilename = null;
+        
+        if (isset($_FILES['valid_id']) && $_FILES['valid_id']['error'] === UPLOAD_ERR_OK) {
+            $idFile = $_FILES['valid_id'];
+            $allowedIdMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            
+            // Validate MIME type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $idMime = finfo_file($finfo, $idFile['tmp_name']);
+            finfo_close($finfo);
+            
+            if (!in_array($idMime, $allowedIdMimes)) {
+                $_SESSION['error'] = 'Valid ID must be an image file (JPG, PNG, WEBP, or GIF).';
+                $this->redirect('home#signup');
+            }
+            
+            if ($idFile['size'] > 5 * 1024 * 1024) {
+                $_SESSION['error'] = 'Valid ID image must not exceed 5MB.';
+                $this->redirect('home#signup');
+            }
+            
+            $idUploadDir = ROOT . DS . 'assets' . DS . 'uploads' . DS . 'admin_ids' . DS;
+            if (!file_exists($idUploadDir)) {
+                mkdir($idUploadDir, 0755, true);
+            }
+            
+            $idExt = strtolower(pathinfo($idFile['name'], PATHINFO_EXTENSION));
+            $validIdFilename = $idFile['name'];
+            $idUniqueFilename = 'admin_id_' . time() . '_' . uniqid() . '.' . $idExt;
+            
+            if (!move_uploaded_file($idFile['tmp_name'], $idUploadDir . $idUniqueFilename)) {
+                $_SESSION['error'] = 'Failed to upload Valid ID. Please try again.';
+                $this->redirect('home#signup');
+            }
+            
+            $validIdPath = 'assets/uploads/admin_ids/' . $idUniqueFilename;
         }
         
         // Generate username from email (use email prefix as username)
@@ -570,8 +670,8 @@ class AuthController extends Controller {
                     // Status will be 'pending' until super admin accepts it
                     $stmt = $db->prepare("
                         INSERT INTO admin_registrations 
-                        (email, username, password, fullname, phone, business_name, business_address, business_city, business_province, business_latitude, business_longitude, business_permit_path, business_permit_filename, registration_status, created_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+                        (email, username, password, fullname, phone, employee_id, business_name, business_address, business_city, business_province, business_latitude, business_longitude, business_permit_path, business_permit_filename, valid_id_path, valid_id_filename, registration_status, created_at) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
                     ");
                     
                     try {
@@ -581,6 +681,7 @@ class AuthController extends Controller {
                             $user['password'], // Already hashed
                             $user['fullname'],
                             $user['phone'] ?? '',
+                            $employeeId,
                             $businessName,
                             $businessAddress,
                             $businessCity,
@@ -588,7 +689,9 @@ class AuthController extends Controller {
                             $latitude,
                             $longitude,
                             $businessPermitPath,
-                            $businessPermitFilename
+                            $businessPermitFilename,
+                            $validIdPath,
+                            $validIdFilename
                         ]);
                     } catch (PDOException $insertError) {
                         // If business fields don't exist, try without them (backward compatibility)
@@ -1677,6 +1780,30 @@ class AuthController extends Controller {
             }
         }
         
+        // Customer ID Image validation
+        $customerIdPath = null;
+        $customerIdFilename = null;
+        
+        if (!isset($_FILES['customer_id_image']) || $_FILES['customer_id_image']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'A valid Customer ID image is required for verification';
+        } else {
+            $idFile = $_FILES['customer_id_image'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            
+            // Validate MIME type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $idFile['tmp_name']);
+            finfo_close($finfo);
+            
+            if (!in_array($mimeType, $allowedMimes)) {
+                $errors[] = 'Customer ID must be an image file (JPG, PNG, WEBP, or GIF)';
+            }
+            
+            if ($idFile['size'] > 5 * 1024 * 1024) {
+                $errors[] = 'Customer ID image size must not exceed 5MB';
+            }
+        }
+        
         // Check if email already exists
         if ($this->userModel->emailExists($email)) {
             $errors[] = 'Email already exists';
@@ -1685,6 +1812,28 @@ class AuthController extends Controller {
         if (!empty($errors)) {
             $_SESSION['error'] = implode('<br>', $errors);
             $this->redirect('home#signup');
+        }
+        
+        // Handle Customer ID image upload
+        if (isset($_FILES['customer_id_image']) && $_FILES['customer_id_image']['error'] === UPLOAD_ERR_OK) {
+            $idFile = $_FILES['customer_id_image'];
+            $uploadDir = ROOT . DS . 'assets' . DS . 'uploads' . DS . 'customer_ids' . DS;
+            
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
+            $fileExtension = strtolower(pathinfo($idFile['name'], PATHINFO_EXTENSION));
+            $customerIdFilename = $idFile['name'];
+            $uniqueFilename = 'customer_id_' . time() . '_' . uniqid() . '.' . $fileExtension;
+            $uploadPath = $uploadDir . $uniqueFilename;
+            
+            if (!move_uploaded_file($idFile['tmp_name'], $uploadPath)) {
+                $_SESSION['error'] = 'Failed to upload Customer ID. Please try again.';
+                $this->redirect('auth/registerCustomer');
+            }
+            
+            $customerIdPath = 'assets/uploads/customer_ids/' . $uniqueFilename;
         }
         
         // Generate username from email (use email prefix as username)
@@ -1705,7 +1854,9 @@ class AuthController extends Controller {
             'fullname' => $fullName,
             'phone' => $phone,
             'role' => 'customer',
-            'status' => 'pending_verification' // Set to pending_verification - waiting for email verification
+            'status' => 'pending_verification', // Set to pending_verification - waiting for email verification
+            'customer_id_path' => $customerIdPath,
+            'customer_id_filename' => $customerIdFilename
         ];
         
         $userId = $this->userModel->register($data);

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>UphoCare – Activity Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --navy:#0F3C5F;--blue:#1565C0;--teal:#00BCD4;
+  --c1:#1565C0;--c1bg:#E3F2FD;--c1light:#BBDEFB;
+  --a1:#2E7D32;--a1bg:#E8F5E9;--a1light:#C8E6C9;
+  --s1:#6A1B9A;--s1bg:#F3E5F5;--s1light:#E1BEE7;
+  --white:#fff;--gray:#F4F6F9;--text:#1A2A3A;
+  --border:#CFD8DC;--muted:#607D8B;
+  --shadow:0 6px 32px rgba(15,60,95,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--gray);color:var(--text);line-height:1.6}
+
+.hero{
+  background:linear-gradient(135deg,#0F3C5F 0%,#1565C0 55%,#00BCD4 100%);
+  padding:52px 40px 40px;text-align:center;color:#fff;position:relative;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:50px;padding:5px 18px;font-size:.75rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;position:relative;}
+.hero h1{font-size:2.5rem;font-weight:800;margin-bottom:10px;position:relative}
+.hero p{font-size:1rem;opacity:.85;max-width:600px;margin:0 auto 20px;position:relative}
+.actor-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;position:relative}
+.actor-pill{padding:7px 20px;border-radius:30px;font-size:.82rem;font-weight:600;border:2px solid rgba(255,255,255,.5);}
+.pill-c{background:rgba(21,101,192,.5)}
+.pill-a{background:rgba(46,125,50,.5)}
+.pill-s{background:rgba(106,27,154,.5)}
+
+/* TOC */
+.toc-wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+.toc{background:var(--white);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin-top:32px;}
+.toc-title{background:var(--navy);color:#fff;padding:14px 28px;font-size:.9rem;font-weight:700;}
+.toc-links{display:flex;flex-wrap:wrap}
+.toc-link{flex:1 1 180px;display:flex;align-items:center;gap:12px;padding:16px 22px;text-decoration:none;color:var(--text);border-right:1px solid var(--border);border-bottom:1px solid var(--border);transition:background .2s;font-weight:600;font-size:.88rem;}
+.toc-link:hover{background:var(--gray)}
+.toc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.ti-c{background:var(--c1bg)}.ti-a{background:var(--a1bg)}.ti-s{background:var(--s1bg)}
+
+/* MAIN */
+.main{max-width:1200px;margin:0 auto;padding:36px 20px 80px}
+
+/* SECTION HEADER */
+.sec-card{background:var(--white);border-radius:20px;box-shadow:var(--shadow);margin-bottom:48px;overflow:hidden;}
+.sec-hdr{display:flex;align-items:center;gap:16px;padding:24px 32px;}
+.sec-hdr.cust{background:linear-gradient(135deg,#0D47A1,#1565C0)}
+.sec-hdr.adm {background:linear-gradient(135deg,#1B5E20,#2E7D32)}
+.sec-hdr.sup {background:linear-gradient(135deg,#4A148C,#6A1B9A)}
+.sec-icon{width:50px;height:50px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:1.6rem;}
+.sec-meta{color:#fff}
+.sec-meta h2{font-size:1.25rem;font-weight:800}
+.sec-meta p{font-size:.82rem;opacity:.82;margin-top:2px}
+.sec-body{padding:28px 32px}
+
+/* SUBSECTION */
+.sub-label{
+  display:flex;align-items:center;gap:8px;
+  font-size:.8rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--border);
+}
+.sub-label.c{color:var(--c1);border-color:var(--c1light)}
+.sub-label.a{color:var(--a1);border-color:var(--a1light)}
+.sub-label.s{color:var(--s1);border-color:var(--s1light)}
+
+/* DIAGRAM WRAP */
+.dw{background:#FAFBFC;border:1.5px solid var(--border);border-radius:14px;padding:24px;overflow-x:auto;margin-bottom:20px;}
+.mermaid{min-width:540px;text-align:center}
+
+/* DB TAGS */
+.db-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.db-tag{display:inline-flex;align-items:center;gap:4px;background:#F8F9FA;border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-family:'Fira Mono',monospace;font-size:.7rem;color:var(--navy);font-weight:500;}
+
+footer{text-align:center;padding:28px;background:var(--navy);color:rgba(255,255,255,.6);font-size:.8rem;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">⚙️ UML Documentation – UphoCare System</div>
+  <h1>Activity Diagrams</h1>
+  <p>Separate activity diagrams for every process of each user role, based on the <code style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:4px">db_upholcare</code> database schema.</p>
+  <div class="actor-pills">
+    <span class="actor-pill pill-c">👤 Customer</span>
+    <span class="actor-pill pill-a">🛠️ Admin (Store Manager)</span>
+    <span class="actor-pill pill-s">👑 Super Admin</span>
+  </div>
+</div>
+
+<div class="toc-wrap">
+  <div class="toc">
+    <div class="toc-title">📋 Jump to a Section</div>
+    <div class="toc-links">
+      <a class="toc-link" href="#c-reg"><div class="toc-icon ti-c">🔐</div><div>Customer – Register &amp; Login</div></a>
+      <a class="toc-link" href="#c-book"><div class="toc-icon ti-c">📋</div><div>Customer – Book Service</div></a>
+      <a class="toc-link" href="#c-quotpay"><div class="toc-icon ti-c">💰</div><div>Customer – Quotation &amp; Pay</div></a>
+      <a class="toc-link" href="#c-rate"><div class="toc-icon ti-c">⭐</div><div>Customer – Rate Store</div></a>
+      <a class="toc-link" href="#a-reg"><div class="toc-icon ti-a">📝</div><div>Admin – Register &amp; Login</div></a>
+      <a class="toc-link" href="#a-booking"><div class="toc-icon ti-a">🔧</div><div>Admin – Booking Workflow</div></a>
+      <a class="toc-link" href="#a-inv"><div class="toc-icon ti-a">📦</div><div>Admin – Inventory</div></a>
+      <a class="toc-link" href="#a-report"><div class="toc-icon ti-a">📈</div><div>Admin – Reports</div></a>
+      <a class="toc-link" href="#s-login"><div class="toc-icon ti-s">🔐</div><div>Super Admin – Login</div></a>
+      <a class="toc-link" href="#s-adminmgmt"><div class="toc-icon ti-s">👥</div><div>Super Admin – Admin Governance</div></a>
+      <a class="toc-link" href="#s-cusmgmt"><div class="toc-icon ti-s">🧑</div><div>Super Admin – Customer Mgmt</div></a>
+      <a class="toc-link" href="#s-monitor"><div class="toc-icon ti-s">📡</div><div>Super Admin – Monitoring</div></a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════ CUSTOMER ═══════════════════════════ -->
+<div class="sec-card" id="customer">
+  <div class="sec-hdr cust">
+    <div class="sec-icon">👤</div>
+    <div class="sec-meta">
+      <h2>Customer Activity Diagrams</h2>
+      <p>All customer processes — from registration to payment and rating</p>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <!-- C1: Register & Login -->
+    <div class="sub-label c" id="c-reg">🔐 Process 1 — Register Account &amp; Login</div>
+    <div class="db-tags"><span class="db-tag">users</span><span class="db-tag">login_logs</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Visit Landing Page]
+  A --> B{Has Account?}
+  B -->|No| C[Click Register]
+  C --> D[Fill Form: username, email,\npassword, fullname, phone]
+  D --> E{Inputs Valid?\nUnique email & username?}
+  E -->|No| F[Show Validation Errors]
+  F --> D
+  E -->|Yes| G[INSERT INTO users\nrole='customer', status='active']
+  G --> H[Redirect to Login Page]
+  B -->|Yes| H
+  H --> I[Enter Email & Password]
+  I --> J{Credentials\nCorrect?}
+  J -->|No| K[INSERT INTO login_logs\nlogin_status='failed']
+  K --> L[Show Error Message]
+  L --> I
+  J -->|Yes| M{Account\nStatus='active'?}
+  M -->|No| N[Show Account Inactive Error]
+  M -->|Yes| O[INSERT INTO login_logs\nlogin_status='success']
+  O --> P[Create PHP Session\nuser_id, role='customer']
+  P --> Q[Redirect to Customer Dashboard]
+  Q --> Z([End])
+style S fill:#1565C0,color:#fff,stroke:#0D47A1
+style Z fill:#1565C0,color:#fff,stroke:#0D47A1
+style G fill:#43A047,color:#fff,stroke:#2E7D32
+style O fill:#43A047,color:#fff,stroke:#2E7D32
+style K fill:#E53935,color:#fff,stroke:#B71C1C
+style N fill:#E53935,color:#fff,stroke:#B71C1C
+    </div></div>
+
+    <!-- C2: Service Booking -->
+    <div class="sub-label c" id="c-book">📋 Process 2 — Submit Service Booking</div>
+    <div class="db-tags"><span class="db-tag">bookings</span><span class="db-tag">services</span><span class="db-tag">service_categories</span><span class="db-tag">store_locations</span><span class="db-tag">notifications</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Open Booking / Repair Form]
+  A --> B[SELECT active services\nFROM services table]
+  B --> C[SELECT active store locations\nFROM store_locations]
+  C --> D[Customer Selects:\nService, Store, Date,\nService Option pickup/dropoff/walkin]
+  D --> E[Enter Notes /\nDamage Description]
+  E --> F{Form\nValid?}
+  F -->|No| G[Highlight Required Fields]
+  G --> D
+  F -->|Yes| H[INSERT INTO bookings\nuser_id, service_id, store_location_id,\nbooking_date, service_option,\nstatus='pending']
+  H --> I[INSERT INTO notifications\nAdmin alert: New Booking]
+  I --> J[Show Booking Confirmation\nwith Booking ID]
+  J --> K[Customer Waits for\nAdmin Confirmation]
+  K --> L{Admin Action}
+  L -->|Confirmed| M[bookings.status='confirmed'\nNotification sent to customer]
+  L -->|Rejected| N[bookings.status='rejected'\nNotification sent to customer]
+  M --> Z([End])
+  N --> Z
+style S fill:#1565C0,color:#fff
+style Z fill:#1565C0,color:#fff
+style H fill:#43A047,color:#fff
+style I fill:#43A047,color:#fff
+style N fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- C3: Quotation & Payment -->
+    <div class="sub-label c" id="c-quotpay">💰 Process 3 — View Quotation &amp; Make Payment</div>
+    <div class="db-tags"><span class="db-tag">quotations</span><span class="db-tag">bookings</span><span class="db-tag">payments</span><span class="db-tag">notifications</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Receive Notification:\nQuotation is Ready]
+  A --> B[Open My Bookings Page]
+  B --> C[SELECT quotation WHERE\nbooking_id = current booking]
+  C --> D[View Quotation Details:\nfabric_cost, labor_fee,\ntotal_amount, valid_until, notes]
+  D --> E{Decision}
+  E -->|Accept| F[POST acceptQuotation\nquotation_accepted=1\nquotation_accepted_at=NOW()\nbookings.status='approved'\nquotations.status='accepted']
+  E -->|Reject| G[POST rejectQuotation\nquotation_accepted=0\nquotations.status='rejected'\nbookings.status='for_quotation']
+  F --> H[Notify Admin: Accepted\nRepair will begin]
+  G --> I[Notify Admin: Rejected\nRevise quotation]
+  I --> Z2([End - Awaits New Quote])
+  H --> J[Wait for Repair Completion]
+  J --> K[Receive Notification:\nService Completed - Pay Now]
+  K --> L[View Final Receipt\nreceipt_issued=1]
+  L --> M{Payment Method}
+  M -->|Cash| N[Admin records payment\nINSERT INTO payments\npayment_status='paid'\nbookings.payment_status='paid_full_cash']
+  M -->|COD| O[INSERT INTO payments\npayment_status='paid'\nbookings.payment_status='paid_on_delivery_cod']
+  M -->|Partial| P[INSERT INTO payments\nbookings.payment_status='partial']
+  N --> Q[bookings.status='completed']
+  O --> Q
+  P --> Q
+  Q --> Z([End])
+style S fill:#1565C0,color:#fff
+style Z fill:#1565C0,color:#fff
+style Z2 fill:#607D8B,color:#fff
+style F fill:#43A047,color:#fff
+style Q fill:#43A047,color:#fff
+style G fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- C4: Rate Store -->
+    <div class="sub-label c" id="c-rate">⭐ Process 4 — Rate Store &amp; Manage Profile</div>
+    <div class="db-tags"><span class="db-tag">store_ratings</span><span class="db-tag">store_locations</span><span class="db-tag">users</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Booking status = 'completed']
+  A --> B[Customer Opens Store Rating Page]
+  B --> C{Already rated\nthis store?}
+  C -->|Yes| D[Show Existing Rating\nOption to Update]
+  C -->|No| E[Show Rating Form\n1.0 to 5.0 stars + review text]
+  E --> F{Rating\nSubmitted?}
+  F -->|No| G([Cancel])
+  F -->|Yes| H[INSERT INTO store_ratings\nstore_id, user_id, rating, review_text\nUNIQUE KEY unique_store_user_rating]
+  H --> I[TRIGGER: UPDATE store_locations.rating\nSET rating = AVG of store_ratings]
+  I --> J[Show Success Message]
+  D --> K[Update rating & review_text\nUPDATE store_ratings]
+  K --> I
+  J --> Z([End])
+  A --> L[Customer Opens Profile Page]
+  L --> M[Edit fullname, phone, password]
+  M --> N[UPDATE users SET\nfullname, phone, password WHERE id=?]
+  N --> O[Show Profile Updated]
+  O --> Z
+style S fill:#1565C0,color:#fff
+style Z fill:#1565C0,color:#fff
+style H fill:#43A047,color:#fff
+style I fill:#FFC107,color:#000
+    </div></div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ ADMIN ═══════════════════════════ -->
+<div class="sec-card" id="admin">
+  <div class="sec-hdr adm">
+    <div class="sec-icon">🛠️</div>
+    <div class="sec-meta">
+      <h2>Admin (Store Manager) Activity Diagrams</h2>
+      <p>All admin processes — from registration through the full booking repair workflow</p>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <!-- A1: Self-Register & Login -->
+    <div class="sub-label a" id="a-reg">📝 Process 1 — Self-Register &amp; Login</div>
+    <div class="db-tags"><span class="db-tag">admin_registrations</span><span class="db-tag">admin_verification_codes</span><span class="db-tag">control_panel_admins</span><span class="db-tag">login_logs</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Visit /control-panel/register]
+  A --> B[Fill: fullname, email, username,\npassword, phone, business name,\nupload business permit/ID]
+  B --> C{Validation OK?\nUnique email?}
+  C -->|No| D[Show Form Errors]
+  D --> B
+  C -->|Yes| E[INSERT INTO admin_registrations\nregistration_status='pending']
+  E --> F[Super Admin sees badge\nin sidebar - pending count]
+  F --> G[Wait for Super Admin Review]
+  G --> H{Super Admin\nDecision}
+  H -->|Reject| I[registration_status='rejected'\nrejection_reason saved\nEmail sent to Admin]
+  H -->|Approve| J[registration_status='pending_verification'\nGenerate 6-digit verification_code\nSet verification_code_sent_at]
+  J --> K[Email Sent to Admin\nwith Verification Code]
+  K --> L[Admin Enters 6-digit Code]
+  L --> M{Code Valid &\nNot Expired?\nCheck verification_attempts}
+  M -->|No| N[Increment verification_attempts\nShow Error]
+  N --> L
+  M -->|Yes| O[INSERT INTO control_panel_admins\nstatus='active', role='admin'\nSet verification_code_verified_at]
+  O --> P[UPDATE admin_registrations\nregistration_status='approved'\napproved_at=NOW()]
+  P --> Q[Admin Logs In\nPOST /admin/login]
+  Q --> R{Credentials Valid?\nstatus='active'?}
+  R -->|No| S2[INSERT login_logs status='failed'\nShow Error]
+  S2 --> Q
+  R -->|Yes| T[INSERT login_logs status='success'\nUPDATE last_login=NOW()]
+  T --> U[Create Session → Admin Dashboard]
+  U --> Z([End])
+style S fill:#2E7D32,color:#fff
+style Z fill:#2E7D32,color:#fff
+style E fill:#1565C0,color:#fff
+style O fill:#43A047,color:#fff
+style P fill:#43A047,color:#fff
+style I fill:#E53935,color:#fff
+style N fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- A2: Full Booking Workflow -->
+    <div class="sub-label a" id="a-booking">🔧 Process 2 — Full Booking &amp; Repair Workflow</div>
+    <div class="db-tags"><span class="db-tag">bookings</span><span class="db-tag">quotations</span><span class="db-tag">payments</span><span class="db-tag">notifications</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start:\nbookings.status='pending']) --> A[Admin Views All Bookings\nAll Bookings Page]
+  A --> B{Review New\nBooking}
+  B -->|Reject| C[UPDATE bookings\nstatus='rejected'\nNotify Customer]
+  B -->|Confirm| D[UPDATE bookings\nstatus='confirmed'\nNotify Customer]
+  D --> E[Assign Pickup Schedule\nstatus='for_pickup'\npickup_date, pickup_address saved]
+  E --> F[Rider/Staff Picks up Item\nstatus='picked_up']
+  F --> G[Item Arrives at Shop\nstatus='for_inspection']
+  G --> H[Admin Inspects Item\nRecord: damage_description,\ndamage_severity, damage_types,\nmeasurement_height/width/thickness]
+  H --> I[status='inspect_completed'\nstatus→'inspection_completed_waiting_approval']
+  I --> J[Upload Preview Photo/Receipt\npreview_image saved\npreview_sent_at=NOW()\nstatus='preview_receipt_sent']
+  J --> K[Calculate Cost:\nfabric_length, fabric_width,\nnumber_of_meters, price_per_meter,\nlabor_fee, fabric_cost, grand_total]
+  K --> L[INSERT INTO quotations\nbooking_id, total_amount, status='sent'\nquotation_number generated]
+  L --> M[UPDATE bookings\nquotation_sent=1\nquotation_sent_at=NOW()\nstatus='for_quotation'\nNotify Customer]
+  M --> N{Customer\nAccepts?}
+  N -->|Reject| O[quotation_accepted=0\nquotations.status='rejected'\nRevise or cancel]
+  O --> K
+  N -->|Accept| P[quotation_accepted=1\nquotation_accepted_at=NOW()\nbookings.status='approved'\nquotations.status='accepted']
+  P --> Q[Start Repair\nstatus='in_queue' → 'in_progress'\nrepair_start_date=NOW()\nrepair_days set]
+  Q --> R[Update Repair Progress\nstatus='under_repair']
+  R --> S2{Repair\nDone?}
+  S2 -->|No| R
+  S2 -->|Yes| T[status='repair_completed'\nstatus='for_quality_check']
+  T --> U{Quality\nCheck OK?}
+  U -->|Fail| V[Return to Repair\nstatus='under_repair']
+  V --> R
+  U -->|Pass| W[status='repair_completed_ready_to_deliver']
+  W --> X{Delivery\nor Pickup?}
+  X -->|Delivery| Y[status='out_for_delivery'\ndelivery_address, delivery_date set]
+  X -->|Pickup| Y2[status='ready_for_pickup']
+  Y --> Z2[Confirm Delivered\nstatus='delivered_and_paid']
+  Y2 --> Z2
+  Z2 --> AA[Issue Receipt\nreceipt_issued=1\nreceipt_issued_at=NOW()\nreceipt_number assigned]
+  AA --> AB[Record Payment\nINSERT INTO payments\npayment_method, amount\nbookings.payment_status='paid']
+  AB --> AC[UPDATE bookings\nstatus='completed'\ncompletion_date=NOW()]
+  AC --> AD{Archive?}
+  AD -->|Yes| AE[status='closed']
+  AD -->|No| Z([End])
+  AE --> Z
+  C --> Z
+style S fill:#FFC107,color:#000
+style Z fill:#2E7D32,color:#fff
+style L fill:#1565C0,color:#fff
+style P fill:#43A047,color:#fff
+style AC fill:#43A047,color:#fff
+style C fill:#E53935,color:#fff
+style O fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- A3: Inventory Management -->
+    <div class="sub-label a" id="a-inv">📦 Process 3 — Manage Fabric Inventory</div>
+    <div class="db-tags"><span class="db-tag">inventory</span><span class="db-tag">store_locations</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Admin Opens Inventory Page]
+  A --> B{Choose Action}
+
+  B -->|Add New Fabric| C[Fill Form: color_code,\ncolor_name, color_hex,\nfabric_type premium/standard,\nprice_per_unit, price_per_meter,\nquantity, store_location_id]
+  C --> D{Duplicate?\ncolor_code + store_location_id\nalready exists?}
+  D -->|Yes| E[Show Error:\nUNIQUE KEY Violation]
+  E --> C
+  D -->|No| F{Quantity > 0?}
+  F -->|Yes| G[INSERT inventory\nstatus='in-stock']
+  F -->|No| H[INSERT inventory\nstatus='out-of-stock']
+  G --> I[Item visible in\nCustomer Fabric Catalog]
+  H --> J[Item hidden from\nCustomer Catalog]
+
+  B -->|Edit Item| K[Load inventory record\nby id]
+  K --> L[Update fields:\nquantity, price, fabric_type]
+  L --> M{New Quantity?}
+  M -->|= 0| N[SET status='out-of-stock'\nHide from customers]
+  M -->|< Low Threshold| O[SET status='low-stock'\nShow warning badge]
+  M -->|> Threshold| P[SET status='in-stock']
+  N --> Q[UPDATE inventory\nupdated_at=NOW()]
+  O --> Q
+  P --> Q
+
+  B -->|Delete Item| R{Quantity = 0\nor Out of Stock?}
+  R -->|Yes| S2[Do NOT delete\nKeep as out-of-stock\nAdmin notified]
+  R -->|No| T[DELETE FROM inventory\nWHERE id=?]
+  S2 --> Z([End])
+  T --> Z
+  Q --> Z
+  I --> Z
+  J --> Z
+style S fill:#2E7D32,color:#fff
+style Z fill:#2E7D32,color:#fff
+style G fill:#43A047,color:#fff
+style E fill:#E53935,color:#fff
+style N fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- A4: Reports -->
+    <div class="sub-label a" id="a-report">📈 Process 4 — Generate Reports &amp; Manage Services</div>
+    <div class="db-tags"><span class="db-tag">bookings</span><span class="db-tag">payments</span><span class="db-tag">services</span><span class="db-tag">service_categories</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A{Admin Action}
+
+  A -->|Generate Report| B[Open Reports Page]
+  B --> C[Select Filter:\nDate Range, Status, Store]
+  C --> D[SELECT bookings + payments\nWHERE conditions match]
+  D --> E{Export Format}
+  E -->|PDF| F[Generate via Dompdf\nDownload .pdf file]
+  E -->|CSV| G[Generate CSV\nDownload .csv file]
+  E -->|View Only| H[Display Table in Browser]
+  F --> Z([End])
+  G --> Z
+  H --> Z
+
+  A -->|Add Service| I[Fill: service_name,\nservice_type, category_id,\ndescription, price, status]
+  I --> J{Category exists?}
+  J -->|No| K[INSERT INTO service_categories]
+  K --> L[INSERT INTO services\nwith category_id]
+  J -->|Yes| L
+  L --> M[Service available\nfor customer booking]
+  M --> Z
+
+  A -->|Edit Service| N[Load service record]
+  N --> O[Update: name, price,\nstatus active/inactive]
+  O --> P{Set Inactive?}
+  P -->|Yes| Q[services.status='inactive'\nHidden from booking form]
+  P -->|No| R[services.status='active']
+  Q --> Z
+  R --> Z
+style S fill:#2E7D32,color:#fff
+style Z fill:#2E7D32,color:#fff
+style L fill:#43A047,color:#fff
+style K fill:#1565C0,color:#fff
+style Q fill:#E53935,color:#fff
+    </div></div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ SUPER ADMIN ═══════════════════════════ -->
+<div class="sec-card" id="superadmin">
+  <div class="sec-hdr sup">
+    <div class="sec-icon">👑</div>
+    <div class="sec-meta">
+      <h2>Super Admin Activity Diagrams</h2>
+      <p>All governance and monitoring processes for the Control Panel Super Admin</p>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <!-- S1: Login -->
+    <div class="sub-label s" id="s-login">🔐 Process 1 — Login to Control Panel</div>
+    <div class="db-tags"><span class="db-tag">control_panel_admins</span><span class="db-tag">login_logs</span><span class="db-tag">control_panel_sessions</span><span class="db-tag">system_statistics</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Visit /control-panel/login]
+  A --> B[Enter Email & Password]
+  B --> C[SELECT FROM control_panel_admins\nWHERE email=?]
+  C --> D{Record Found?}
+  D -->|No| E[INSERT login_logs\nstatus='failed', failure_reason='not found'\nip_address, user_agent logged]
+  E --> F[Show Invalid Credentials Error]
+  F --> B
+  D -->|Yes| G{Password\nHash Match?}
+  G -->|No| H[INSERT login_logs status='failed'\nfailure_reason='wrong password']
+  H --> F
+  G -->|Yes| I{status='active'?}
+  I -->|No| J[Show Account Inactive Error]
+  I -->|Yes| K[INSERT login_logs\nstatus='success'\nuser_type='control_panel']
+  K --> L[UPDATE control_panel_admins\nlast_login=NOW()]
+  L --> M[INSERT control_panel_sessions\nsession_id, ip_address, expires_at]
+  M --> N{role?}
+  N -->|super_admin| O[Redirect to Super Admin Dashboard\nFull access to all modules]
+  N -->|admin| P[Redirect to Admin Dashboard\nLimited access]
+  O --> Z([End])
+  P --> Z
+style S fill:#6A1B9A,color:#fff
+style Z fill:#6A1B9A,color:#fff
+style K fill:#43A047,color:#fff
+style L fill:#43A047,color:#fff
+style M fill:#1565C0,color:#fff
+style E fill:#E53935,color:#fff
+style H fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- S2: Admin Governance -->
+    <div class="sub-label s" id="s-adminmgmt">👥 Process 2 — Admin Registration Governance</div>
+    <div class="db-tags"><span class="db-tag">admin_registrations</span><span class="db-tag">control_panel_admins</span><span class="db-tag">system_activities</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Login to Control Panel]
+  A --> B[See Sidebar Badge:\nPending Admin Count]
+  B --> C[Open Admin Registrations Page]
+  C --> D[SELECT FROM admin_registrations\nWHERE registration_status IN\npending, pending_verification]
+  D --> E[View Awaiting Review Tab\nList of Applications]
+  E --> F{Super Admin\nAction}
+
+  F -->|View Details| G[Open Review Modal:\nfullname, email, username, phone,\nbusiness info, uploaded documents]
+  G --> F
+
+  F -->|Approve| H[Check Documents\nBusiness Permit / ID verified]
+  H --> I[UPDATE admin_registrations\nregistration_status='pending_verification'\napproved_by=super_admin_id\napproved_at=NOW()]
+  I --> J[Generate 6-digit verification_code\nSET verification_code_sent_at=NOW()]
+  J --> K[Send Verification Email\nto Admin applicant]
+  K --> L[INSERT system_activities\nactivity_type='user_created'\ndescription, affected_record_id]
+  L --> M([Admin receives code\nand verifies → Account Created])
+
+  F -->|Reject| N[Enter Rejection Reason]
+  N --> O[UPDATE admin_registrations\nregistration_status='rejected'\nrejection_reason=text]
+  O --> P[Send Rejection Email]
+  P --> Q[INSERT system_activities\nactivity_type='user_modified']
+  Q --> Z([End])
+
+  F -->|Resend Code| R[Regenerate verification_code\nReset verification_attempts=0]
+  R --> K
+
+  F -->|View Active Admins| S2[SELECT FROM control_panel_admins\nstatus='active', role='admin']
+  S2 --> T{Action on Active Admin}
+  T -->|Deactivate| U[UPDATE control_panel_admins\nstatus='inactive']
+  U --> V[INSERT system_activities\nold_value='active', new_value='inactive']
+  V --> Z
+  M --> Z
+style S fill:#6A1B9A,color:#fff
+style Z fill:#6A1B9A,color:#fff
+style I fill:#1565C0,color:#fff
+style L fill:#43A047,color:#fff
+style O fill:#E53935,color:#fff
+style U fill:#E53935,color:#fff
+    </div></div>
+
+    <!-- S3: Customer Management -->
+    <div class="sub-label s" id="s-cusmgmt">🧑 Process 3 — Customer Account Management</div>
+    <div class="db-tags"><span class="db-tag">users</span><span class="db-tag">system_activities</span><span class="db-tag">login_logs</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Super Admin Opens\nCustomer Accounts Page]
+  A --> B[SELECT FROM users\nWHERE role='customer'\nORDER BY created_at DESC]
+  B --> C[View Customer List:\nfullname, email, status,\ncreated_at, last login]
+  C --> D{Action}
+
+  D -->|View Login History| E[SELECT FROM login_logs\nWHERE user_type='customer'\nAND email=customer_email]
+  E --> F[Show login attempts,\nIP address, success/failed]
+  F --> D
+
+  D -->|Deactivate Account| G{Confirm\nDeactivation?}
+  G -->|No| D
+  G -->|Yes| H[UPDATE users\nSET status='inactive'\nWHERE id=?]
+  H --> I[INSERT system_activities\nactivity_type='user_modified'\nold_value='active', new_value='inactive'\naffected_table='users'\naffected_record_id=user_id]
+  I --> J[Customer can no longer login\nShow inactive error on login]
+  J --> Z([End])
+
+  D -->|Reactivate Account| K[UPDATE users\nSET status='active'\nWHERE id=?]
+  K --> L[INSERT system_activities\nold_value='inactive', new_value='active']
+  L --> M[Customer can login again]
+  M --> Z
+
+  D -->|View Business Registrations| N[SELECT FROM admin_registrations\nWHERE business fields filled]
+  N --> O[Open Business Registration Review\nView permit documents]
+  O --> P{Decision}
+  P -->|Approve| Q[registration_status='pending_verification'\nSend verification code]
+  P -->|Reject| R[registration_status='rejected'\nSave rejection_reason]
+  Q --> Z
+  R --> Z
+style S fill:#6A1B9A,color:#fff
+style Z fill:#6A1B9A,color:#fff
+style H fill:#E53935,color:#fff
+style I fill:#1565C0,color:#fff
+style K fill:#43A047,color:#fff
+    </div></div>
+
+    <!-- S4: System Monitoring -->
+    <div class="sub-label s" id="s-monitor">📡 Process 4 — System Monitoring &amp; Audit</div>
+    <div class="db-tags"><span class="db-tag">login_logs</span><span class="db-tag">system_activities</span><span class="db-tag">system_statistics</span><span class="db-tag">store_ratings</span><span class="db-tag">store_locations</span></div>
+    <div class="dw"><div class="mermaid">
+flowchart TD
+  S([Start]) --> A[Super Admin\nOpens Monitoring Section]
+  A --> B{Choose Module}
+
+  B -->|Login Logs| C[SELECT FROM login_logs\nORDER BY login_time DESC]
+  C --> D[Filter by: user_type\ncustomer/admin/control_panel\nlogin_status success/failed\ndate range, IP address]
+  D --> E[View: email, fullname,\nip_address, user_agent\nlogin_time, failure_reason]
+  E --> Z([End])
+
+  B -->|System Activity Audit| F[SELECT FROM system_activities\nORDER BY created_at DESC]
+  F --> G[View: admin_id, activity_type\nuser_created/user_modified/\nbooking_modified/settings_changed\ndescription, old_value, new_value\naffected_table, affected_record_id]
+  G --> Z
+
+  B -->|System Statistics| H[SELECT FROM system_statistics\nWHERE stat_date = CURDATE()]
+  H --> I[View Daily KPIs:\ntotal_logins, successful_logins\nfailed_logins, customer_logins\nadmin_logins, unique_users\nnew_users, new_bookings\ncompleted_bookings]
+  I --> Z
+
+  B -->|Store Ratings| J[SELECT store_ratings\nJOIN store_locations\nORDER BY rating DESC]
+  J --> K[View: store_name, avg_rating\nreview_text, customer_name\nstatus active/hidden]
+  K --> L{Hide Review?}
+  L -->|Yes| M[UPDATE store_ratings\nstatus='hidden']
+  L -->|No| Z
+  M --> Z
+
+  B -->|Compliance Reports| N[SELECT FROM store_compliance_reports\nWHERE store_id=?]
+  N --> O[View Report:\ncompliance status, issues, notes]
+  O --> P{Action Needed?}
+  P -->|Ban Store| Q[UPDATE store_locations\nstatus='inactive'\nINSERT ban_tracking fields]
+  P -->|No Action| Z
+  Q --> Z
+style S fill:#6A1B9A,color:#fff
+style Z fill:#6A1B9A,color:#fff
+style M fill:#E53935,color:#fff
+style Q fill:#E53935,color:#fff
+style I fill:#43A047,color:#fff
+    </div></div>
+
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<footer>
+  <strong>UphoCare – Activity Diagrams</strong> &nbsp;|&nbsp; 2026<br/>
+  Based on <code>db_upholcare</code> database schema &nbsp;·&nbsp;
+  Users: Customer · Admin (Store Manager) · Super Admin (Control Panel)
+</footer>
+
+<script>
+mermaid.initialize({
+  startOnLoad:true,
+  theme:'default',
+  securityLevel:'loose',
+  flowchart:{curve:'basis',htmlLabels:true,padding:18}
+});
+</script>
+</body>
+</html>

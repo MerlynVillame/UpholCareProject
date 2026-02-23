@@ -264,7 +264,7 @@ $error = $error ?? null;
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-list"></i> All Store Ratings
+                    <i class="fas fa-list"></i> Store Ratings & Reviews
                 </h6>
             </div>
             <div class="card-body">
@@ -278,7 +278,6 @@ $error = $error ?? null;
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Store</th>
                                     <th>Customer</th>
                                     <th>Rating</th>
                                     <th>Review</th>
@@ -292,12 +291,6 @@ $error = $error ?? null;
                                         data-rating-value="<?php echo (int)$rating['rating']; ?>"
                                         data-status="<?php echo $rating['status']; ?>">
                                         <td><?php echo $rating['id']; ?></td>
-                                        <td>
-                                            <strong><?php echo htmlspecialchars($rating['store_name'] ?? 'N/A'); ?></strong><br>
-                                            <small class="text-muted">
-                                                <?php echo htmlspecialchars($rating['city'] ?? ''); ?>
-                                            </small>
-                                        </td>
                                         <td>
                                             <strong><?php echo htmlspecialchars($rating['customer_name'] ?? 'Anonymous'); ?></strong><br>
                                             <small class="text-muted">
@@ -593,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!noResultsMsg) {
                 noResultsMsg = document.createElement('tr');
                 noResultsMsg.className = 'no-results-msg';
-                noResultsMsg.innerHTML = '<td colspan="7" class="text-center py-4"><em class="text-muted">No ratings match the selected filters.</em></td>';
+                noResultsMsg.innerHTML = '<td colspan="6" class="text-center py-4"><em class="text-muted">No ratings match the selected filters.</em></td>';
                 tbody.appendChild(noResultsMsg);
             }
         } else {

@@ -1,5 +1,17 @@
-<!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
+<?php
+$current_uri = $_SERVER['REQUEST_URI'] ?? '';
+$page = 'dashboard'; // Default
+
+if (strpos($current_uri, 'admin/allBookings') !== false) $page = 'allBookings';
+elseif (strpos($current_uri, 'admin/archivedBookings') !== false) $page = 'archivedBookings';
+elseif (strpos($current_uri, 'admin/inventory') !== false) $page = 'inventory';
+elseif (strpos($current_uri, 'admin/services') !== false) $page = 'services';
+elseif (strpos($current_uri, 'admin/storeRatings') !== false) $page = 'storeRatings';
+elseif (strpos($current_uri, 'admin/dailySchedule') !== false) $page = 'dailySchedule';
+elseif (strpos($current_uri, 'admin/reports') !== false) $page = 'reports';
+elseif (strpos($current_uri, 'admin/dashboard') !== false) $page = 'dashboard';
+?>
+<ul class="navbar-nav sidebar sidebar-light accordion" id="accordionSidebar" style="background-color: #FFFFFF !important;">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>admin/dashboard">
@@ -12,7 +24,7 @@
     <hr class="sidebar-divider my-0">
 
     <!-- Nav Item - Dashboard -->
-    <li class="nav-item active">
+    <li class="nav-item <?php echo $page === 'dashboard' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span></a>
@@ -27,38 +39,45 @@
     </div>
 
     <!-- Nav Item - Reservations -->
-    <li class="nav-item">
+    <li class="nav-item <?php echo $page === 'allBookings' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/allBookings">
             <i class="fas fa-fw fa-calendar-check"></i>
             <span>All Bookings</span></a>
     </li>
 
     <!-- Nav Item - Archived Bookings -->
-    <li class="nav-item">
+    <li class="nav-item <?php echo $page === 'archivedBookings' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/archivedBookings">
             <i class="fas fa-fw fa-archive"></i>
             <span>Archived Bookings</span></a>
     </li>
 
     <!-- Nav Item - Inventory -->
-    <li class="nav-item">
+    <li class="nav-item <?php echo $page === 'inventory' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/inventory">
             <i class="fas fa-fw fa-box"></i>
             <span>Inventory</span></a>
     </li>
 
     <!-- Nav Item - Services -->
-    <li class="nav-item">
+    <li class="nav-item <?php echo $page === 'services' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/services">
             <i class="fas fa-fw fa-tools"></i>
             <span>Services</span></a>
     </li>
 
     <!-- Nav Item - Store Ratings -->
-    <li class="nav-item">
+    <li class="nav-item <?php echo $page === 'storeRatings' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/storeRatings">
             <i class="fas fa-fw fa-star"></i>
             <span>Store Ratings</span></a>
+    </li>
+
+    <!-- Nav Item - Logistics Management -->
+    <li class="nav-item <?php echo $page === 'dailySchedule' ? 'active' : ''; ?>">
+        <a class="nav-link" href="<?php echo BASE_URL; ?>admin/dailySchedule">
+            <i class="fas fa-fw fa-truck"></i>
+            <span>Logistics Management</span></a>
     </li>
 
     <!-- Divider -->
@@ -70,7 +89,7 @@
     </div>
 
     <!-- Nav Item - Reports -->
-    <li class="nav-item">
+    <li class="nav-item <?php echo $page === 'reports' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo BASE_URL; ?>admin/reports">
             <i class="fas fa-fw fa-chart-area"></i>
             <span>Reports</span></a>
@@ -89,6 +108,8 @@
 <style>
 /* Admin Sidebar - Fixed positioning */
 .sidebar {
+    background-color: #FFFFFF !important;
+    background-image: none !important;
     position: fixed !important;
     top: 0;
     left: 0;
@@ -97,10 +118,57 @@
     overflow-x: hidden;
     z-index: 999;
     width: 14rem; /* Standard SB Admin 2 sidebar width */
-    border-right: 3px solid var(--uphol-blue);
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     -webkit-overflow-scrolling: touch;
+}
+
+/* Sidebar Text & Design Enhancements */
+.sidebar .nav-item .nav-link {
+    color: #333333 !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-item .nav-link i {
+    color: #0F3C5F !important;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-item .nav-link:hover {
+    background-color: rgba(15, 60, 95, 0.05);
+    color: #0F3C5F !important;
+    padding-left: 1.25rem;
+}
+
+.sidebar .nav-item .nav-link:hover i {
+    color: #0F3C5F !important;
+}
+
+.sidebar .nav-item.active .nav-link {
+    background-color: rgba(15, 60, 95, 0.1) !important;
+    color: #0F3C5F !important;
+    font-weight: 700;
+    border-left: 4px solid #0F3C5F;
+}
+
+.sidebar .nav-item.active .nav-link i {
+    color: #0F3C5F !important;
+}
+
+.sidebar-heading {
+    color: #0F3C5F !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+    opacity: 0.9;
+}
+
+.sidebar .sidebar-brand-text {
+    color: #000000 !important;
 }
 
 /* Custom scrollbar for sidebar */

@@ -1,5 +1,5 @@
 <!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav sidebar sidebar-light accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo BASE_URL; ?>customer/dashboard" style="height: 80px;">
@@ -23,7 +23,7 @@
     <hr class="sidebar-divider">
 
     <!-- Heading -->
-    <div class="sidebar-heading" style="font-size: 0.65rem; color: #8895a7; letter-spacing: 0.5px;">
+    <div class="sidebar-heading" style="font-size: 0.8rem; color: #000000; letter-spacing: 0.5px; font-weight: 700;">
         BOOKING MANAGEMENT
     </div>
 
@@ -40,7 +40,7 @@
     <hr class="sidebar-divider">
 
     <!-- Heading -->
-    <div class="sidebar-heading" style="font-size: 0.65rem; color: #8895a7; letter-spacing: 0.5px;">
+    <div class="sidebar-heading" style="font-size: 0.8rem; color: #000000; letter-spacing: 0.5px; font-weight: 700;">
         SERVICES & INFO
     </div>
 
@@ -64,7 +64,7 @@
     <hr class="sidebar-divider">
 
     <!-- Heading -->
-    <div class="sidebar-heading" style="font-size: 0.65rem; color: #8895a7; letter-spacing: 0.5px;">
+    <div class="sidebar-heading" style="font-size: 0.8rem; color: #5a5c69; letter-spacing: 0.5px; font-weight: 700;">
         ACCOUNT
     </div>
 
@@ -101,7 +101,7 @@
 /* Sidebar border adjustments */
 .sidebar,
 #accordionSidebar {
-    border-right: 3px solid var(--uphol-orange);
+    border-right: none;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     position: fixed;
@@ -163,15 +163,20 @@ body:not(.customer-profile) .sidebar {
 
 .sidebar .nav-item.active .nav-link,
 #accordionSidebar .nav-item.active .nav-link {
-    background-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: rgba(15, 60, 95, 0.05) !important;
     opacity: 1 !important;
-    color: #ffffff !important;
+    color: #0F3C5F !important;
+    border-left: 4px solid #0F3C5F;
 }
 
-/* Ensure sidebar brand is not transparent */
+.sidebar .nav-item.active .nav-link i,
+#accordionSidebar .nav-item.active .nav-link i {
+    color: #0F3C5F !important;
+}
+
+/* Ensure sidebar brand matches theme */
 .sidebar-brand {
-    background: #0d1117 !important;
-    background-color: #0d1117 !important;
+    background: transparent !important;
     opacity: 1 !important;
 }
 
@@ -183,10 +188,10 @@ body:not(.customer-profile) .sidebar {
     opacity: 1 !important;
 }
 
-/* Override any transparent backgrounds - use solid colors */
+/* White background for sidebar */
 .sidebar,
 #accordionSidebar {
-    background-color: var(--uphol-navy) !important;
+    background-color: #ffffff !important;
     opacity: 1 !important;
 }
 
@@ -200,26 +205,36 @@ body:not(.customer-profile) .sidebar {
 .sidebar .nav-link,
 #accordionSidebar .nav-link {
     opacity: 1 !important;
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: #3a3b45 !important;
+}
+
+.sidebar .nav-link i,
+#accordionSidebar .nav-link i {
+    color: #b7b9cc !important;
 }
 
 .sidebar .nav-link:hover,
 #accordionSidebar .nav-link:hover {
     opacity: 1 !important;
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #0F3C5F !important;
+    background-color: rgba(15, 60, 95, 0.05) !important;
 }
 
-/* Ensure dividers are visible */
+.sidebar .nav-link:hover i,
+#accordionSidebar .nav-link:hover i {
+    color: #0F3C5F !important;
+}
+
+/* Ensure dividers are visible against white background */
 .sidebar-divider {
     opacity: 1 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Ensure headings are visible */
 .sidebar-heading {
     opacity: 1 !important;
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #858796 !important;
 }
 
 .sidebar .nav-link {
@@ -533,8 +548,8 @@ body.sidebar-toggled .sticky-footer {
         transform: translateX(0) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
-        background-color: #1a252f !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
     }
     
     /* Show sidebar when toggled - ensure fully opaque */
@@ -550,8 +565,8 @@ body.sidebar-toggled .sticky-footer {
         opacity: 1 !important;
         transform: translateX(0) !important;
         z-index: 1060 !important;
-        background: linear-gradient(180deg, #1a252f 0%, #2c3e50 100%) !important;
-        background-color: #1a252f !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
     }
     
     /* Force all sidebar content to be opaque on mobile */
@@ -562,8 +577,8 @@ body.sidebar-toggled .sticky-footer {
         }
         
         body.sidebar-toggled .sidebar-brand {
-            background: #0d1117 !important;
-            background-color: #0d1117 !important;
+            background: #ffffff !important;
+            background-color: #ffffff !important;
             opacity: 1 !important;
         }
     }
@@ -723,7 +738,7 @@ body.sidebar-toggled .sticky-footer {
     }
     
     #sidebarToggleTop:hover {
-        color: #1F4E79 !important;
+        color: #ffffffff !important;
         background-color: rgba(139, 69, 19, 0.1) !important;
     }
     

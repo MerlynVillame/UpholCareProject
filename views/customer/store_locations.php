@@ -2,16 +2,43 @@
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'customer_sidebar.php'; ?>
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
 
-<!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Find Nearest Store</h1>
-    <div>
-        <button class="btn btn-primary btn-sm" onclick="getCurrentLocation(event)">
-            <i class="fas fa-map-marker-alt"></i> Use My Location
+<style>
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.welcome-text {
+    color: #0F3C5F;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
+}
+</style>
+
+<!-- Tab Container for Heading and Actions -->
+<div class="welcome-container shadow-sm">
+    <div class="welcome-text">
+        <i class="fas fa-store-alt mr-2" style="color: #0F3C5F;"></i>
+        Store Locations
+    </div>
+    <div class="d-flex align-items-center">
+        <button class="btn btn-outline-primary btn-sm px-4 shadow-sm" onclick="getCurrentLocation(event)" style="border-radius: 50px; font-weight: 600; font-size: 0.8rem; height: 38px;">
+            <i class="fas fa-map-marker-alt mr-1"></i> Use My Location
         </button>
-        <a href="<?php echo BASE_URL; ?>customer/newBooking" class="btn btn-success btn-sm">
-            <i class="fas fa-plus"></i> Book Service
-        </a>
+        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm ml-2" onclick="openReservationModal()" style="border-radius: 50px; font-weight: 600; font-size: 0.8rem; height: 38px;">
+            <i class="fas fa-plus mr-1"></i> Book Service
+        </button>
     </div>
 </div>
 
@@ -111,7 +138,7 @@
 
 <!-- Store Details Modal -->
 <div class="modal fade" id="storeDetailsModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="storeDetailsTitle">Store Details</h5>
@@ -603,53 +630,72 @@ function displayStores(stores) {
         const ratingText = rating >= 4.5 ? 'Excellent' : rating >= 4.0 ? 'Good' : rating > 0 ? 'Fair' : 'No Rating';
         
         return `
-            <div class="card mb-3 store-card ${index === 0 && rating >= 4.5 ? 'border-warning shadow' : index < 3 && rating >= 4.0 ? 'border-info' : ''}" style="transition: all 0.3s ease;">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-1 text-center">
-                            ${index === 0 && rating >= 4.5 ? '<span class="badge badge-warning badge-pill" style="font-size: 1.2rem; padding: 8px 12px;"><i class="fas fa-crown"></i> #1</span>' : ''}
-                            ${index === 1 && rating >= 4.0 ? '<span class="badge badge-secondary badge-pill" style="font-size: 1rem; padding: 6px 10px;"><i class="fas fa-medal"></i> #2</span>' : ''}
-                            ${index === 2 && rating >= 4.0 ? '<span class="badge badge-secondary badge-pill" style="font-size: 1rem; padding: 6px 10px;"><i class="fas fa-award"></i> #3</span>' : ''}
-                            ${index >= 3 ? `<span class="text-muted" style="font-size: 1.5rem; font-weight: bold;">#${index + 1}</span>` : ''}
+            <div class="card mb-3 store-card shadow-sm hover-shadow" style="transition: all 0.3s ease; border-radius: 12px; overflow: hidden; border: 1px solid #e3e6f0;">
+                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            ${index === 0 && rating >= 4.5 ? '<span class="badge badge-warning badge-pill mr-2 shadow-sm" style="font-size: 0.9rem;"><i class="fas fa-crown"></i> #1</span>' : ''}
+                            <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 1.1rem;">${store.store_name || 'Store'}</h5>
                         </div>
-                        <div class="col-md-7">
-                            <div class="d-flex align-items-center mb-2">
-                                <h5 class="card-title mb-0">${store.store_name || 'Store'}</h5>
-                            </div>
-                            <p class="card-text mb-2">
-                                <i class="fas fa-map-marker-alt text-primary"></i> 
-                                <strong>Address:</strong> ${store.address || 'Address not provided'}<br>
-                                <i class="fas fa-city text-info"></i> 
-                                <strong>Location:</strong> ${store.city || 'Bohol'}, ${store.province || 'Bohol'}<br>
-                                ${store.phone ? `<i class="fas fa-phone text-success"></i> <strong>Phone:</strong> ${store.phone}<br>` : ''}
-                                ${store.email ? `<i class="fas fa-envelope text-info"></i> <strong>Email:</strong> ${store.email}` : ''}
-                            </p>
-                            <div class="mb-2">
-                                <span class="badge ${ratingBadgeClass} mr-2" style="font-size: 0.9rem; padding: 6px 10px;">
-                                    <i class="fas fa-star"></i> ${rating.toFixed(1)}/5.0 ${ratingText}
-                                </span>
-                                ${store.distance ? `<span class="badge badge-info" style="font-size: 0.85rem;"><i class="fas fa-route"></i> ${store.distance.toFixed(2)} km away</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-right">
-                            <button class="btn btn-primary btn-sm mb-2" onclick="viewStoreDetails(${store.id})" style="width: 100%;">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
-                            <button class="btn btn-success btn-sm mb-2" onclick="selectStore(${store.id})" style="width: 100%;">
-                                <i class="fas fa-check"></i> Select Store
-                            </button>
-                            ${store.latitude && store.longitude ? `
-                                <button class="btn btn-info btn-sm mb-2" onclick="focusOnStore(${store.latitude}, ${store.longitude}, ${store.id})" style="width: 100%;">
-                                    <i class="fas fa-map-marker-alt"></i> Show on Map
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-warning btn-sm" onclick="showReportIssueModal(${store.id})" style="width: 100%;" title="Report an issue with this store">
-                                <i class="fas fa-exclamation-triangle"></i> Report Issue
-                            </button>
+                        <div class="d-flex align-items-center">
+                            <span class="badge ${ratingBadgeClass} shadow-sm px-2 py-1" style="border-radius: 6px;">
+                                <i class="fas fa-star mr-1"></i>${rating.toFixed(1)} ${ratingText}
+                            </span>
                         </div>
                     </div>
                 </div>
+                <div class="card-body py-2">
+                    <div class="row">
+                        <div class="col-md-7 border-right-md">
+                            <div class="mb-2">
+                                <small class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Location Details</small>
+                                <p class="mb-1 mt-1 text-dark" style="font-size: 0.9rem;">
+                                    <i class="fas fa-map-marker-alt text-primary mr-2" style="width: 16px; text-align: center;"></i> 
+                                    ${store.address || 'Address not provided'}
+                                </p>
+                                <p class="mb-0 text-muted" style="font-size: 0.85rem;">
+                                    <i class="fas fa-city text-info mr-2" style="width: 16px; text-align: center;"></i> 
+                                    ${store.city || 'Bohol'}, ${store.province || 'Bohol'}
+                                    ${store.distance ? `<span class="ml-2 badge badge-light border"><i class="fas fa-route text-success"></i> ${store.distance.toFixed(2)} km</span>` : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="mb-2">
+                                <small class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Contact Info</small>
+                                <p class="mb-1 mt-1" style="font-size: 0.9rem;">
+                                    <i class="fas fa-phone text-success mr-2" style="width: 16px; text-align: center;"></i> 
+                                    ${store.phone || '<span class="text-muted font-italic">Not available</span>'}
+                                </p>
+                                <p class="mb-0" style="font-size: 0.9rem;">
+                                    <i class="fas fa-envelope text-info mr-2" style="width: 16px; text-align: center;"></i> 
+                                    ${store.email || '<span class="text-muted font-italic">Not available</span>'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light border-top-0 pt-0 pb-3">
+                    <div class="d-flex justify-content-end align-items-center pt-2">
+                        <button class="btn btn-outline-primary btn-sm mr-2 px-3 shadow-none" onclick="viewStoreDetails(${store.id})" style="border-radius: 6px; font-weight: 600; font-size: 0.8rem;">
+                            <i class="fas fa-eye mr-1"></i> View
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm mr-2 px-3 shadow-none text-dark" onclick="showReportIssueModal(${store.id})" style="border-radius: 6px; font-weight: 600; font-size: 0.8rem;">
+                            <i class="fas fa-flag mr-1"></i> Report
+                        </button>
+                        <button class="btn btn-success btn-sm px-4 shadow-sm" onclick="selectStore(${store.id})" style="border-radius: 6px; font-weight: 600; font-size: 0.8rem;">
+                            <i class="fas fa-check mr-1"></i> Select Store
+                        </button>
+                    </div>
+                </div>
             </div>
+            <!-- Standard CSS media query for border styling -->
+            <style>
+                @media (min-width: 768px) {
+                    .border-right-md { border-right: 1px solid #e3e6f0; }
+                }
+                .hover-shadow:hover { box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; transform: translateY(-2px); }
+            </style>
         `;
     }).join('');
 }
@@ -874,122 +920,227 @@ function viewStoreDetails(storeId) {
             // Get user's existing rating for this store
             checkUserRating(storeId).then(userRating => {
                 document.getElementById('storeDetailsBody').innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-map-marker-alt text-primary"></i> Address</h6>
-                            <p>${store.address}, ${store.city}, ${store.province}</p>
-                            
-                            <h6><i class="fas fa-phone text-success"></i> Contact</h6>
-                            <p>Phone: ${store.phone || 'N/A'}<br>Email: ${store.email || 'N/A'}</p>
-                            
-                            ${store.operating_hours ? `<h6><i class="fas fa-clock text-info"></i> Operating Hours</h6><p>${store.operating_hours}</p>` : ''}
+                    <!-- Refined Compact Modal Layout -->
+                    <div class="text-center mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center p-2 mb-2 rounded-circle bg-light shadow-sm" style="width: 50px; height: 50px;">
+                            <i class="fas fa-store text-primary"></i>
+                        </div>
+                        <h5 class="font-weight-bold text-dark mb-1">${store.store_name}</h5>
+                        <div class="d-flex justify-content-center align-items-center small">
+                            <div class="mr-2">${renderStarRating(parseFloat(store.rating || 0))}</div>
+                            <span class="font-weight-bold text-dark">${parseFloat(store.rating || 0).toFixed(1)}</span>
+                            <span class="text-muted ml-1">(${store.total_ratings || 0} reviews)</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <div class="card h-100 border-0 shadow-sm bg-light" style="border-radius: 10px;">
+                                <div class="card-body p-3">
+                                    <h6 class="text-uppercase text-muted font-weight-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                        <i class="fas fa-map-marker-alt mr-1 text-primary"></i> Location
+                                    </h6>
+                                    <p class="mb-1 font-weight-bold text-dark small">${store.address}</p>
+                                    <p class="mb-0 text-muted extra-small">${store.city}, ${store.province}</p>
+                                    ${store.operating_hours ? `
+                                        <hr class="my-2">
+                                        <p class="mb-0 text-muted" style="font-size: 0.75rem;"><i class="fas fa-clock mr-1"></i> ${store.operating_hours}</p>
+                                    ` : ''}
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <h6><i class="fas fa-star text-warning"></i> Average Rating</h6>
-                            <div class="mb-2">
-                                ${renderStarRating(parseFloat(store.rating || 0))}
-                                <span class="ml-2"><strong>${parseFloat(store.rating || 0).toFixed(1)}</strong>/5.0</span>
-                                ${store.total_ratings ? `<small class="text-muted">(${store.total_ratings} ${store.total_ratings === 1 ? 'rating' : 'ratings'})</small>` : ''}
+                            <div class="card h-100 border-0 shadow-sm bg-light" style="border-radius: 10px;">
+                                <div class="card-body p-3">
+                                    <h6 class="text-uppercase text-muted font-weight-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                        <i class="fas fa-address-card mr-1 text-success"></i> Contact Info
+                                    </h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2 d-flex align-items-center">
+                                            <i class="fas fa-phone fa-xs text-success mr-2" style="width: 15px;"></i>
+                                            <span class="text-dark small">${store.phone || '<span class="text-muted font-italic">N/A</span>'}</span>
+                                        </li>
+                                        <li class="d-flex align-items-center">
+                                            <i class="fas fa-envelope fa-xs text-info mr-2" style="width: 15px;"></i>
+                                            <span class="text-dark small" style="word-break: break-all;">${store.email || '<span class="text-muted font-italic">N/A</span>'}</span>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
-                            
-                            ${store.services_offered ? `<h6><i class="fas fa-tools text-primary"></i> Services Offered</h6><p>${store.services_offered}</p>` : ''}
-                            ${store.features ? `<h6><i class="fas fa-star text-success"></i> Features</h6><p>${store.features}</p>` : ''}
                         </div>
                     </div>
                     
-                    <!-- Rating Section -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <hr>
-                            <h6><i class="fas fa-star text-warning"></i> Rate This Store</h6>
-                            ${userRating ? `
-                                <div class="alert alert-info">
-                                    <p class="mb-2">You have already rated this store:</p>
-                                    <div class="mb-2">${renderStarRating(parseFloat(userRating.rating))} <strong>${userRating.rating}/5.0</strong></div>
-                                    ${userRating.review_text ? `<p class="mb-0"><em>"${escapeHtml(userRating.review_text)}"</em></p>` : ''}
-                                    <button class="btn btn-sm btn-primary mt-2" onclick="showRatingForm(${storeId}, ${userRating.rating}, '${escapeHtml(userRating.review_text || '')}')">
-                                        <i class="fas fa-edit"></i> Update Rating
-                                    </button>
+                    ${store.services_offered || store.features ? `
+                        <div class="alert alert-secondary border-0 mb-3 py-2 px-3 rounded-lg" style="font-size: 0.8rem;">
+                            <div class="row">
+                                ${store.services_offered ? `
+                                    <div class="col-md-6">
+                                        <span class="font-weight-bold text-primary mr-1"><i class="fas fa-tools"></i> Services:</span>
+                                        <span class="text-dark">${store.services_offered}</span>
+                                    </div>
+                                ` : ''}
+                                ${store.features ? `
+                                    <div class="col-md-6 ${store.services_offered ? 'mt-1 mt-md-0' : ''}">
+                                        <span class="font-weight-bold text-success mr-1"><i class="fas fa-check-circle"></i> Features:</span>
+                                        <span class="text-dark">${store.features}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Compact Tabs Navigation -->
+                    <ul class="nav nav-pills nav-fill mb-3 bg-light p-1 rounded-pill" id="storeModalTabs" role="tablist" style="font-size: 0.8rem;">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active rounded-pill py-1" id="map-tab" data-toggle="tab" href="#modal-map" role="tab">
+                                <i class="fas fa-map-marker-alt"></i> Map
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link rounded-pill py-1" id="reviews-tab" data-toggle="tab" href="#modal-reviews" role="tab">
+                                <i class="fas fa-star"></i> Services
+                            </a>
+                        </li>
+                        ${store.can_rate ? `
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link rounded-pill py-1" id="rate-tab" data-toggle="tab" href="#modal-rate" role="tab">
+                                <i class="fas fa-pen"></i> Rate
+                            </a>
+                        </li>
+                        ` : ''}
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content" id="storeModalTabContent">
+                        
+                        <!-- Map Tab -->
+                        <div class="tab-pane fade show active" id="modal-map" role="tabpanel">
+                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 10px;">
+                                <iframe src="${mapUrl}" width="100%" height="250" style="border:0; display: block;" allowfullscreen="" loading="lazy"></iframe>
+                            </div>
+                        </div>
+
+                        <!-- Services Tab -->
+                        <div class="tab-pane fade" id="modal-reviews" role="tabpanel">
+                            <div class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">
+                                <div id="servicesList">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="fas fa-spinner fa-spin mb-1"></i>
+                                        <p class="small">Loading services...</p>
+                                    </div>
                                 </div>
-                            ` : `
-                                <div id="ratingFormContainer">
-                                    <div class="form-group">
-                                        <label>Your Rating:</label>
-                                        <div class="star-rating" id="starRating" data-rating="0">
-                                            <span class="star" data-value="1"><i class="far fa-star"></i></span>
-                                            <span class="star" data-value="2"><i class="far fa-star"></i></span>
-                                            <span class="star" data-value="3"><i class="far fa-star"></i></span>
-                                            <span class="star" data-value="4"><i class="far fa-star"></i></span>
-                                            <span class="star" data-value="5"><i class="far fa-star"></i></span>
+                            </div>
+                            <!-- Book Now Button -->
+                            <div class="mt-3 text-center" id="bookNowContainer" style="display: none;">
+                                <div class="alert alert-info py-2 mb-2" style="font-size: 0.85rem;">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    <strong>Selected:</strong> <span id="selectedServiceName"></span>
+                                </div>
+                                <button class="btn btn-primary btn-block" id="bookNowBtn" onclick="bookSelectedService()">
+                                    <i class="fas fa-calendar-check mr-2"></i>Book This Service
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Rate Tab -->
+                        ${store.can_rate ? `
+                        <div class="tab-pane fade" id="modal-rate" role="tabpanel">
+                            <div class="card border-0 shadow-sm py-2">
+                                <div class="card-body text-center p-2">
+                                    ${userRating ? `
+                                        <div class="alert alert-success d-inline-block px-3 py-2 mb-0">
+                                            <h6 class="alert-heading small mb-1">Your Rating: ${userRating.rating}/5.0</h6>
+                                            <div class="mb-2 text-warning" style="font-size: 1rem;">
+                                                ${renderStarRating(parseFloat(userRating.rating))}
+                                            </div>
+                                            <button class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size: 0.7rem;" onclick="showRatingForm(${storeId}, ${userRating.rating}, '${escapeHtml(userRating.review_text || '')}')">
+                                                Edit
+                                            </button>
                                         </div>
-                                        <small class="text-muted" id="ratingText">Click stars to rate</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="reviewText">Your Review (Optional):</label>
-                                        <textarea class="form-control" id="reviewText" rows="3" placeholder="Share your experience with this store..."></textarea>
-                                    </div>
-                                    <button class="btn btn-primary" onclick="submitRating(${storeId})">
-                                        <i class="fas fa-star"></i> Submit Rating
-                                    </button>
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Reviews Section -->
-                    <div class="row mt-4" id="reviewsSection">
-                        <div class="col-12">
-                            <hr>
-                            <h6><i class="fas fa-comments text-info"></i> Recent Reviews</h6>
-                            <div id="reviewsList">
-                                <div class="text-center text-muted">
-                                    <i class="fas fa-spinner fa-spin"></i> Loading reviews...
+                                    ` : `
+                                        <div id="ratingFormContainer" class="text-left mx-auto" style="max-width: 400px;">
+                                            <div class="form-group text-center mb-2">
+                                                <div class="star-rating justify-content-center mb-1" id="starRating" data-rating="0">
+                                                    <span class="star" data-value="1" style="font-size: 1.8rem; padding: 0 3px;"><i class="far fa-star"></i></span>
+                                                    <span class="star" data-value="2" style="font-size: 1.8rem; padding: 0 3px;"><i class="far fa-star"></i></span>
+                                                    <span class="star" data-value="3" style="font-size: 1.8rem; padding: 0 3px;"><i class="far fa-star"></i></span>
+                                                    <span class="star" data-value="4" style="font-size: 1.8rem; padding: 0 3px;"><i class="far fa-star"></i></span>
+                                                    <span class="star" data-value="5" style="font-size: 1.8rem; padding: 0 3px;"><i class="far fa-star"></i></span>
+                                                </div>
+                                                <small class="text-muted extra-small" id="ratingText">Tap stars to rate</small>
+                                            </div>
+                                            <textarea class="form-control bg-light border-0 mb-2 small" id="reviewText" rows="2" placeholder="Write a review..."></textarea>
+                                            <button class="btn btn-primary btn-sm btn-block font-weight-bold" onclick="submitRating(${storeId})">
+                                                Submit
+                                            </button>
+                                        </div>
+                                    `}
                                 </div>
                             </div>
                         </div>
+                        ` : ''}
                     </div>
                     
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6><i class="fas fa-map text-danger"></i> Location Map</h6>
-                            <div style="border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px;">
-                                <iframe 
-                                    src="${mapUrl}" 
-                                    width="100%" 
-                                    height="400" 
-                                    style="border:0; display: block;" 
-                                    allowfullscreen="" 
-                                    loading="lazy" 
-                                    referrerpolicy="no-referrer-when-downgrade">
-                                </iframe>
-                            </div>
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle"></i> View the store location on Google Maps. Click and drag to explore the area.
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <!-- Report Issue Section -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <hr>
-                            <button class="btn btn-warning btn-sm" onclick="showReportIssueModal(${storeId})">
-                                <i class="fas fa-exclamation-triangle"></i> Report Issue
-                            </button>
-                            <small class="text-muted d-block mt-2">
-                                <i class="fas fa-info-circle"></i> Found an issue with this store? Report it to the administrator.
-                            </small>
-                        </div>
-                    </div>
-                `;
+                    <div class="text-center mt-3">
+                        <li class="list-unstyled">
+                            <a href="#" class="text-muted extra-small text-decoration-none" onclick="showReportIssueModal(${storeId}); return false;">
+                                <i class="fas fa-flag mr-1"></i>Report Issue
+                            </a>
+                        </li>
+                    </div>`;
                 
                 // Initialize star rating
                 initializeStarRating();
                 
-                // Load reviews
-                loadStoreReviews(storeId);
+                // Load services with store name and rating
+                loadStoreServices(storeId, store.store_name, store.rating);
                 
+                // Show modal
                 $('#storeDetailsModal').modal('show');
+                
+                // Set up tab event listeners after modal is shown
+                // Use setTimeout to ensure modal content is fully rendered
+                setTimeout(() => {
+                    const mapTab = document.getElementById('map-tab');
+                    const servicesTab = document.getElementById('reviews-tab');
+                    const rateTab = document.getElementById('rate-tab');
+                    
+                    // Remove any existing listeners to avoid duplicates
+                    if (mapTab) {
+                        $(mapTab).off('shown.bs.tab');
+                        $(mapTab).on('shown.bs.tab', function() {
+                            // Always show "Select This Store" button on Map tab
+                            const selectStoreBtn = document.getElementById('selectStoreBtn');
+                            if (selectStoreBtn) {
+                                selectStoreBtn.style.display = 'inline-block';
+                            }
+                        });
+                    }
+                    
+                    if (servicesTab) {
+                        $(servicesTab).off('shown.bs.tab');
+                        $(servicesTab).on('shown.bs.tab', function() {
+                            // On Services tab, hide button only if a service is selected
+                            const selectStoreBtn = document.getElementById('selectStoreBtn');
+                            if (selectStoreBtn && selectedService) {
+                                selectStoreBtn.style.display = 'none';
+                            } else if (selectStoreBtn) {
+                                selectStoreBtn.style.display = 'inline-block';
+                            }
+                        });
+                    }
+                    
+                    if (rateTab) {
+                        $(rateTab).off('shown.bs.tab');
+                        $(rateTab).on('shown.bs.tab', function() {
+                            // Always show "Select This Store" button on Rate tab
+                            const selectStoreBtn = document.getElementById('selectStoreBtn');
+                            if (selectStoreBtn) {
+                                selectStoreBtn.style.display = 'inline-block';
+                            }
+                        });
+                    }
+                }, 100);
             });
         } else {
             alert('Error loading store details: ' + data.message);
@@ -1064,11 +1215,11 @@ function selectStore(storeId = null) {
         }
     }
     
-    // Default behavior: Set the selected store ID in the hidden form
-    document.getElementById('selectedStoreId').value = selectedStoreId;
-    
-    // Submit the form to go to booking page with selected store
-    document.getElementById('storeSelectionForm').submit();
+    // Default behavior: Open modal with selected store
+    // document.getElementById('selectedStoreId').value = selectedStoreId;
+    // document.getElementById('storeSelectionForm').submit();
+    $('#storeDetailsModal').modal('hide');
+    openReservationModal(selectedStoreId);
 }
 
 // Render star rating display
@@ -1386,6 +1537,278 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+// Global variable to track selected service
+let selectedService = null;
+let currentStoreId = null;
+let currentStoreName = null;
+let currentStoreRating = 0;
+
+// Load store services/inventory
+function loadStoreServices(storeId, storeName = '', storeRating = 0) {
+    const servicesList = document.getElementById('servicesList');
+    currentStoreId = storeId;
+    currentStoreName = storeName;
+    currentStoreRating = parseFloat(storeRating) || 0;
+    selectedService = null; // Reset selection
+    
+    if (!servicesList) return;
+    
+    // Hide Book Now button initially
+    const bookNowContainer = document.getElementById('bookNowContainer');
+    if (bookNowContainer) {
+        bookNowContainer.style.display = 'none';
+    }
+    
+    // Show loading state
+    servicesList.innerHTML = `
+        <div class="text-center text-muted py-3">
+            <i class="fas fa-spinner fa-spin mb-1"></i>
+            <p class="small">Loading services...</p>
+        </div>
+    `;
+    
+    // Fetch services from backend
+    fetch(`<?php echo BASE_URL; ?>customer/getStoreInventory?store_id=${storeId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data && data.data.length > 0) {
+                servicesList.innerHTML = data.data.map((service, index) => {
+                    // Use store rating for all services (already implemented)
+                    const rating = currentStoreRating > 0 ? currentStoreRating.toFixed(1) : '0.0';
+                    
+                    // Use REAL booking count from database
+                    const bookings = parseInt(service.total_bookings) || 0;
+                    
+                    // Use REAL slots left (calculated from daily_capacity - today_bookings)
+                    const slotsLeft = parseInt(service.slots_left) || 0;
+                    
+                    // Use REAL most popular determination (service with highest booking count)
+                    const isPopular = service.is_most_popular || false;
+                    
+                    return `
+                    <div class="card mb-3 border-0 shadow-sm service-card" 
+                         id="service-${service.id}"
+                         onclick="selectService(${service.id}, '${escapeHtml(service.service_name)}', ${service.price || 0})"
+                         style="cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
+                        
+                        ${isPopular ? `
+                            <div class="position-absolute" style="top: 10px; right: 10px; z-index: 10;">
+                                <span class="badge badge-danger" style="font-size: 0.7rem; padding: 4px 8px;">
+                                    🔥 Most Booked
+                                </span>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-start">
+                                <div class="mr-3">
+                                    <div class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);">
+                                        <i class="fas fa-tools text-white" style="font-size: 1.2rem;"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 font-weight-bold text-dark" style="font-size: 1rem;">${escapeHtml(service.service_name)}</h6>
+                                    
+                                    <!-- Rating (same as store rating) -->
+                                    <div class="mb-2">
+                                        <span class="text-warning" style="font-size: 0.85rem;">
+                                            ⭐ ${rating}
+                                        </span>
+                                        <span class="text-muted" style="font-size: 0.75rem;">
+                                            (${bookings} bookings)
+                                        </span>
+                                    </div>
+                                    
+                                    ${service.description ? `
+                                        <p class="text-muted mb-2" style="font-size: 0.8rem; line-height: 1.4;">${escapeHtml(service.description)}</p>
+                                    ` : ''}
+                                    
+                                    <!-- Price and Service Type -->
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                        ${service.price ? `
+                                            <div class="mr-3">
+                                                <div class="font-weight-bold text-success" style="font-size: 1.1rem;">
+                                                    ₱${parseFloat(service.price).toFixed(2)}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${service.service_type ? `
+                                            <span class="badge badge-info" style="font-size: 0.7rem; padding: 4px 8px;">
+                                                ${escapeHtml(service.service_type)}
+                                            </span>
+                                        ` : ''}
+                                    </div>
+                                    
+                                    <!-- Availability Status (REAL DATA) -->
+                                    <div class="mt-2">
+                                        ${slotsLeft > 3 ? `
+                                            <span class="badge badge-success" style="font-size: 0.75rem; padding: 4px 10px;">
+                                                🟢 ${slotsLeft} slots left today
+                                            </span>
+                                        ` : slotsLeft > 0 ? `
+                                            <span class="badge badge-warning" style="font-size: 0.75rem; padding: 4px 10px;">
+                                                🟡 Only ${slotsLeft} slots left
+                                            </span>
+                                        ` : `
+                                            <span class="badge badge-danger" style="font-size: 0.75rem; padding: 4px 10px;">
+                                                🔴 Fully Booked Today
+                                            </span>
+                                        `}
+                                    </div>
+                                </div>
+                                
+                                <!-- Selection Checkmark -->
+                                <div class="text-right ml-2">
+                                    <i class="fas fa-check-circle text-success selected-icon" 
+                                       style="display: none; font-size: 2rem; transition: all 0.3s ease;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Overlay -->
+                        <div class="selected-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                             background: linear-gradient(135deg, rgba(15, 60, 95, 0.1) 0%, rgba(31, 78, 121, 0.1) 100%);
+                             opacity: 0; transition: opacity 0.3s ease; pointer-events: none;"></div>
+                    </div>
+                    `;
+                }).join('');
+                
+                // Add premium hover and selection effects
+                addPremiumServiceCardEffects();
+            } else {
+                servicesList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-info-circle fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p class="mb-0">No services available at this store yet.</p>
+                        <small class="text-muted">Check back soon!</small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading services:', error);
+            servicesList.innerHTML = `
+                <div class="text-center text-danger py-3">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p class="small mb-0">Error loading services. Please try again.</p>
+                </div>
+            `;
+        });
+}
+
+// Add premium hover and selection effects
+function addPremiumServiceCardEffects() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .service-card {
+            border-radius: 12px !important;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+        }
+        
+        .service-card.selected {
+            border: 3px solid #0F3C5F !important;
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(15, 60, 95, 0.3) !important;
+        }
+        
+        .service-card.selected .selected-overlay {
+            opacity: 1 !important;
+        }
+        
+        .service-card.selected .selected-icon {
+            animation: checkmarkPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes checkmarkPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%) !important;
+        }
+    `;
+    if (!document.getElementById('premium-service-card-styles')) {
+        style.id = 'premium-service-card-styles';
+        document.head.appendChild(style);
+    }
+}
+
+// Select a service
+function selectService(serviceId, serviceName, servicePrice) {
+    // Remove previous selection
+    document.querySelectorAll('.service-card').forEach(card => {
+        card.classList.remove('selected');
+        const icon = card.querySelector('.selected-icon');
+        if (icon) icon.style.display = 'none';
+    });
+    
+    // Add selection to clicked service
+    const selectedCard = document.getElementById(`service-${serviceId}`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        const icon = selectedCard.querySelector('.selected-icon');
+        if (icon) icon.style.display = 'block';
+    }
+    
+    // Store selected service info
+    selectedService = {
+        id: serviceId,
+        name: serviceName,
+        price: servicePrice,
+        storeId: currentStoreId,
+        storeName: currentStoreName
+    };
+    
+    // Hide "Select This Store" button when service is selected
+    const selectStoreBtn = document.getElementById('selectStoreBtn');
+    if (selectStoreBtn) {
+        selectStoreBtn.style.display = 'none';
+    }
+    
+    // Show Book Now button with sticky positioning
+    const bookNowContainer = document.getElementById('bookNowContainer');
+    if (bookNowContainer) {
+        document.getElementById('selectedServiceName').textContent = serviceName;
+        bookNowContainer.style.display = 'block';
+        
+        // Make it sticky
+        bookNowContainer.style.position = 'sticky';
+        bookNowContainer.style.bottom = '0';
+        bookNowContainer.style.zIndex = '100';
+        bookNowContainer.style.backgroundColor = 'white';
+        bookNowContainer.style.boxShadow = '0 -4px 12px rgba(0,0,0,0.1)';
+    }
+}
+
+// Book selected service - open repair reservation modal
+function bookSelectedService() {
+    if (!selectedService) {
+        alert('Please select a service first.');
+        return;
+    }
+    
+    // Close the store details modal first
+    $('#storeDetailsModal').modal('hide');
+    
+    // Open repair reservation modal with pre-filled service and store data
+    // Using setTimeout to ensure store modal closes smoothly before opening reservation modal
+    setTimeout(() => {
+        openReservationModal(
+            currentStoreId,           // Store ID
+            selectedService.id,       // Service ID
+            selectedService.name      // Service name
+        );
+    }, 300);
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Leaflet map immediately (no API key needed)
@@ -1504,18 +1927,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    /* Override Bootstrap primary colors with brown */
+    /* Override Bootstrap primary colors with navy blue */
     .btn-primary,
     .btn-info {
-        background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
-        border-color: #1F4E79 !important;
+        background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%) !important;
+        border-color: #0F3C5F !important;
         color: white !important;
     }
 
     .btn-primary:hover,
     .btn-info:hover {
-        background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
-        border-color: #4CAF50 !important;
+        background: linear-gradient(135deg, #1F4E79 0%, #0F3C5F 100%) !important;
+        border-color: #1F4E79 !important;
         color: white !important;
     }
 
@@ -1523,5 +1946,8 @@ document.addEventListener('DOMContentLoaded', function() {
         color: #1F4E79 !important;
     }
 </style>
+
+<!-- Repair Reservation Modal -->
+<?php require_once ROOT . DS . 'views' . DS . 'customer' . DS . 'repair_reservation_modal_wrapper.php'; ?>
 
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>

@@ -41,30 +41,30 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
         left: 0;
         height: 100vh;
         width: 280px;
-        background: var(--uphol-navy) !important;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+        background: #FFFFFF !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
         z-index: 1000;
         overflow-y: auto;
         overflow-x: hidden;
         transition: all 0.3s ease;
         display: flex;
         flex-direction: column;
+        border-right: 1px solid #e3e6f0;
     }
 
     .sidebar-user {
         padding: 20px;
-        background: rgba(255, 255, 255, 0.05);
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        background: rgba(15, 60, 95, 0.05);
+        border-bottom: 1px solid rgba(15, 60, 95, 0.1);
         margin: 10px;
-        border-radius: var(--br-modern);
-        backdrop-filter: blur(10px);
+        border-radius: 12px;
     }
 
     .sidebar-user-info {
         display: flex;
         align-items: center;
         gap: 12px;
-        color: white;
+        color: #0F3C5F;
     }
 
     .sidebar-user-avatar {
@@ -99,7 +99,7 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
 
     .sidebar-user-role {
         font-size: 11px;
-        color: rgba(255,255,255,0.7);
+        color: #5a5c69;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -109,7 +109,7 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
     }
 
     .sidebar-user-role .role-badge {
-        background: var(--uphol-orange);
+        background: #0F3C5F;
         padding: 2px 8px;
         border-radius: 10px;
         font-size: 9px;
@@ -128,7 +128,7 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
 
     .sidebar-menu-title {
         padding: 12px 20px 8px 20px;
-        color: rgba(255,255,255,0.5);
+        color: #0F3C5F;
         font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
@@ -136,62 +136,83 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
         display: flex;
         align-items: center;
         gap: 8px;
+        opacity: 0.7;
     }
 
     .sidebar-menu-item {
         display: flex;
         align-items: center;
         padding: 14px 20px;
-        color: rgba(255,255,255,0.8);
+        color: #333333;
         text-decoration: none;
         transition: all 0.3s ease;
         border-left: 3px solid transparent;
         position: relative;
         margin: 2px 10px;
-        border-radius: var(--br-modern);
+        border-radius: 12px;
     }
 
     .sidebar-menu-item:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
+        background: rgba(15, 60, 95, 0.05);
+        color: #0F3C5F;
         transform: translateX(5px);
     }
 
     .sidebar-menu-item.active {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border-left-color: var(--uphol-blue);
+        background: rgba(15, 60, 95, 0.1);
+        color: #0F3C5F;
+        border-left-color: #0F3C5F;
+        font-weight: 700;
     }
 
     .sidebar-menu-item i {
-        width: 22px;
+        width: 20px;
         margin-right: 12px;
-        font-size: 18px;
+        font-size: 16px;
         text-align: center;
+        color: #0F3C5F;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-menu-item .badge {
+        margin-left: auto;
+        background: #0F3C5F;
+        color: white;
+        font-size: 10px;
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-weight: 600;
     }
 
     .sidebar-footer {
-        padding: 15px 20px;
-        background: rgba(0,0,0,0.3);
-        border-top: 1px solid rgba(255,255,255,0.1);
+        padding: 20px;
         margin-top: auto;
+        border-top: 1px solid #e3e6f0;
     }
 
     .sidebar-footer-link {
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding: 12px 20px;
-        color: white;
+        gap: 10px;
+        padding: 12px 15px;
+        color: #dc3545;
         text-decoration: none;
         transition: all 0.3s ease;
-        border-radius: var(--br-modern);
-        background: #e74c3c;
+        border-radius: 10px;
+        font-weight: 600;
+        background: rgba(220, 53, 69, 0.05);
+        border: 1px solid rgba(220, 53, 69, 0.1);
     }
 
     .sidebar-footer-link:hover {
-        background: #c0392b;
+        background: #dc3545;
+        color: white;
         transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
+    }
+
+    .sidebar-footer-link i {
+        font-size: 18px;
     }
 
     /* Responsive */
@@ -226,16 +247,15 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
     <!-- User Info -->
-    <div class="sidebar-user" style="margin-top: 20px;">
+    <div class="sidebar-user" style="margin-top: 20px; background: white; border: 1px solid #e3e6f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
         <div class="sidebar-user-info">
-            <div class="sidebar-user-avatar">
+            <div class="sidebar-user-avatar" style="background: #0F3C5F; box-shadow: none; border: none;">
                 <i class="fas <?= $isSuperAdmin ? 'fa-crown' : 'fa-user-shield' ?>"></i>
             </div>
             <div class="sidebar-user-details">
-                <div class="sidebar-user-name"><?= htmlspecialchars($data['admin']['fullname'] ?? 'Admin') ?></div>
+                <div class="sidebar-user-name" style="color: #0F3C5F;"><?= htmlspecialchars($data['admin']['fullname'] ?? 'Admin') ?></div>
                 <div class="sidebar-user-role">
-                    <span class="role-badge">
-                        <i class="fas <?= $isSuperAdmin ? 'fa-crown' : 'fa-user-shield' ?>"></i>
+                    <span class="role-badge" style="background: rgba(15, 60, 95, 0.1); color: #0F3C5F; border: 1px solid rgba(15, 60, 95, 0.2);">
                         <?= $isSuperAdmin ? 'Super Admin' : 'Admin' ?>
                     </span>
                 </div>
@@ -330,14 +350,6 @@ $activeComplianceReports = (strpos($currentUrl, 'complianceReports') !== false) 
         <?php endif; ?>
 
     </nav>
-
-    <!-- Sidebar Footer -->
-    <div class="sidebar-footer">
-        <a href="<?= BASE_URL ?>control-panel/logout" class="sidebar-footer-link" title="Logout from Control Panel">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </a>
-    </div>
 </aside>
 
 <!-- Sidebar Toggle Button (Mobile) -->

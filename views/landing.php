@@ -17,7 +17,7 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
     <title><?php echo $title ?? 'Welcome - UpholCare'; ?></title>
 
     <!-- Custom fonts -->
-    <link href="<?php echo defined('BASE_URL') ? BASE_URL : 'http://localhost/UphoCare/'; ?>startbootstrap-sb-admin-2-gh-pages/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Bootstrap CSS -->
@@ -643,6 +643,7 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
             color: #6c757d;
             cursor: pointer;
             z-index: 10;
+            display: none; /* Hidden by default, shown when password has input */
         }
 
         .password-toggle:hover {
@@ -660,6 +661,68 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
         .modal-body {
             max-height: 80vh;
             overflow-y: auto;
+        }
+
+        /* ID Upload Section Styles */
+        .id-upload-zone {
+            border: 2px dashed #cdd3da;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            background: #fff;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .id-upload-zone:hover, .id-upload-zone.drag-over {
+            border-color: var(--primary-blue);
+            background: #f0f7ff;
+        }
+        .id-upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .id-upload-zone .upload-placeholder {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+        .id-upload-zone .upload-placeholder .upload-icon {
+            font-size: 2rem;
+            color: #adb5bd;
+        }
+        .id-preview-box {
+            display: none;
+            margin-top: 0.75rem;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #28a745;
+            position: relative;
+            max-height: 130px;
+        }
+        .id-preview-box img {
+            width: 100%;
+            max-height: 130px;
+            object-fit: cover;
+            display: block;
+        }
+        .id-preview-box .id-preview-badge {
+            position: absolute;
+            top: 6px; right: 6px;
+            background: rgba(40,167,69,0.9);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        .section-verification {
+            background: linear-gradient(135deg, #fff9f0 0%, #fff3e0 100%);
+            border-left: 4px solid #E67E22 !important;
         }
     </style>
 </head>
@@ -867,7 +930,7 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
                         <li><a href="#home" class="footer-link">Home</a></li>
                         <li><a href="#features" class="footer-link">Features</a></li>
                         <li><a href="#testimonials" class="footer-link">Testimonials</a></li>
-                        <li><a href="<?php echo defined('BASE_URL') ? BASE_URL : 'http://localhost/UphoCare/'; ?>auth/roleSelection" class="footer-link">Login</a></li>
+                        <li><a href="<?php echo defined('BASE_URL') ? BASE_URL : 'http://localhost/UpholCare/'; ?>auth/roleSelection" class="footer-link">Login</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">
@@ -1009,6 +1072,30 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Section: Admin Valid ID Verification -->
+                                <div class="p-3 mb-3 rounded shadow-sm section-verification">
+                                    <h6 class="text-warning font-weight-bold mb-1">
+                                        <i class="fas fa-id-card mr-2"></i>Identity Verification
+                                    </h6>
+                                    <p class="small text-muted mb-3">Upload a clear photo of your valid government-issued ID. The Super Admin will review this before approving your account.</p>
+                                    <label class="small font-weight-bold text-muted mb-2">VALID ID (IMAGE) *</label>
+                                    <div class="id-upload-zone" id="adminIdUploadZone">
+                                        <input type="file" id="admin_valid_id" name="valid_id" accept="image/jpeg,image/png,image/webp,image/gif" required>
+                                        <div class="upload-placeholder">
+                                            <div class="upload-icon"><i class="fas fa-id-card"></i></div>
+                                            <div>
+                                                <div class="font-weight-bold text-dark" style="font-size:0.9rem;">Click or drag to upload your ID</div>
+                                                <div class="text-muted" style="font-size:0.78rem;">UMID, PhilSys, Driver's License, Passport &bull; JPG / PNG / WEBP &bull; Max 5MB</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="id-preview-box" id="adminIdPreviewBox">
+                                        <img id="adminIdPreviewImg" src="#" alt="ID Preview">
+                                        <span class="id-preview-badge"><i class="fas fa-check mr-1"></i>ID Uploaded</span>
+                                    </div>
+                                    <div id="adminIdFileName" class="small text-success mt-1" style="display:none;"></div>
+                                </div>
                                 
                                 <!-- Section 3: Account Security -->
                                 <div class="p-3 mb-3 bg-light rounded shadow-sm border-left-info">
@@ -1056,7 +1143,7 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
 
                         <!-- Customer Tab -->
                         <div class="tab-pane fade" id="customer" role="tabpanel">
-                            <form action="<?php echo BASE_URL; ?>auth/processRegisterCustomer" method="POST">
+                            <form action="<?php echo BASE_URL; ?>auth/processRegisterCustomer" method="POST" enctype="multipart/form-data">
                                 <input type="hidden" name="role" value="customer">
                                 
                                 <!-- Section 1: Personal Information -->
@@ -1077,8 +1164,32 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <!-- Section 2: Account Security -->
+
+                                <!-- Section 2: Customer Valid ID Verification -->
+                                <div class="p-3 mb-3 rounded shadow-sm section-verification">
+                                    <h6 class="text-warning font-weight-bold mb-1">
+                                        <i class="fas fa-id-card mr-2"></i>Identity Verification
+                                    </h6>
+                                    <p class="small text-muted mb-3">Upload a clear photo of your valid government-issued ID for account verification.</p>
+                                    <label class="small font-weight-bold text-muted mb-2">VALID ID (IMAGE) *</label>
+                                    <div class="id-upload-zone" id="custIdUploadZone">
+                                        <input type="file" id="customer_valid_id" name="customer_id_image" accept="image/jpeg,image/png,image/webp,image/gif" required>
+                                        <div class="upload-placeholder">
+                                            <div class="upload-icon"><i class="fas fa-id-card"></i></div>
+                                            <div>
+                                                <div class="font-weight-bold text-dark" style="font-size:0.9rem;">Click or drag to upload your ID</div>
+                                                <div class="text-muted" style="font-size:0.78rem;">UMID, PhilSys, Driver's License, Passport &bull; JPG / PNG / WEBP &bull; Max 5MB</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="id-preview-box" id="custIdPreviewBox">
+                                        <img id="custIdPreviewImg" src="#" alt="ID Preview">
+                                        <span class="id-preview-badge"><i class="fas fa-check mr-1"></i>ID Uploaded</span>
+                                    </div>
+                                    <div id="custIdFileName" class="small text-success mt-1" style="display:none;"></div>
+                                </div>
+
+                                <!-- Section 3: Account Security -->
                                 <div class="p-3 mb-3 bg-light rounded shadow-sm border-left-info">
                                     <h6 class="text-info font-weight-bold mb-3"><i class="fas fa-lock mr-2"></i>Account Security</h6>
                                     <div class="form-row">
@@ -1146,19 +1257,14 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
                         </div>
                     <?php endif; ?>
                     
-                    <form action="<?php echo BASE_URL; ?>auth/processLogin" method="POST">
+                    <form action="<?php echo BASE_URL; ?>auth/processLogin" method="POST" autocomplete="off">
                         <div class="form-group">
                             <label class="small fw-bold" style="font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem; display: block;">Email Address</label>
-                            <input type="email" name="email" class="form-control" placeholder="Enter your email" required style="border-radius: 8px; border: 1px solid #DDD; padding: 0.75rem 1rem; height: auto; font-size: 0.95rem;">
+                            <input type="email" name="email" id="loginEmail" class="form-control" placeholder="Enter your email" required autocomplete="new-password" style="border-radius: 8px; border: 1px solid #DDD; padding: 0.75rem 1rem; height: auto; font-size: 0.95rem;">
                         </div>
                         <div class="form-group">
                             <label class="small fw-bold" style="font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem; display: block;">Password</label>
-                            <div class="password-wrapper position-relative">
-                                <input type="password" id="loginPassword" name="password" class="form-control" placeholder="Enter your password" required style="border-radius: 8px; border: 1px solid #DDD; padding: 0.75rem 1rem; height: auto; font-size: 0.95rem;">
-                                <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
-                                    <i class="fas fa-eye" id="toggleLoginPasswordIcon"></i>
-                                </button>
-                            </div>
+                            <input type="password" id="loginPassword" name="password" class="form-control" placeholder="Enter your password" required autocomplete="new-password" style="border-radius: 8px; border: 1px solid #DDD; padding: 0.75rem 1rem; height: auto; font-size: 0.95rem;">
                         </div>
                         <div class="form-group mb-4">
                             <div class="custom-control custom-checkbox small">
@@ -1166,7 +1272,7 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
                                 <label class="custom-control-label" for="rememberMe">Remember Me</label>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-register w-100" style="background: var(--primary-navy); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; transition: all 0.3s ease; width: 100%; text-transform: uppercase; letter-spacing: 0.5px;">Log In</button>
+                        <button type="submit" id="btn-login" class="btn btn-register w-100" disabled style="background: var(--primary-navy); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; transition: all 0.3s ease; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.5;">Log In</button>
                         <div class="text-center mt-3">
                             <a href="#" class="small text-muted" data-dismiss="modal" data-toggle="modal" data-target="#forgotPasswordModal">Forgot Password?</a>
                         </div>
@@ -1207,9 +1313,9 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="<?php echo defined('BASE_URL') ? BASE_URL : 'http://localhost/UphoCare/'; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery/jquery.min.js"></script>
-    <script src="<?php echo defined('BASE_URL') ? BASE_URL : 'http://localhost/UphoCare/'; ?>startbootstrap-sb-admin-2-gh-pages/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS & jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         // Smooth scrolling for anchor links
@@ -1267,11 +1373,63 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
         window.addEventListener('scroll', checkReveal);
         checkReveal(); // Check on page load
 
-        // Update custom file input label
+        // Update custom file input label (business permit)
         $('.custom-file-input').on('change', function() {
             let fileName = $(this).val().split('\\').pop();
             $(this).next('.custom-file-label').addClass("selected").html(fileName);
         });
+
+        // ── Valid ID upload handlers ──────────────────────────────────────────
+        function setupIdUpload(inputId, previewBoxId, previewImgId, fileNameId, zoneId) {
+            const input = document.getElementById(inputId);
+            const previewBox = document.getElementById(previewBoxId);
+            const previewImg = document.getElementById(previewImgId);
+            const fileNameEl = document.getElementById(fileNameId);
+            const zone = document.getElementById(zoneId);
+
+            if (!input) return;
+
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (!file) { previewBox.style.display = 'none'; fileNameEl.style.display = 'none'; return; }
+
+                // Validate type
+                if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)) {
+                    alert('Only image files are allowed (JPG, PNG, WEBP, GIF).');
+                    this.value = ''; previewBox.style.display = 'none'; fileNameEl.style.display = 'none';
+                    return;
+                }
+                // Validate size (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must not exceed 5MB.');
+                    this.value = ''; previewBox.style.display = 'none'; fileNameEl.style.display = 'none';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewBox.style.display = 'block';
+                    fileNameEl.textContent = '\u2714 ' + file.name;
+                    fileNameEl.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Drag & drop visual feedback
+            zone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+            zone.addEventListener('drop', function(e) {
+                e.preventDefault(); this.classList.remove('drag-over');
+                if (e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    input.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+
+        setupIdUpload('admin_valid_id', 'adminIdPreviewBox', 'adminIdPreviewImg', 'adminIdFileName', 'adminIdUploadZone');
+        setupIdUpload('customer_valid_id', 'custIdPreviewBox',  'custIdPreviewImg',  'custIdFileName',  'custIdUploadZone');
 
         // Toggle registration buttons based on terms agreement
         $('#agree_terms').on('change', function() {
@@ -1303,6 +1461,24 @@ $field_errors = $_SESSION['registration_field_errors'] ?? [];
                 $('#loginModal').modal('show');
             } else if (window.location.hash === '#signup' || <?php echo isset($_SESSION['registration_field_errors']) ? 'true' : 'false'; ?>) {
                 $('#registrationModal').modal('show');
+            }
+        });
+
+        // Clear login form fields when modal opens to prevent autofill
+        $('#loginModal').on('show.bs.modal', function () {
+            setTimeout(function() {
+                $('#loginEmail').val('');
+                $('#loginPassword').val('');
+            }, 50);
+        });
+
+        // Enable/disable login button based on Remember Me checkbox
+        $('#rememberMe').on('change', function() {
+            const loginBtn = $('#btn-login');
+            if ($(this).is(':checked')) {
+                loginBtn.prop('disabled', false).css('opacity', '1');
+            } else {
+                loginBtn.prop('disabled', true).css('opacity', '0.5');
             }
         });
 

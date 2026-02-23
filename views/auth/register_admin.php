@@ -11,11 +11,11 @@
     <title><?php echo $title; ?></title>
 
     <!-- Custom fonts for this template-->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
 
     <style>
         .register-container {
@@ -170,6 +170,19 @@
                                         value="<?php echo htmlspecialchars($form_data['phone'] ?? ''); ?>">
                                     <small class="form-text text-muted">Enter exactly 11 digits (e.g., 09123456789)</small>
                                 </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control form-control-user <?php echo (!empty($field_errors) && empty($form_data['employee_id']) ? 'is-invalid' : ''); ?>" 
+                                        id="employee_id" name="employee_id" 
+                                        placeholder="Employee ID / Admin ID *" 
+                                        value="<?php echo htmlspecialchars($form_data['employee_id'] ?? ''); ?>"
+                                        required>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-id-badge"></i> Enter your Employee ID or Admin ID for identity verification.
+                                    </small>
+                                    <?php if (!empty($field_errors) && empty($form_data['employee_id'])): ?>
+                                        <div class="invalid-feedback d-block">Employee ID / Admin ID is required</div>
+                                    <?php endif; ?>
+                                </div>
                                 
                                 <h5 class="text-gray-700 mb-3 mt-4"><i class="fas fa-store"></i> Business Information</h5>
                                 <hr class="mb-4">
@@ -320,15 +333,11 @@
 
     </div>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery/jquery.min.js"></script>
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery-easing/jquery.easing.min.js"></script>
-
-    <!-- Custom scripts for all pages-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/js/sb-admin-2.min.js"></script>
+    <!-- Core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
 
     <script>
         function togglePassword(fieldId) {

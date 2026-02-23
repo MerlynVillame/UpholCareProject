@@ -3,7 +3,7 @@
 <div class="card booking-detail-card border-0 shadow-none">
     
     <!-- Booking Header -->
-    <div class="detail-section" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 0.5rem 0.5rem 0 0;">
+    <div class="detail-section" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 0.5rem 0.5rem 0 0;">
         <div class="row align-items-center">
             <div class="col-sm-8">
                 <h3 class="mb-2" style="color: white; font-size: 1.5rem;">

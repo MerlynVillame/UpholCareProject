@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>UphoCare – Sequence Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--navy:#0F3C5F;--blue:#1565C0;--green:#2E7D32;--purple:#6A1B9A;--red:#C62828;--amber:#F9A825;--white:#fff;--gray:#F4F6F9;--border:#CFD8DC;--muted:#607D8B;--shadow:0 4px 24px rgba(15,60,95,.12);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--gray);color:#1A2A3A;line-height:1.6}
+/* HERO */
+.hero{background:linear-gradient(135deg,#0F3C5F,#1565C0 55%,#00BCD4);padding:50px 32px 38px;text-align:center;color:#fff;}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:50px;padding:4px 16px;font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;max-width:580px;margin:0 auto 18px;font-size:.95rem}
+.pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pill{padding:6px 18px;border-radius:30px;font-size:.8rem;font-weight:600;border:2px solid rgba(255,255,255,.4);}
+.pc{background:rgba(21,101,192,.4)}.pa{background:rgba(46,125,50,.4)}.ps{background:rgba(106,27,154,.4)}
+/* LAYOUT */
+.wrap{max-width:1100px;margin:0 auto;padding:36px 20px 80px}
+/* SECTION */
+.sec{background:var(--white);border-radius:18px;box-shadow:var(--shadow);margin-bottom:44px;overflow:hidden}
+.sec-hdr{display:flex;align-items:center;gap:14px;padding:22px 28px}
+.sec-hdr.c{background:linear-gradient(135deg,#0D47A1,#1565C0)}
+.sec-hdr.a{background:linear-gradient(135deg,#1B5E20,#2E7D32)}
+.sec-hdr.s{background:linear-gradient(135deg,#4A148C,#6A1B9A)}
+.sec-icon{width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+.sec-title{color:#fff;font-size:1.15rem;font-weight:800}
+.sec-sub{color:rgba(255,255,255,.8);font-size:.8rem;margin-top:2px}
+.sec-body{padding:28px}
+/* PROCESS BLOCK */
+.proc{margin-bottom:36px}
+.proc-title{font-size:.78rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:8px 0 10px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.proc-title.c{color:var(--blue);border-bottom:2px solid #BBDEFB}
+.proc-title.a{color:var(--green);border-bottom:2px solid #C8E6C9}
+.proc-title.s{color:var(--purple);border-bottom:2px solid #CE93D8}
+/* PARTICIPANTS */
+.participants{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.part{padding:5px 12px;border-radius:6px;font-size:.76rem;font-weight:600;border:1.5px solid}
+.part.actor{background:#E3F2FD;border-color:#90CAF9;color:#0D47A1}
+.part.sys{background:#E8F5E9;border-color:#A5D6A7;color:#1B5E20}
+.part.db{background:#FFF3E0;border-color:#FFCC80;color:#BF360C;font-family:'Fira Mono',monospace;font-size:.7rem}
+/* SEQUENCE TABLE */
+.seq-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.seq-table th{background:#F8F9FA;padding:9px 12px;text-align:left;font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);font-weight:700}
+.seq-table td{padding:9px 12px;border-bottom:1px solid #ECEFF1;vertical-align:top}
+.seq-table tr:last-child td{border-bottom:none}
+.seq-table tr:hover td{background:#FAFBFC}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:.68rem;font-weight:700;color:#fff;flex-shrink:0}
+.sn-c{background:var(--blue)}.sn-a{background:var(--green)}.sn-s{background:var(--purple)}
+.arrow{color:var(--muted);font-size:.9rem}
+.from-c{color:#0D47A1;font-weight:600}
+.from-a{color:#1B5E20;font-weight:600}
+.from-s{color:#4A148C;font-weight:600}
+.from-sys{color:var(--muted);font-weight:600}
+.msg{color:#1A2A3A}
+.db-ref{font-family:'Fira Mono',monospace;font-size:.7rem;color:#BF360C;background:#FFF8E1;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:2px}
+.ret{color:#43A047;font-style:italic;font-size:.78rem}
+.alt-box{background:#FFF3E0;border:1px solid #FFCC80;border-radius:6px;padding:6px 10px;margin:4px 0;font-size:.78rem;color:#BF360C;font-weight:600}
+footer{text-align:center;padding:26px;background:var(--navy);color:rgba(255,255,255,.6);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-badge">🔁 UML Documentation – UphoCare</div>
+  <h1>Sequence Diagrams</h1>
+  <p>Step-by-step message flows for every process per user role, based on the <code style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:4px">db_upholcare</code> schema.</p>
+  <div class="pills">
+    <span class="pill pc">👤 Customer</span>
+    <span class="pill pa">🛠️ Admin (Store)</span>
+    <span class="pill ps">👑 Super Admin</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ CUSTOMER ═══════════ -->
+<div class="sec" id="customer">
+  <div class="sec-hdr c">
+    <div class="sec-icon">👤</div>
+    <div><div class="sec-title">Customer – Sequence Diagrams</div><div class="sec-sub">All processes: Registration, Booking, Quotation, Payment, Rating</div></div>
+  </div>
+  <div class="sec-body">
+
+    <!-- C-SEQ 1 -->
+    <div class="proc">
+      <div class="proc-title c">🔐 SEQ-C1 — Register Account</div>
+      <div class="participants">
+        <span class="part actor">Customer</span><span class="part sys">Browser</span><span class="part sys">AuthController</span><span class="part db">users</span><span class="part db">login_logs</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-c">1</span></td><td class="from-c">Customer</td><td class="from-sys">Browser</td><td class="msg">Visits <code>/register</code></td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">2</span></td><td class="from-sys">Browser</td><td class="from-sys">AuthController</td><td class="msg">GET /register</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">3</span></td><td class="from-sys">AuthController</td><td class="from-sys">Browser</td><td class="ret">← Return register.php view</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">4</span></td><td class="from-c">Customer</td><td class="from-sys">Browser</td><td class="msg">Submits form: username, email, password, phone</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">5</span></td><td class="from-sys">Browser</td><td class="from-sys">AuthController</td><td class="msg">POST /register</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">6</span></td><td class="from-sys">AuthController</td><td class="from-sys">AuthController</td><td class="msg">Validate: unique email, password strength</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">7</span></td><td class="from-sys">AuthController</td><td class="from-sys">users DB</td><td class="msg">Insert new user</td><td><span class="db-ref">INSERT INTO users (username, email, password, fullname, phone, role='customer', status='active')</span></td></tr>
+          <tr><td><span class="step-num sn-c">8</span></td><td class="from-sys">users DB</td><td class="from-sys">AuthController</td><td class="ret">← new user_id returned</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">9</span></td><td class="from-sys">AuthController</td><td class="from-sys">Browser</td><td class="msg">Redirect to /login</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- C-SEQ 2 -->
+    <div class="proc">
+      <div class="proc-title c">🔑 SEQ-C2 — Login</div>
+      <div class="participants">
+        <span class="part actor">Customer</span><span class="part sys">AuthController</span><span class="part db">users</span><span class="part db">login_logs</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-c">1</span></td><td class="from-c">Customer</td><td class="from-sys">AuthController</td><td class="msg">POST /login (email, password)</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">2</span></td><td class="from-sys">AuthController</td><td class="from-sys">users DB</td><td class="msg">Find account</td><td><span class="db-ref">SELECT * FROM users WHERE email=? AND role='customer'</span></td></tr>
+          <tr><td><span class="step-num sn-c">3</span></td><td class="from-sys">AuthController</td><td class="from-sys">AuthController</td><td class="msg">password_verify() hash check</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">4a</span></td><td class="from-sys">AuthController</td><td class="from-sys">login_logs DB</td><td class="msg">[FAIL] Log failed attempt</td><td><span class="db-ref">INSERT INTO login_logs (user_type='customer', login_status='failed', failure_reason, ip_address)</span></td></tr>
+          <tr><td><span class="step-num sn-c">4b</span></td><td class="from-sys">AuthController</td><td class="from-sys">login_logs DB</td><td class="msg">[SUCCESS] Log success</td><td><span class="db-ref">INSERT INTO login_logs (login_status='success')</span></td></tr>
+          <tr><td><span class="step-num sn-c">5</span></td><td class="from-sys">AuthController</td><td class="from-sys">AuthController</td><td class="msg">Create $_SESSION [user_id, role='customer']</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">6</span></td><td class="from-sys">AuthController</td><td class="from-c">Customer</td><td class="ret">← Redirect to /customer/dashboard</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- C-SEQ 3 -->
+    <div class="proc">
+      <div class="proc-title c">📋 SEQ-C3 — Submit Service Booking</div>
+      <div class="participants">
+        <span class="part actor">Customer</span><span class="part sys">CustomerController</span><span class="part db">services</span><span class="part db">store_locations</span><span class="part db">bookings</span><span class="part db">notifications</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-c">1</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">GET /customer/book – load booking form</td><td><span class="db-ref">SELECT * FROM services WHERE status='active'</span></td></tr>
+          <tr><td><span class="step-num sn-c">2</span></td><td class="from-sys">CustomerController</td><td class="from-sys">store_locations DB</td><td class="msg">Fetch active stores</td><td><span class="db-ref">SELECT * FROM store_locations WHERE status='active'</span></td></tr>
+          <tr><td><span class="step-num sn-c">3</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">POST /customer/book (service_id, store_location_id, booking_date, service_option, notes)</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">4</span></td><td class="from-sys">CustomerController</td><td class="from-sys">bookings DB</td><td class="msg">Create booking record</td><td><span class="db-ref">INSERT INTO bookings (user_id, service_id, store_location_id, booking_date, service_option, status='pending')</span></td></tr>
+          <tr><td><span class="step-num sn-c">5</span></td><td class="from-sys">CustomerController</td><td class="from-sys">notifications DB</td><td class="msg">Alert admin of new booking</td><td><span class="db-ref">INSERT INTO notifications (user_id=admin_id, title='New Booking', type='info')</span></td></tr>
+          <tr><td><span class="step-num sn-c">6</span></td><td class="from-sys">CustomerController</td><td class="from-c">Customer</td><td class="ret">← Show booking confirmation page</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- C-SEQ 4 -->
+    <div class="proc">
+      <div class="proc-title c">💰 SEQ-C4 — Accept Quotation &amp; Make Payment</div>
+      <div class="participants">
+        <span class="part actor">Customer</span><span class="part sys">CustomerController</span><span class="part db">quotations</span><span class="part db">bookings</span><span class="part db">payments</span><span class="part db">notifications</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-c">1</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">Receives notification — quotation is ready</td><td><span class="db-ref">SELECT * FROM notifications WHERE user_id=? AND is_read=0</span></td></tr>
+          <tr><td><span class="step-num sn-c">2</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">Opens My Bookings — views quotation</td><td><span class="db-ref">SELECT * FROM quotations WHERE booking_id=?</span></td></tr>
+          <tr><td><span class="step-num sn-c">3a</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">[ACCEPT] POST /acceptQuotation</td><td><span class="db-ref">UPDATE bookings SET quotation_accepted=1, status='approved'</span> <span class="db-ref">UPDATE quotations SET status='accepted'</span></td></tr>
+          <tr><td><span class="step-num sn-c">3b</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">[REJECT] POST /rejectQuotation</td><td><span class="db-ref">UPDATE bookings SET quotation_accepted=0</span> <span class="db-ref">UPDATE quotations SET status='rejected'</span></td></tr>
+          <tr><td><span class="step-num sn-c">4</span></td><td class="from-sys">CustomerController</td><td class="from-sys">notifications DB</td><td class="msg">Notify admin of customer decision</td><td><span class="db-ref">INSERT INTO notifications (user_id=admin_id)</span></td></tr>
+          <tr><td><span class="step-num sn-c">5</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">After repair: View final receipt (receipt_issued=1)</td><td><span class="db-ref">SELECT bookings WHERE receipt_issued=1 AND user_id=?</span></td></tr>
+          <tr><td><span class="step-num sn-c">6</span></td><td class="from-sys">CustomerController</td><td class="from-sys">payments DB</td><td class="msg">Payment recorded by admin</td><td><span class="db-ref">INSERT INTO payments (booking_id, amount, payment_method, payment_status='paid')</span></td></tr>
+          <tr><td><span class="step-num sn-c">7</span></td><td class="from-sys">CustomerController</td><td class="from-sys">bookings DB</td><td class="msg">Booking marked completed</td><td><span class="db-ref">UPDATE bookings SET status='completed', payment_status='paid'</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- C-SEQ 5 -->
+    <div class="proc">
+      <div class="proc-title c">⭐ SEQ-C5 — Rate Store</div>
+      <div class="participants">
+        <span class="part actor">Customer</span><span class="part sys">CustomerController</span><span class="part db">store_ratings</span><span class="part db">store_locations</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-c">1</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">Opens Store Locations page</td><td><span class="db-ref">SELECT * FROM store_locations WHERE status='active'</span></td></tr>
+          <tr><td><span class="step-num sn-c">2</span></td><td class="from-c">Customer</td><td class="from-sys">CustomerController</td><td class="msg">Submits rating (1.0–5.0) + review text</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-c">3</span></td><td class="from-sys">CustomerController</td><td class="from-sys">store_ratings DB</td><td class="msg">Insert rating</td><td><span class="db-ref">INSERT INTO store_ratings (store_id, user_id, rating, review_text) UNIQUE KEY per store+user</span></td></tr>
+          <tr><td><span class="step-num sn-c">4</span></td><td class="from-sys">store_ratings DB</td><td class="from-sys">store_locations DB</td><td class="msg">DB Trigger fires automatically</td><td><span class="db-ref">UPDATE store_locations SET rating = AVG(store_ratings.rating) WHERE id=store_id</span></td></tr>
+          <tr><td><span class="step-num sn-c">5</span></td><td class="from-sys">CustomerController</td><td class="from-c">Customer</td><td class="ret">← Show success message</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════ ADMIN ═══════════ -->
+<div class="sec" id="admin">
+  <div class="sec-hdr a">
+    <div class="sec-icon">🛠️</div>
+    <div><div class="sec-title">Admin (Store Manager) – Sequence Diagrams</div><div class="sec-sub">Registration, Booking Workflow, Quotation, Inventory, Reports</div></div>
+  </div>
+  <div class="sec-body">
+
+    <!-- A-SEQ 1 -->
+    <div class="proc">
+      <div class="proc-title a">📝 SEQ-A1 — Self-Register &amp; Email Verification</div>
+      <div class="participants">
+        <span class="part actor">Admin Applicant</span><span class="part sys">ControlPanelController</span><span class="part db">admin_registrations</span><span class="part db">control_panel_admins</span><span class="part sys">Email Service</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-a">1</span></td><td class="from-a">Admin</td><td class="from-sys">ControlPanelController</td><td class="msg">POST /control-panel/register (fullname, email, username, password, phone, business info, permit file)</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">2</span></td><td class="from-sys">Controller</td><td class="from-sys">admin_registrations DB</td><td class="msg">Save registration</td><td><span class="db-ref">INSERT INTO admin_registrations (fullname, email, username, password, phone, registration_status='pending')</span></td></tr>
+          <tr><td><span class="step-num sn-a">3</span></td><td class="from-sys">Controller</td><td class="from-a">Admin</td><td class="ret">← "Application submitted. Await Super Admin review."</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">4</span></td><td class="from-sys">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Approves application → generates code</td><td><span class="db-ref">UPDATE admin_registrations SET registration_status='pending_verification', verification_code='XXXXXX', verification_code_sent_at=NOW()</span></td></tr>
+          <tr><td><span class="step-num sn-a">5</span></td><td class="from-sys">Controller</td><td class="from-sys">Email Service</td><td class="msg">Send verification code email to admin</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">6</span></td><td class="from-a">Admin</td><td class="from-sys">Controller</td><td class="msg">POST /control-panel/verify (code)</td><td><span class="db-ref">SELECT * FROM admin_registrations WHERE verification_code=? AND registration_status='pending_verification'</span></td></tr>
+          <tr><td><span class="step-num sn-a">7</span></td><td class="from-sys">Controller</td><td class="from-sys">control_panel_admins DB</td><td class="msg">Create active admin account</td><td><span class="db-ref">INSERT INTO control_panel_admins (email, password, fullname, role='admin', status='active')</span></td></tr>
+          <tr><td><span class="step-num sn-a">8</span></td><td class="from-sys">Controller</td><td class="from-sys">admin_registrations DB</td><td class="msg">Mark approved</td><td><span class="db-ref">UPDATE admin_registrations SET registration_status='approved', approved_at=NOW(), verification_code_verified_at=NOW()</span></td></tr>
+          <tr><td><span class="step-num sn-a">9</span></td><td class="from-sys">Controller</td><td class="from-a">Admin</td><td class="ret">← "Account activated. You may now login."</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- A-SEQ 2 -->
+    <div class="proc">
+      <div class="proc-title a">🔧 SEQ-A2 — Full Booking &amp; Repair Workflow</div>
+      <div class="participants">
+        <span class="part actor">Admin</span><span class="part sys">AdminController</span><span class="part db">bookings</span><span class="part db">quotations</span><span class="part db">payments</span><span class="part db">notifications</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-a">1</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Views pending bookings</td><td><span class="db-ref">SELECT * FROM bookings WHERE status='pending'</span></td></tr>
+          <tr><td><span class="step-num sn-a">2</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Confirms booking</td><td><span class="db-ref">UPDATE bookings SET status='confirmed'</span> + <span class="db-ref">INSERT INTO notifications</span></td></tr>
+          <tr><td><span class="step-num sn-a">3</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Assigns pickup</td><td><span class="db-ref">UPDATE bookings SET status='for_pickup', pickup_date, pickup_address</span></td></tr>
+          <tr><td><span class="step-num sn-a">4</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Confirms picked up</td><td><span class="db-ref">UPDATE bookings SET status='picked_up'</span></td></tr>
+          <tr><td><span class="step-num sn-a">5</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Records inspection results</td><td><span class="db-ref">UPDATE bookings SET damage_description, damage_severity, damage_types, measurement_height, measurement_width, measurement_thickness, status='inspect_completed'</span></td></tr>
+          <tr><td><span class="step-num sn-a">6</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Uploads preview photo</td><td><span class="db-ref">UPDATE bookings SET preview_image, preview_sent_at=NOW(), status='preview_receipt_sent'</span></td></tr>
+          <tr><td><span class="step-num sn-a">7</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Creates quotation (fabric cost + labor)</td><td><span class="db-ref">INSERT INTO quotations (booking_id, total_amount, status='sent', quotation_number)</span> + <span class="db-ref">UPDATE bookings SET quotation_sent=1, quotation_sent_at=NOW(), status='for_quotation'</span></td></tr>
+          <tr><td><span class="step-num sn-a">8</span></td><td class="from-sys">AdminController</td><td class="from-sys">notifications DB</td><td class="msg">Notify customer — quotation ready</td><td><span class="db-ref">INSERT INTO notifications (user_id=customer_id, title='Quotation Ready')</span></td></tr>
+          <tr><td><span class="step-num sn-a">9</span></td><td class="from-sys">Customer</td><td class="from-sys">AdminController</td><td class="msg">Customer accepts quotation</td><td><span class="db-ref">UPDATE bookings SET quotation_accepted=1, status='approved'</span></td></tr>
+          <tr><td><span class="step-num sn-a">10</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Starts repair</td><td><span class="db-ref">UPDATE bookings SET status='in_progress', repair_start_date=NOW(), repair_days</span></td></tr>
+          <tr><td><span class="step-num sn-a">11</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Updates progress → repair done → QC</td><td><span class="db-ref">UPDATE bookings SET status='under_repair' → 'repair_completed' → 'for_quality_check' → 'repair_completed_ready_to_deliver'</span></td></tr>
+          <tr><td><span class="step-num sn-a">12</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Marks for delivery or pickup</td><td><span class="db-ref">UPDATE bookings SET status='out_for_delivery' OR 'ready_for_pickup', delivery_date</span></td></tr>
+          <tr><td><span class="step-num sn-a">13</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Issues receipt</td><td><span class="db-ref">UPDATE bookings SET receipt_issued=1, receipt_issued_at=NOW(), receipt_number</span></td></tr>
+          <tr><td><span class="step-num sn-a">14</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Records payment</td><td><span class="db-ref">INSERT INTO payments (booking_id, amount, payment_method, payment_status='paid')</span> + <span class="db-ref">UPDATE bookings SET payment_status='paid', status='completed'</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- A-SEQ 3 -->
+    <div class="proc">
+      <div class="proc-title a">📦 SEQ-A3 — Manage Fabric Inventory</div>
+      <div class="participants">
+        <span class="part actor">Admin</span><span class="part sys">AdminController</span><span class="part db">inventory</span><span class="part db">store_locations</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-a">1</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Opens Inventory page</td><td><span class="db-ref">SELECT * FROM inventory JOIN store_locations</span></td></tr>
+          <tr><td><span class="step-num sn-a">2</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Submits Add Fabric form (color_code, color_name, fabric_type, quantity, price_per_unit, store_location_id)</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">3</span></td><td class="from-sys">AdminController</td><td class="from-sys">AdminController</td><td class="msg">Check unique constraint: color_code + store_location_id</td><td><span class="db-ref">SELECT count(*) FROM inventory WHERE color_code=? AND store_location_id=?</span></td></tr>
+          <tr><td><span class="step-num sn-a">4a</span></td><td class="from-sys">AdminController</td><td class="from-a">Admin</td><td class="msg">[DUPLICATE] Return error — unique key violation</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">4b</span></td><td class="from-sys">AdminController</td><td class="from-sys">inventory DB</td><td class="msg">[OK] Insert inventory item</td><td><span class="db-ref">INSERT INTO inventory (color_code, color_name, color_hex, fabric_type, price_per_unit, price_per_meter, quantity, store_location_id, status='in-stock')</span></td></tr>
+          <tr><td><span class="step-num sn-a">5</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Edit item — updates quantity</td><td><span class="db-ref">UPDATE inventory SET quantity=?, status=('in-stock'|'low-stock'|'out-of-stock'), updated_at=NOW()</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- A-SEQ 4 -->
+    <div class="proc">
+      <div class="proc-title a">📈 SEQ-A4 — Generate Reports</div>
+      <div class="participants">
+        <span class="part actor">Admin</span><span class="part sys">AdminController</span><span class="part db">bookings</span><span class="part db">payments</span><span class="part db">services</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-a">1</span></td><td class="from-a">Admin</td><td class="from-sys">AdminController</td><td class="msg">Opens Reports page — selects date range, status, store</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">2</span></td><td class="from-sys">AdminController</td><td class="from-sys">bookings DB</td><td class="msg">Fetch filtered data</td><td><span class="db-ref">SELECT bookings.*, payments.*, services.* WHERE booking_date BETWEEN ? AND ? AND status=?</span></td></tr>
+          <tr><td><span class="step-num sn-a">3a</span></td><td class="from-sys">AdminController</td><td class="from-a">Admin</td><td class="msg">[PDF] Generate via Dompdf → download .pdf</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">3b</span></td><td class="from-sys">AdminController</td><td class="from-a">Admin</td><td class="msg">[CSV] Build CSV string → download .csv</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-a">3c</span></td><td class="from-sys">AdminController</td><td class="from-a">Admin</td><td class="msg">[View] Render table in browser</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════ SUPER ADMIN ═══════════ -->
+<div class="sec" id="superadmin">
+  <div class="sec-hdr s">
+    <div class="sec-icon">👑</div>
+    <div><div class="sec-title">Super Admin – Sequence Diagrams</div><div class="sec-sub">Login, Admin Governance, Customer Management, Business Registration, System Monitoring</div></div>
+  </div>
+  <div class="sec-body">
+
+    <!-- S-SEQ 1 -->
+    <div class="proc">
+      <div class="proc-title s">🔐 SEQ-S1 — Login to Control Panel</div>
+      <div class="participants">
+        <span class="part actor">Super Admin</span><span class="part sys">ControlPanelController</span><span class="part db">control_panel_admins</span><span class="part db">login_logs</span><span class="part db">control_panel_sessions</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-s">1</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">POST /control-panel/login (email, password)</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">2</span></td><td class="from-sys">Controller</td><td class="from-sys">control_panel_admins DB</td><td class="msg">Find account by email</td><td><span class="db-ref">SELECT * FROM control_panel_admins WHERE email=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">3</span></td><td class="from-sys">Controller</td><td class="from-sys">Controller</td><td class="msg">password_verify() — check hash</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">4a</span></td><td class="from-sys">Controller</td><td class="from-sys">login_logs DB</td><td class="msg">[FAIL] Log failed attempt</td><td><span class="db-ref">INSERT INTO login_logs (user_type='control_panel', login_status='failed', ip_address, user_agent, failure_reason)</span></td></tr>
+          <tr><td><span class="step-num sn-s">4b</span></td><td class="from-sys">Controller</td><td class="from-sys">login_logs DB</td><td class="msg">[SUCCESS] Log success</td><td><span class="db-ref">INSERT INTO login_logs (user_type='control_panel', login_status='success')</span></td></tr>
+          <tr><td><span class="step-num sn-s">5</span></td><td class="from-sys">Controller</td><td class="from-sys">control_panel_admins DB</td><td class="msg">Update last login</td><td><span class="db-ref">UPDATE control_panel_admins SET last_login=NOW()</span></td></tr>
+          <tr><td><span class="step-num sn-s">6</span></td><td class="from-sys">Controller</td><td class="from-sys">control_panel_sessions DB</td><td class="msg">Create session record</td><td><span class="db-ref">INSERT INTO control_panel_sessions (admin_id, session_id, ip_address, user_agent, expires_at)</span></td></tr>
+          <tr><td><span class="step-num sn-s">7</span></td><td class="from-sys">Controller</td><td class="from-s">Super Admin</td><td class="ret">← Redirect to Super Admin Dashboard</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- S-SEQ 2 -->
+    <div class="proc">
+      <div class="proc-title s">👥 SEQ-S2 — Admin Registration Review &amp; Approval</div>
+      <div class="participants">
+        <span class="part actor">Super Admin</span><span class="part sys">ControlPanelController</span><span class="part db">admin_registrations</span><span class="part db">control_panel_admins</span><span class="part db">system_activities</span><span class="part sys">Email Service</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-s">1</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Opens Admin Registrations page</td><td><span class="db-ref">SELECT * FROM admin_registrations WHERE registration_status IN ('pending','pending_verification')</span></td></tr>
+          <tr><td><span class="step-num sn-s">2</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Clicks View Details → opens review modal</td><td><span class="db-ref">SELECT * FROM admin_registrations WHERE id=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">3a</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">[APPROVE] POST /approveAdmin</td><td><span class="db-ref">UPDATE admin_registrations SET registration_status='pending_verification', verification_code='XXXXXX', verification_code_sent_at=NOW(), approved_by=super_admin_id</span></td></tr>
+          <tr><td><span class="step-num sn-s">4</span></td><td class="from-sys">Controller</td><td class="from-sys">Email Service</td><td class="msg">Send verification code email to admin</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">5</span></td><td class="from-sys">Controller</td><td class="from-sys">system_activities DB</td><td class="msg">Log approval action</td><td><span class="db-ref">INSERT INTO system_activities (admin_id, activity_type='user_created', description, affected_table='admin_registrations', affected_record_id)</span></td></tr>
+          <tr><td><span class="step-num sn-s">3b</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">[REJECT] POST /rejectAdmin (reason)</td><td><span class="db-ref">UPDATE admin_registrations SET registration_status='rejected', rejection_reason=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">6</span></td><td class="from-sys">Controller</td><td class="from-sys">Email Service</td><td class="msg">Send rejection email to admin</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">7</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Deactivate an active admin</td><td><span class="db-ref">UPDATE control_panel_admins SET status='inactive'</span> + <span class="db-ref">INSERT INTO system_activities (activity_type='user_modified', old_value='active', new_value='inactive')</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- S-SEQ 3 -->
+    <div class="proc">
+      <div class="proc-title s">🧑 SEQ-S3 — Customer Account Management</div>
+      <div class="participants">
+        <span class="part actor">Super Admin</span><span class="part sys">ControlPanelController</span><span class="part db">users</span><span class="part db">system_activities</span><span class="part db">login_logs</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-s">1</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Opens Customer Accounts page</td><td><span class="db-ref">SELECT * FROM users WHERE role='customer' ORDER BY created_at DESC</span></td></tr>
+          <tr><td><span class="step-num sn-s">2</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Views customer login history</td><td><span class="db-ref">SELECT * FROM login_logs WHERE user_type='customer' AND email=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">3a</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">[DEACTIVATE] Toggle status</td><td><span class="db-ref">UPDATE users SET status='inactive' WHERE id=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">3b</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">[ACTIVATE] Restore account</td><td><span class="db-ref">UPDATE users SET status='active' WHERE id=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">4</span></td><td class="from-sys">Controller</td><td class="from-sys">system_activities DB</td><td class="msg">Log account status change</td><td><span class="db-ref">INSERT INTO system_activities (admin_id, activity_type='user_modified', affected_table='users', old_value, new_value, ip_address)</span></td></tr>
+          <tr><td><span class="step-num sn-s">5</span></td><td class="from-sys">Controller</td><td class="from-s">Super Admin</td><td class="ret">← Show updated customer list</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- S-SEQ 4 -->
+    <div class="proc">
+      <div class="proc-title s">🏢 SEQ-S4 — Business Registration Review</div>
+      <div class="participants">
+        <span class="part actor">Super Admin</span><span class="part sys">ControlPanelController</span><span class="part db">admin_registrations</span><span class="part sys">Email Service</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-s">1</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Opens Business Registrations page</td><td><span class="db-ref">SELECT * FROM admin_registrations WHERE business_name IS NOT NULL ORDER BY created_at DESC</span></td></tr>
+          <tr><td><span class="step-num sn-s">2</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Opens review modal — views uploaded permit file</td><td><span class="db-ref">SELECT fullname, email, business_name, business_permit_path FROM admin_registrations WHERE id=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">3</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Clicks "Open Document" button — views permit file/PDF</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">4a</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">[APPROVE] Checks verification checkbox → clicks Approve</td><td><span class="db-ref">UPDATE admin_registrations SET registration_status='pending_verification', verification_code=?, verification_code_sent_at=NOW()</span></td></tr>
+          <tr><td><span class="step-num sn-s">4b</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">[REJECT] Enters reason → clicks Reject</td><td><span class="db-ref">UPDATE admin_registrations SET registration_status='rejected', rejection_reason=?</span></td></tr>
+          <tr><td><span class="step-num sn-s">5</span></td><td class="from-sys">Controller</td><td class="from-sys">Email Service</td><td class="msg">Send approval/rejection email notification</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- S-SEQ 5 -->
+    <div class="proc">
+      <div class="proc-title s">📡 SEQ-S5 — System Monitoring (Login Logs, Audit, Statistics)</div>
+      <div class="participants">
+        <span class="part actor">Super Admin</span><span class="part sys">ControlPanelController</span><span class="part db">login_logs</span><span class="part db">system_activities</span><span class="part db">system_statistics</span><span class="part db">store_ratings</span>
+      </div>
+      <table class="seq-table">
+        <thead><tr><th>#</th><th>From</th><th>To</th><th>Message / Action</th><th>DB Operation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="step-num sn-s">1</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Views Login Logs — filters by user_type, status, date</td><td><span class="db-ref">SELECT * FROM login_logs WHERE user_type=? AND login_status=? AND login_time BETWEEN ? AND ? ORDER BY login_time DESC</span></td></tr>
+          <tr><td><span class="step-num sn-s">2</span></td><td class="from-sys">Controller</td><td class="from-s">Super Admin</td><td class="ret">← Show: email, fullname, ip_address, user_agent, login_time, failure_reason</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">3</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Views System Activity Audit Trail</td><td><span class="db-ref">SELECT * FROM system_activities ORDER BY created_at DESC</span></td></tr>
+          <tr><td><span class="step-num sn-s">4</span></td><td class="from-sys">Controller</td><td class="from-s">Super Admin</td><td class="ret">← Show: admin_id, activity_type, description, affected_table, old_value, new_value, ip_address</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">5</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Views Dashboard Statistics</td><td><span class="db-ref">SELECT * FROM system_statistics WHERE stat_date = CURDATE()</span></td></tr>
+          <tr><td><span class="step-num sn-s">6</span></td><td class="from-sys">Controller</td><td class="from-s">Super Admin</td><td class="ret">← Show KPIs: total_logins, successful_logins, failed_logins, new_users, new_bookings, completed_bookings</td><td>—</td></tr>
+          <tr><td><span class="step-num sn-s">7</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Views Store Ratings — option to hide review</td><td><span class="db-ref">SELECT sr.*, sl.store_name FROM store_ratings sr JOIN store_locations sl ON sr.store_id=sl.id ORDER BY rating DESC</span></td></tr>
+          <tr><td><span class="step-num sn-s">8</span></td><td class="from-s">Super Admin</td><td class="from-sys">Controller</td><td class="msg">Hides a review</td><td><span class="db-ref">UPDATE store_ratings SET status='hidden' WHERE id=?</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+</div>
+<footer>
+  <strong>UphoCare – Sequence Diagrams (Document Form)</strong> &nbsp;|&nbsp; 2026<br/>
+  Based on <code>db_upholcare</code> schema &nbsp;·&nbsp; Users: Customer · Admin · Super Admin
+</footer>
+</body>
+</html>

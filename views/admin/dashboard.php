@@ -4,9 +4,8 @@
 
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Admin Dashboard</h1>
-    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary-admin shadow-sm" data-toggle="modal" data-target="#generateReportModal"><i
-            class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+    <h1 class="h3 mb-0" style="color: #0F3C5F; font-weight: 700;">Admin Dashboard</h1>
+    
 </div>
 
 <!-- Content Row -->
@@ -18,7 +17,7 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #0F3C5F;">
                             Total Bookings</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $totalBookings; ?></div>
                     </div>
@@ -99,7 +98,7 @@
             <!-- Card Header - Dropdown -->
             <div
                 class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
+                <h6 class="m-0 font-weight-bold" style="color: #0F3C5F;">Revenue Overview</h6>
                 <div class="dropdown no-arrow">
                     <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -130,7 +129,7 @@
             <!-- Card Header - Dropdown -->
             <div
                 class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Service Distribution</h6>
+                <h6 class="m-0 font-weight-bold" style="color: #0F3C5F;">Service Distribution</h6>
                 <div class="dropdown no-arrow">
                     <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

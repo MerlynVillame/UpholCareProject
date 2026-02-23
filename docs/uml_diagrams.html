@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UphoCare – UML System Diagrams</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --navy:   #0F3C5F;
+      --blue:   #1565C0;
+      --accent: #2196F3;
+      --teal:   #00BCD4;
+      --gold:   #FFC107;
+      --green:  #43A047;
+      --red:    #E53935;
+      --light:  #E8F0FE;
+      --white:  #FFFFFF;
+      --gray:   #F4F6F9;
+      --text:   #1A2A3A;
+      --muted:  #607D8B;
+      --border: #CFD8DC;
+      --shadow: 0 4px 24px rgba(15,60,95,.13);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ─── HERO HEADER ─────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #0F3C5F 0%, #1565C0 55%, #00BCD4 100%);
+      padding: 60px 40px 40px;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 50px;
+      padding: 6px 18px;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 10px; }
+    .hero p  { font-size: 1.05rem; opacity: .85; max-width: 620px; margin: 0 auto 24px; }
+    .hero-roles {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      justify-content: center; margin-top: 20px;
+    }
+    .hero-role {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-size: .82rem;
+      font-weight: 500;
+    }
+
+    /* ─── NAV TABS ────────────────────────────────── */
+    .tab-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--white);
+      border-bottom: 2px solid var(--border);
+      display: flex; overflow-x: auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+    .tab-btn {
+      flex: 0 0 auto;
+      padding: 16px 28px;
+      font-size: .9rem; font-weight: 600;
+      border: none; background: none; cursor: pointer;
+      color: var(--muted);
+      border-bottom: 3px solid transparent;
+      transition: all .25s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover  { color: var(--blue); background: var(--light); }
+    .tab-btn.active { color: var(--blue); border-color: var(--blue); background: var(--light); }
+
+    /* ─── CONTENT PANELS ──────────────────────────── */
+    .main { max-width: 1400px; margin: 0 auto; padding: 40px 24px 80px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ─── SECTION CARD ────────────────────────────── */
+    .section-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 40px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 22px 28px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      color: #fff;
+    }
+    .section-icon {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .section-title { font-size: 1.15rem; font-weight: 700; }
+    .section-subtitle { font-size: .82rem; opacity: .8; margin-top: 2px; }
+    .section-body { padding: 28px; }
+
+    /* ─── DIAGRAM WRAPPER ─────────────────────────── */
+    .diagram-wrap {
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      overflow-x: auto;
+      margin-bottom: 10px;
+    }
+    .diagram-wrap .mermaid {
+      min-width: 600px;
+      text-align: center;
+    }
+
+    /* ─── DESCRIPTION BOX ─────────────────────────── */
+    .desc-box {
+      background: var(--light);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      font-size: .875rem;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+    .desc-box strong { color: var(--navy); }
+
+    /* ─── ACTOR LEGEND ────────────────────────────── */
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .82rem; font-weight: 500;
+    }
+    .legend-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+    }
+
+    /* ─── STEP LIST ───────────────────────────────── */
+    .step-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+    .step-list li {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 14px;
+      background: var(--gray);
+      border-radius: 8px;
+      font-size: .875rem;
+    }
+    .step-num {
+      min-width: 26px; height: 26px;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 700;
+    }
+
+    /* ─── STATUS FLOW ─────────────────────────────── */
+    .status-flow {
+      display: flex; flex-wrap: wrap;
+      align-items: center; gap: 6px;
+      padding: 16px 0;
+    }
+    .status-chip {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: .75rem; font-weight: 600;
+      letter-spacing: .3px;
+    }
+    .arrow-chip { color: var(--muted); font-size: 1rem; }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      background: var(--navy);
+      color: rgba(255,255,255,.6);
+      font-size: .8rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">📐 UML System Documentation</div>
+  <h1>UphoCare System Diagrams</h1>
+  <p>Complete Use Case, Activity, and Sequence Diagrams for every process and user role in the UphoCare Upholstery Management System.</p>
+  <div class="hero-roles">
+    <span class="hero-role">👤 Customer</span>
+    <span class="hero-role">🛠️ Admin (Store)</span>
+    <span class="hero-role">👑 Super Admin (Control Panel)</span>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="usecase"  onclick="switchTab('usecase')">📌 Use Case Diagram</button>
+  <button class="tab-btn"        data-tab="activity" onclick="switchTab('activity')">⚙️ Activity Diagrams</button>
+  <button class="tab-btn"        data-tab="sequence" onclick="switchTab('sequence')">🔁 Sequence Diagrams</button>
+</div>
+
+<div class="main">
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 1 — USE CASE DIAGRAM
+  ═══════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-usecase">
+
+    <!-- Actor Legend -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">🎭</div>
+        <div>
+          <div class="section-title">System Actors</div>
+          <div class="section-subtitle">All user roles in the UphoCare system</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#1565C0"></div> <strong>Customer</strong> — Registers, books services, tracks orders, makes payments</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2E7D32"></div> <strong>Admin (Store Manager)</strong> — Manages bookings, inventory, services, quotations, reports</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#B71C1C"></div> <strong>Super Admin (Control Panel)</strong> — Reviews registrations, manages accounts, monitors system</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Case: Customer -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">👤</div>
+        <div>
+          <div class="section-title">Customer Use Cases</div>
+          <div class="section-subtitle">All actions a registered customer can perform</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="desc-box">
+          Customers interact with the public-facing and authenticated customer portal. They can browse services, submit bookings, track repair status, and manage their account.
+        </div>
+        <div class="diagram-wrap">
+          <div class="mermaid">
+graph LR
+  C((Customer))
+  subgraph UphoCare_Customer_Portal[" UphoCare - Customer Portal "]
+    UC1[Register Account]
+    UC2[Login]
+    UC3[View Landing Page]
+    UC4[Browse Services]
+    UC5[View Fabric Catalog]
+    UC6[View Store Locations on Map]
+    UC7[Submit Service Booking]
+    UC8[Submit Repair Reservation]
+    UC9[Track Booking Status]
+    UC10[View Booking History]
+    UC11[Accept / Reject Quotation]
+    UC12[Make Payment]
+    UC13[View Receipt]
+    UC14[Rate Store]
+    UC15[Edit Profile]
+    UC16[Archive Completed Booking]
+    UC17[Receive Notifications]
+  end
+  C --> UC1
+  C --> UC2
+  C --> UC3
+  C --> UC4
+  C --> UC5
+  C --> UC6
+  C --> UC7
+  C --> UC8
+  C --> UC9
+  C --> UC10
+  C --> UC11
+  C --> UC12
+  C --> UC13
+  C --> UC14
+  C --> UC15
+  C --> UC16
+  C --> UC17
+  UC7 -->|includes| UC2
+  UC8 -->|includes| UC2
+  UC11 -->|extends| UC9
+  UC12 -->|extends| UC11
+  UC13 -->|extends| UC12
+
+style UphoCare_Customer_Portal fill:#E3F2FD,stroke:#1565C0,color:#0D1B2A
+          </div>
+        </div>
+        <ul class="step-list">
+          <li><span class="step-num">1</span> Register a new customer account (username, email, password, phone)</li>
+          <li><span class="step-num">2</span> Login to the customer portal</li>
+          <li><span class="step-num">3</span> Browse available services and fabric catalog (inventory)</li>
+          <li><span class="step-num">4</span> View partner store locations on an interactive map</li>
+          <li><span class="step-num">5</span> Submit a service booking (pickup / drop-off / walkin)</li>
+          <li><span class="step-num">6</span> Submit a repair reservation request</li>
+          <li><span class="step-num">7</span> Track booking status from pending → completed</li>
+          <li><span class="step-num">8</span> Accept or reject a quotation sent by the admin</li>
+          <li><span class="step-num">9</span> Make payment after quotation acceptance</li>
+          <li><span class="step-num">10</span> Rate the store after service completion</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Use Case: Admin -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">🛠️</div>
+        <div>
+          <div class="section-title">Admin (Store Manager) Use Cases</div>
+          <div class="section-subtitle">All actions available to an approved store admin</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="desc-box">
+          Store Admins manage the day-to-day operations: processing bookings through each stage of the repair workflow, managing inventory, generating quotations and receipts, and producing reports.
+        </div>
+        <div class="diagram-wrap">
+          <div class="mermaid">
+graph LR
+  A((Admin))
+  subgraph AdminPortal[" UphoCare - Admin Portal "]
+    subgraph Registration["Registration & Access"]
+      AR1[Self-Register as Admin]
+      AR2[Email Verification]
+      AR3[Login to Admin Panel]
+    end
+    subgraph BookingMgmt["Booking Management"]
+      AB1[View All Bookings]
+      AB2[Confirm / Accept Booking]
+      AB3[Assign for Pickup]
+      AB4[Update Inspection Results]
+      AB5[Send Preview Receipt]
+      AB6[Generate Quotation]
+      AB7[Start / Update Repair]
+      AB8[Mark Repair Completed]
+      AB9[Mark Ready for Pickup / Delivery]
+      AB10[Issue Final Receipt]
+      AB11[Confirm Payment Received]
+      AB12[Close / Archive Booking]
+    end
+    subgraph Inventory["Inventory & Services"]
+      AI1[Manage Fabric Inventory]
+      AI2[Add / Edit Services]
+      AI3[Manage Service Categories]
+    end
+    subgraph Reports["Reports & Monitoring"]
+      AR4[Generate Business Reports]
+      AR5[View Dashboard Analytics]
+      AR6[Manage Email Notifications]
+    end
+    subgraph Account["Account & Store"]
+      AA1[Edit Admin Profile]
+      AA2[Manage Store Ratings]
+    end
+  end
+  A --> AR1
+  A --> AR2
+  A --> AR3
+  A --> AB1
+  A --> AB2
+  A --> AB3
+  A --> AB4
+  A --> AB5
+  A --> AB6
+  A --> AB7
+  A --> AB8
+  A --> AB9
+  A --> AB10
+  A --> AB11
+  A --> AB12
+  A --> AI1
+  A --> AI2
+  A --> AI3
+  A --> AR4
+  A --> AR5
+  A --> AR6
+  A --> AA1
+  A --> AA2
+  AR1 -->|precedes| AR2
+  AR2 -->|precedes| AR3
+
+style AdminPortal fill:#E8F5E9,stroke:#2E7D32,color:#0D1B2A
+style Registration fill:#F1F8E9,stroke:#558B2F
+style BookingMgmt fill:#E8F5E9,stroke:#388E3C
+style Inventory fill:#E0F2F1,stroke:#00695C
+style Reports fill:#FFF3E0,stroke:#E65100
+style Account fill:#FCE4EC,stroke:#880E4F
+          </div>
+        </div>
+        <ul class="step-list">
+          <li><span class="step-num">1</span> Self-register and await Super Admin approval</li>
+          <li><span class="step-num">2</span> Complete email verification using one-time code</li>
+          <li><span class="step-num">3</span> Manage the full booking workflow (pending → closed)</li>
+          <li><span class="step-num">4</span> Add / edit fabric inventory with stock levels per store</li>
+          <li><span class="step-num">5</span> Create and send quotations; issue receipts after payment</li>
+          <li><span class="step-num">6</span> Generate PDF/CSV reports (bookings, revenue, services)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Use Case: Super Admin -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">👑</div>
+        <div>
+          <div class="section-title">Super Admin (Control Panel) Use Cases</div>
+          <div class="section-subtitle">System-level oversight and governance</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="desc-box">
+          The Super Admin uses a separate Control Panel to govern the platform: approving admin registrations, managing customer accounts, reviewing compliance, and monitoring all login and system activity.
+        </div>
+        <div class="diagram-wrap">
+          <div class="mermaid">
+graph LR
+  SA((Super Admin))
+  subgraph ControlPanel[" UphoCare - Control Panel "]
+    subgraph AdminMgmt["Admin Governance"]
+      SA1[Review Admin Registrations]
+      SA2[Approve Admin Account]
+      SA3[Reject Admin Registration]
+      SA4[Manage Active Admins]
+      SA5[Deactivate / Ban Admin]
+    end
+    subgraph CustomerMgmt["Customer Management"]
+      SC1[View All Customer Accounts]
+      SC2[Activate / Deactivate Customer]
+    end
+    subgraph BusinessMgmt["Business Registration"]
+      SB1[Review Business Registrations]
+      SB2[Approve Business Permit]
+      SB3[Reject Business Application]
+    end
+    subgraph Monitoring["System Monitoring"]
+      SM1[View Login Logs]
+      SM2[View System Activity Audit]
+      SM3[Monitor System Statistics]
+      SM4[View Store Compliance Reports]
+      SM5[View Store Banned List]
+      SM6[View Store Ratings]
+    end
+    subgraph CPAccount["Control Panel Account"]
+      CP1[Login to Control Panel]
+      CP2[Forgot / Reset Password]
+    end
+  end
+  SA --> SA1
+  SA --> SA2
+  SA --> SA3
+  SA --> SA4
+  SA --> SA5
+  SA --> SC1
+  SA --> SC2
+  SA --> SB1
+  SA --> SB2
+  SA --> SB3
+  SA --> SM1
+  SA --> SM2
+  SA --> SM3
+  SA --> SM4
+  SA --> SM5
+  SA --> SM6
+  SA --> CP1
+  SA --> CP2
+  SA1 -->|includes| SA2
+  SA1 -->|includes| SA3
+  SB1 -->|includes| SB2
+  SB1 -->|includes| SB3
+
+style ControlPanel fill:#FFEBEE,stroke:#B71C1C,color:#0D1B2A
+style AdminMgmt fill:#FCE4EC,stroke:#880E4F
+style CustomerMgmt fill:#E8EAF6,stroke:#283593
+style BusinessMgmt fill:#FFF8E1,stroke:#F57F17
+style Monitoring fill:#E0F2F1,stroke:#004D40
+style CPAccount fill:#F3E5F5,stroke:#4A148C
+          </div>
+        </div>
+        <ul class="step-list">
+          <li><span class="step-num">1</span> Review admin registration requests (pending / pending_verification)</li>
+          <li><span class="step-num">2</span> Approve or reject admin applications</li>
+          <li><span class="step-num">3</span> Review business registration documents (permits)</li>
+          <li><span class="step-num">4</span> Monitor all login attempts and system activity audit trail</li>
+          <li><span class="step-num">5</span> View store compliance reports and ratings</li>
+          <li><span class="step-num">6</span> Manage and deactivate customer/admin accounts</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /panel-usecase -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 2 — ACTIVITY DIAGRAMS
+  ═══════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-activity">
+
+    <!-- Activity 1: Customer Registration & Login -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">🔐</div>
+        <div>
+          <div class="section-title">Activity 1 – Customer Registration &amp; Login</div>
+          <div class="section-subtitle">From landing page to authenticated dashboard</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+flowchart TD
+  A([Start]) --> B[Visit Landing Page]
+  B --> C{Has Account?}
+  C -->|No| D[Click Register]
+  D --> E[Fill Registration Form\nusername, email, password, phone]
+  E --> F{Validation\nPassed?}
+  F -->|No| G[Show Error Messages]
+  G --> E
+  F -->|Yes| H[Create User Record\nrole=customer, status=active]
+  H --> I[Redirect to Login]
+  C -->|Yes| I
+  I --> J[Enter Email & Password]
+  J --> K{Credentials\nValid?}
+  K -->|No| L[Show Invalid Login Error\nLog Failed Attempt to login_logs]
+  L --> J
+  K -->|Yes| M{Account\nActive?}
+  M -->|No| N[Show Account Inactive Error]
+  M -->|Yes| O[Log Successful Login\nto login_logs table]
+  O --> P[Create Session]
+  P --> Q[Redirect to Customer Dashboard]
+  Q --> Z([End])
+
+style A fill:#0F3C5F,color:#fff,stroke:#0F3C5F
+style Z fill:#0F3C5F,color:#fff,stroke:#0F3C5F
+style H fill:#43A047,color:#fff,stroke:#43A047
+style O fill:#43A047,color:#fff,stroke:#43A047
+style L fill:#E53935,color:#fff,stroke:#E53935
+style N fill:#E53935,color:#fff,stroke:#E53935
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity 2: Service Booking -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">📋</div>
+        <div>
+          <div class="section-title">Activity 2 – Customer Service Booking</div>
+          <div class="section-subtitle">Full booking submission flow stored in the <code>bookings</code> table</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+flowchart TD
+  A([Start]) --> B[Customer Opens Booking Form]
+  B --> C[Select Service from services table]
+  C --> D[Select Store Location from store_locations]
+  D --> E[Choose Service Option\nPickup / Drop-off / Walk-in]
+  E --> F[Set Booking Date]
+  F --> G[Enter Notes / Damage Description]
+  G --> H{Form\nValidation OK?}
+  H -->|No| I[Highlight Missing Fields]
+  I --> G
+  H -->|Yes| J[Insert into bookings table\nstatus='pending']
+  J --> K[Insert Notification\nfor Admin]
+  K --> L[Redirect to Booking Confirmation Page]
+  L --> M[Admin receives notification]
+  M --> N{Admin Action}
+  N -->|Confirm| O[Update bookings.status = 'confirmed']
+  N -->|Reject| P[Update bookings.status = 'rejected']
+  O --> Q[Customer Notified via notifications table]
+  P --> Q
+  Q --> Z([End])
+
+style A fill:#0F3C5F,color:#fff
+style Z fill:#0F3C5F,color:#fff
+style J fill:#1565C0,color:#fff
+style O fill:#43A047,color:#fff
+style P fill:#E53935,color:#fff
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity 3: Full Repair Workflow -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">🔧</div>
+        <div>
+          <div class="section-title">Activity 3 – Complete Repair Workflow (Admin)</div>
+          <div class="section-subtitle">All status transitions in the <code>bookings.status</code> field</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="desc-box">
+          This outlines the full lifecycle of a booking managed by the store admin, from pickup through inspection, quotation, repair, and final delivery/payment.
+        </div>
+        <div class="status-flow">
+          <span class="status-chip" style="background:#FFF9C4;color:#5D4037">pending</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#E3F2FD;color:#0D47A1">confirmed</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#E8EAF6;color:#283593">for_pickup</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#E0F2F1;color:#004D40">picked_up</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#FFF3E0;color:#BF360C">for_inspection</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#F3E5F5;color:#4A148C">inspect_completed</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#E8F5E9;color:#1B5E20">preview_receipt_sent</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#FCE4EC;color:#880E4F">for_quotation</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#E1F5FE;color:#01579B">approved</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#F1F8E9;color:#33691E">in_progress</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#E0F7FA;color:#006064">repair_completed</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#FFF8E1;color:#E65100">out_for_delivery</span><span class="arrow-chip">→</span>
+          <span class="status-chip" style="background:#43A047;color:#fff">completed</span>
+        </div>
+        <div class="diagram-wrap">
+          <div class="mermaid">
+flowchart TD
+  S([Booking Created\nstatus='pending']) --> A1
+
+  A1{Admin: Confirm\nBooking?}
+  A1 -->|Yes| A2[status='confirmed'\nNotify Customer]
+  A1 -->|Reject| RJ[status='rejected'\nNotify Customer]
+
+  A2 --> A3[status='for_pickup'\nSchedule Pickup]
+  A3 --> A4[Pickup Done\nstatus='picked_up']
+  A4 --> A5[status='for_inspection'\nItem Received at Shop]
+  A5 --> A6[Admin Inspects Item\nRecord damage_description,\ndamage_severity, measurements]
+  A6 --> A7[status='inspect_completed']
+  A7 --> A8[Admin Sends Preview\nReceipt/Photo\nstatus='preview_receipt_sent']
+  A8 --> A9[Admin Generates Quotation\nInserts into quotations table\nstatus='for_quotation'\nquotation_sent=1]
+
+  A9 --> A10{Customer\nAccepts?}
+  A10 -->|Accept| A11[quotation_accepted=1\nbookings.status='approved']
+  A10 -->|Reject| A12[quotation_accepted=0\nAdmin Re-quotes or Cancels]
+
+  A11 --> A13[status='in_queue' or 'in_progress'\nRepair Starts\nrepair_start_date set]
+  A13 --> A14[Admin Updates Progress\nstatus='under_repair']
+  A14 --> A15{Repair\nDone?}
+  A15 -->|No| A14
+  A15 -->|Yes| A16[status='repair_completed'\nQuality Check]
+  A16 --> A17[status='for_quality_check']
+  A17 --> A18{QC\nPassed?}
+  A18 -->|No| A14
+  A18 -->|Yes| A19[status='repair_completed_ready_to_deliver']
+
+  A19 --> A20{Delivery or\nPickup?}
+  A20 -->|Delivery| A21[status='out_for_delivery']
+  A20 -->|Pickup| A22[status='ready_for_pickup']
+
+  A21 --> A23[Admin Confirms Delivery\nstatus='delivered_and_paid']
+  A22 --> A23
+  A23 --> A24[Issue Final Receipt\nInsert into receipts table\nreceipt_issued=1]
+  A24 --> A25[Record Payment\nInsert into payments table]
+  A25 --> A26[status='completed'\npayment_status='paid']
+  A26 --> A27{Archive?}
+  A27 -->|Yes| A28[is_archived=1\nstatus='closed']
+  A27 -->|No| END([End])
+  A28 --> END
+
+style S fill:#FFC107,color:#000
+style END fill:#0F3C5F,color:#fff
+style A26 fill:#43A047,color:#fff
+style A28 fill:#607D8B,color:#fff
+style RJ fill:#E53935,color:#fff
+style A12 fill:#E53935,color:#fff
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity 4: Admin Registration & Approval -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">📝</div>
+        <div>
+          <div class="section-title">Activity 4 – Admin Self-Registration &amp; Super Admin Approval</div>
+          <div class="section-subtitle">Uses <code>admin_registrations</code> and <code>control_panel_admins</code> tables</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+flowchart TD
+  A([Start]) --> B[Admin Clicks Register\non /control-panel/register]
+  B --> C[Fill Registration Form\nfullname, email, password,\nbusiness name, phone, permit upload]
+  C --> D{Validation\nOK?}
+  D -->|No| E[Show Form Errors]
+  E --> C
+  D -->|Yes| F[Insert into admin_registrations\nstatus='pending']
+  F --> G[Notify Super Admin\nvia email / badge count]
+
+  G --> H{Super Admin\nAction}
+  H -->|View Details| I[Opens Review Modal\nViews documents & business info]
+  I --> H
+  H -->|Reject| J[status='rejected'\nStore rejection_reason\nEmail Admin]
+  H -->|Approve| K[status='pending_verification'\nGenerate 6-digit code\nInsert into admin_verification_codes]
+  K --> L[Send Verification Email\nto Admin]
+
+  L --> M[Admin Enters\nVerification Code]
+  M --> N{Code Valid\n& Not Expired?}
+  N -->|No| O[Show Error: Invalid Code]
+  O --> M
+  N -->|Yes| P[Create control_panel_admins record\nstatus='active', role='admin']
+  P --> Q[Delete/Expire Verification Code]
+  Q --> R[Admin Can Now Login\nto Admin Panel]
+  R --> Z([End])
+
+style A fill:#0F3C5F,color:#fff
+style Z fill:#0F3C5F,color:#fff
+style F fill:#1565C0,color:#fff
+style K fill:#43A047,color:#fff
+style P fill:#43A047,color:#fff
+style J fill:#E53935,color:#fff
+style O fill:#E53935,color:#fff
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity 5: Quotation & Payment -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">💰</div>
+        <div>
+          <div class="section-title">Activity 5 – Quotation &amp; Payment Process</div>
+          <div class="section-subtitle">Uses <code>quotations</code>, <code>payments</code>, and <code>bookings</code> tables</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+flowchart TD
+  A([Start: Inspection Done]) --> B[Admin Calculates Cost\nfabric_cost, labor_fee,\nnumber_of_meters, price_per_meter]
+  B --> C[Admin Generates Quotation\nInsert into quotations\nstatus='sent', quotation_sent=1\nSet quotation_sent_at]
+  C --> D[Customer Receives\nNotification]
+  D --> E{Customer\nDecision?}
+  E -->|Accept| F[quotation_accepted=1\nquotation_accepted_at set\nbookings.status='approved']
+  E -->|Reject| G[quotation_accepted=0\nAdmin Notified to Revise]
+  G --> B
+  F --> H[Repair Begins\nSee Repair Workflow]
+  H --> I[Repair Completed\nAdmin Issues Final Receipt\nreceipt_issued=1]
+  I --> J{Payment Method}
+  J -->|Cash| K[Insert into payments\npayment_method='cash'\npayment_status='paid'\npayment_status in bookings='paid_full_cash']
+  J -->|COD| L[Insert into payments\npayment_method='cod'\nbookings.payment_status=\n'paid_on_delivery_cod']
+  J -->|Partial| M[Insert partial payment\nbookings.payment_status='partial']
+  K --> N[bookings.status='completed']
+  L --> N
+  M --> O[Admin Records Remaining\nPayment Later]
+  O --> N
+  N --> Z([End])
+
+style A fill:#FFC107,color:#000
+style Z fill:#0F3C5F,color:#fff
+style C fill:#1565C0,color:#fff
+style F fill:#43A047,color:#fff
+style N fill:#43A047,color:#fff
+style G fill:#E53935,color:#fff
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity 6: Inventory Management -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">📦</div>
+        <div>
+          <div class="section-title">Activity 6 – Fabric Inventory Management (Admin)</div>
+          <div class="section-subtitle">Uses the <code>inventory</code> table linked to <code>store_locations</code></div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+flowchart TD
+  A([Start]) --> B[Admin Opens Inventory Page]
+  B --> C{Action}
+  C -->|Add Item| D[Fill Fabric Form\ncolor_code, color_name,\nfabric_type, quantity, price_per_unit]
+  D --> E{Duplicate\ncolor_code for\nsame store?}
+  E -->|Yes| F[Show Uniqueness Error\nUNIQUE KEY color_code+store_location_id]
+  F --> D
+  E -->|No| G[Insert into inventory\nstatus='in-stock']
+  G --> H[Item Available in\nFabric Catalog for Customers]
+
+  C -->|Edit Item| I[Load Existing Record]
+  I --> J[Update quantity / price / type]
+  J --> K{quantity = 0?}
+  K -->|Yes| L[Set status='out-of-stock'\nHide from Customer Catalog]
+  K -->|No| M{quantity < threshold?}
+  M -->|Yes| N[Set status='low-stock'\nShow Warning Badge]
+  M -->|No| O[Set status='in-stock']
+  L --> P([Save Changes])
+  N --> P
+  O --> P
+
+  C -->|Delete| Q{Item has\nzero stock?}
+  Q -->|Yes| R[Mark as out-of-stock\nDo NOT delete]
+  Q -->|No| S[DELETE from inventory]
+  R --> P
+  S --> P
+  H --> Z([End])
+  P --> Z
+
+style A fill:#0F3C5F,color:#fff
+style Z fill:#0F3C5F,color:#fff
+style G fill:#43A047,color:#fff
+style L fill:#E53935,color:#fff
+style F fill:#E53935,color:#fff
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-activity -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 3 — SEQUENCE DIAGRAMS
+  ═══════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-sequence">
+
+    <!-- Sequence 1: Customer Registration & Login -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">🔐</div>
+        <div>
+          <div class="section-title">Sequence 1 – Customer Registration &amp; Login</div>
+          <div class="section-subtitle">Interaction between Browser, AuthController, and <code>users</code> table</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  actor C as Customer
+  participant B as Browser
+  participant AC as AuthController
+  participant DB as Database (users)
+  participant LL as login_logs
+
+  C->>B: Visit /register
+  B->>AC: GET /register
+  AC-->>B: Render register.php
+
+  C->>B: Submit Registration Form
+  B->>AC: POST /register (username, email, password, phone)
+  AC->>AC: Validate inputs (unique email, password strength)
+  AC->>DB: INSERT INTO users (role='customer', status='active')
+  DB-->>AC: Insert success, new user_id
+  AC-->>B: Redirect to /login
+
+  C->>B: Enter email & password
+  B->>AC: POST /login
+  AC->>DB: SELECT * FROM users WHERE email=?
+  DB-->>AC: Return user record
+  AC->>AC: Verify password hash
+  AC->>LL: INSERT INTO login_logs (status='success')
+  AC->>AC: Create $_SESSION[user_id, role]
+  AC-->>B: Redirect to /customer/dashboard
+  B-->>C: Show Customer Dashboard
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence 2: Booking Submission -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">📋</div>
+        <div>
+          <div class="section-title">Sequence 2 – Service Booking Submission</div>
+          <div class="section-subtitle">Customer → CustomerController → <code>bookings</code> + <code>notifications</code></div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  actor C as Customer
+  participant B as Browser
+  participant CC as CustomerController
+  participant SVC as services (DB)
+  participant BK as bookings (DB)
+  participant NT as notifications (DB)
+  actor AD as Admin
+
+  C->>B: Open Booking Form
+  B->>CC: GET /customer/book
+  CC->>SVC: SELECT active services & store_locations
+  SVC-->>CC: Services list
+  CC-->>B: Render booking form
+
+  C->>B: Fill & Submit Booking Form
+  B->>CC: POST /customer/book (service_id, store_id, date, option, notes)
+  CC->>CC: Validate session & inputs
+  CC->>BK: INSERT INTO bookings (user_id, service_id, store_location_id,\n booking_date, service_option, status='pending')
+  BK-->>CC: booking_id returned
+  CC->>NT: INSERT INTO notifications (admin notification)
+  CC-->>B: Redirect to Booking Confirmation
+
+  NT-->>AD: Admin sees notification badge
+  AD->>B: Open Admin All Bookings Page
+  AD->>B: Click "Confirm" Button
+  B->>CC: POST /admin/updateBookingStatus (booking_id, status='confirmed')
+  CC->>BK: UPDATE bookings SET status='confirmed' WHERE id=booking_id
+  BK-->>CC: Updated
+  CC->>NT: INSERT INTO notifications (customer notification)
+  NT-->>C: Customer receives confirmation notification
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence 3: Repair Full Workflow -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">🔧</div>
+        <div>
+          <div class="section-title">Sequence 3 – Full Repair Workflow (Admin ↔ Customer)</div>
+          <div class="section-subtitle">Covers all stages from pickup to payment</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  actor A as Admin
+  actor C as Customer
+  participant AC as AdminController
+  participant BK as bookings (DB)
+  participant QT as quotations (DB)
+  participant RCP as payments (DB)
+  participant NT as notifications (DB)
+
+  A->>AC: Update status → 'for_pickup'
+  AC->>BK: UPDATE bookings SET status='for_pickup'
+  AC->>NT: Notify Customer: Pickup Scheduled
+
+  A->>AC: Confirm Pickup → status='picked_up'
+  AC->>BK: UPDATE bookings SET status='picked_up'
+
+  A->>AC: Begin Inspection → status='for_inspection'
+  A->>AC: Save Inspection Results\n(damage_description, measurements, severity)
+  AC->>BK: UPDATE bookings SET damage_description, measurements,\nstatus='inspect_completed'
+
+  A->>AC: Send Preview Receipt (photo/image)
+  AC->>BK: UPDATE preview_image, preview_sent_at,\nstatus='preview_receipt_sent'
+  AC->>NT: Notify Customer: Preview Sent
+
+  A->>AC: Create Quotation
+  AC->>QT: INSERT INTO quotations (booking_id, total_amount, status='sent')
+  AC->>BK: UPDATE bookings SET quotation_sent=1, status='for_quotation'
+  AC->>NT: Notify Customer: Quotation Ready
+
+  C->>AC: Accept Quotation
+  AC->>BK: UPDATE bookings SET quotation_accepted=1, status='approved'
+  AC->>NT: Notify Admin: Customer Accepted
+
+  A->>AC: Start Repair
+  AC->>BK: UPDATE bookings SET status='in_progress', repair_start_date=NOW()
+  loop Repair Progress
+    A->>AC: Update Status (under_repair)
+    AC->>BK: UPDATE bookings SET status='under_repair'
+  end
+
+  A->>AC: Mark Repair Complete
+  AC->>BK: UPDATE bookings SET status='repair_completed'
+  A->>AC: Quality Check → status='for_quality_check'
+  AC->>BK: UPDATE bookings
+  A->>AC: QC Pass → 'repair_completed_ready_to_deliver'
+
+  A->>AC: Deliver or Pickup Ready
+  AC->>BK: UPDATE bookings SET status='out_for_delivery' OR 'ready_for_pickup'
+
+  A->>AC: Confirm Payment Received
+  AC->>RCP: INSERT INTO payments (booking_id, amount, payment_status='paid')
+  AC->>BK: UPDATE bookings SET receipt_issued=1, status='completed',\npayment_status='paid'
+  AC->>NT: Notify Customer: Service Completed
+
+  C->>AC: Archive Booking
+  AC->>BK: UPDATE bookings SET status='closed'
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence 4: Admin Registration Approval -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">✅</div>
+        <div>
+          <div class="section-title">Sequence 4 – Admin Self-Registration &amp; Super Admin Approval</div>
+          <div class="section-subtitle">Uses <code>admin_registrations</code>, <code>admin_verification_codes</code>, <code>control_panel_admins</code></div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  actor NA as New Admin
+  actor SA as Super Admin
+  participant CPC as ControlPanelController
+  participant ART as admin_registrations (DB)
+  participant VCT as admin_verification_codes (DB)
+  participant CPA as control_panel_admins (DB)
+  participant EM as Email Service
+
+  NA->>CPC: POST /control-panel/register\n(fullname, email, password, business_name, permit_file)
+  CPC->>CPC: Validate inputs (unique email, file check)
+  CPC->>ART: INSERT INTO admin_registrations\n(status='pending', business_permit_path)
+  ART-->>CPC: Inserted
+  CPC-->>NA: "Your application is under review"
+
+  CPC->>SA: Sidebar badge incremented\n(pending count +1)
+
+  SA->>CPC: GET /control-panel/admin-registrations
+  CPC->>ART: SELECT * WHERE status IN ('pending','pending_verification')
+  ART-->>CPC: Pending list
+  CPC-->>SA: Render Admin Registrations Page
+
+  SA->>CPC: Click View Details → Opens Modal\n(Review documents, business info)
+
+  alt Approve
+    SA->>CPC: POST /control-panel/approveAdmin (reg_id)
+    CPC->>ART: UPDATE status='pending_verification'
+    CPC->>VCT: INSERT INTO admin_verification_codes\n(code=random 6-digit, expires_at=+24h)
+    CPC->>EM: Send Verification Email to Admin\n(code included)
+    EM-->>NA: Receives verification email
+    NA->>CPC: POST /control-panel/verify (code)
+    CPC->>VCT: SELECT WHERE code=? AND NOT expired
+    VCT-->>CPC: Valid
+    CPC->>CPA: INSERT INTO control_panel_admins\n(email, password, role='admin', status='active')
+    CPC->>ART: UPDATE status='approved'
+    CPC->>VCT: DELETE / expire code
+    CPC-->>NA: "Account Activated – Login Now"
+  else Reject
+    SA->>CPC: POST /control-panel/rejectAdmin (reg_id, reason)
+    CPC->>ART: UPDATE status='rejected', rejection_reason=?
+    CPC->>EM: Send Rejection Email to Admin
+    EM-->>NA: Rejection notification
+  end
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence 5: Quotation -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">📄</div>
+        <div>
+          <div class="section-title">Sequence 5 – Quotation Generation &amp; Customer Acceptance</div>
+          <div class="section-subtitle">Admin creates quotation, customer accepts, repair proceeds</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  actor A as Admin
+  actor C as Customer
+  participant AC as AdminController
+  participant BK as bookings (DB)
+  participant QT as quotations (DB)
+  participant NT as notifications (DB)
+
+  A->>AC: Open Quotation Form for Booking
+  AC->>BK: SELECT measurement, damage, fabric fields
+  BK-->>AC: Booking data
+  AC-->>A: Pre-filled Calculation Form\n(fabric_length, labor_fee, price_per_meter)
+
+  A->>AC: Submit Quotation\n(total_amount, notes, valid_until)
+  AC->>QT: INSERT INTO quotations\n(booking_id, total_amount, status='sent')
+  AC->>BK: UPDATE bookings SET quotation_sent=1,\nquotation_sent_at=NOW(), status='for_quotation'
+  AC->>NT: INSERT notification for Customer
+
+  NT-->>C: "Your Quotation is Ready"
+  C->>AC: GET /customer/bookings → View Quotation
+  AC->>QT: SELECT quotation WHERE booking_id=?
+  QT-->>AC: Quotation details
+  AC-->>C: Show Quotation Modal
+
+  alt Customer Accepts
+    C->>AC: POST /customer/acceptQuotation (booking_id)
+    AC->>BK: UPDATE bookings SET quotation_accepted=1,\nquotation_accepted_at=NOW(), status='approved'
+    AC->>QT: UPDATE quotations SET status='accepted'
+    AC->>NT: Notify Admin: Quotation Accepted
+    AC-->>C: "Quotation Accepted – Repair will begin"
+  else Customer Rejects
+    C->>AC: POST /customer/rejectQuotation (booking_id)
+    AC->>BK: UPDATE bookings SET quotation_accepted=0
+    AC->>QT: UPDATE quotations SET status='rejected'
+    AC->>NT: Notify Admin: Quotation Rejected
+    AC-->>C: "Quotation Rejected – Admin will be notified"
+  end
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence 6: Super Admin Monitoring -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon">📊</div>
+        <div>
+          <div class="section-title">Sequence 6 – Super Admin System Monitoring</div>
+          <div class="section-subtitle">Login logs, activity audit, statistics from Control Panel</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="diagram-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  actor SA as Super Admin
+  participant CPC as ControlPanelController
+  participant LL as login_logs (DB)
+  participant SA2 as system_activities (DB)
+  participant SS as system_statistics (DB)
+  participant CPA as control_panel_admins (DB)
+  participant US as users (DB)
+
+  SA->>CPC: GET /control-panel/login
+  CPC-->>SA: Login Form
+
+  SA->>CPC: POST /control-panel/login (email, password)
+  CPC->>CPA: SELECT WHERE email=? AND status='active'
+  CPA-->>CPC: Super Admin record
+  CPC->>CPC: Verify password
+  CPC->>LL: INSERT login_log (user_type='control_panel', status='success')
+  CPC->>CPA: UPDATE last_login=NOW()
+  CPC-->>SA: Redirect to Super Admin Dashboard
+
+  SA->>CPC: View Login Logs
+  CPC->>LL: SELECT * FROM login_logs ORDER BY login_time DESC
+  LL-->>CPC: All login records
+  CPC-->>SA: Render login_logs.php (user_type, status, ip, time)
+
+  SA->>CPC: View System Activity
+  CPC->>SA2: SELECT * FROM system_activities ORDER BY created_at DESC
+  SA2-->>CPC: Activity records
+  CPC-->>SA: Render system changes (who changed what, old/new values)
+
+  SA->>CPC: View Dashboard Statistics
+  CPC->>SS: SELECT * FROM system_statistics WHERE stat_date = TODAY
+  CPC->>LL: COUNT logins by type
+  CPC->>US: COUNT new users (customers)
+  SS-->>CPC: Stats data
+  CPC-->>SA: Render Dashboard KPIs\n(logins, new bookings, new users, etc.)
+
+  SA->>CPC: Manage Customer Accounts
+  CPC->>US: SELECT * FROM users WHERE role='customer'
+  US-->>CPC: Customer list
+  CPC-->>SA: Render customer_accounts.php
+
+  SA->>CPC: Deactivate Customer
+  CPC->>US: UPDATE users SET status='inactive' WHERE id=?
+  CPC->>SA2: INSERT system_activities (activity_type='user_modified')
+  CPC-->>SA: Account deactivated
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-sequence -->
+
+</div><!-- /main -->
+
+<footer>
+  <strong>UphoCare System UML Documentation</strong> — Generated 2026 &nbsp;|&nbsp;
+  Covers: Customer · Admin (Store Manager) · Super Admin (Control Panel) &nbsp;|&nbsp;
+  Based on <code>db_upholcare</code> database schema
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: { curve: 'basis', htmlLabels: true },
+    sequence: { diagramMarginX: 30, diagramMarginY: 20, actorMargin: 60, noteMargin: 10, messageMargin: 35 }
+  });
+
+  function switchTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+  }
+</script>
+</body>
+</html>

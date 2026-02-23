@@ -3,10 +3,26 @@
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
 
 <style>
-.page-title {
-    font-size: 1.75rem;
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.welcome-text {
+    color: #0F3C5F;
     font-weight: 700;
-    color: #2c3e50;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
 }
 
 .booking-detail-card {
@@ -45,14 +61,14 @@
 
 /* Override Bootstrap primary colors with brown */
 .btn-primary {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
-    border-color: #1F4E79 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%) !important;
+    border-color: #0F3C5F !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
-    border-color: #4CAF50 !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #0F3C5F 100%) !important;
+    border-color: #0F3C5F !important;
     color: white !important;
 }
 
@@ -62,20 +78,21 @@
 </style>
 
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4 no-print">
-    <div>
-        <h1 class="page-title mb-2">Booking Details</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard">Home</a></li>
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/bookings">Bookings</a></li>
-                <li class="breadcrumb-item active">Booking Details</li>
+<div class="welcome-container shadow-sm no-print">
+    <div class="welcome-text">
+        <i class="fas fa-calendar-check mr-2" style="color: #0F3C5F;"></i>
+        Booking Details
+    </div>
+    <div class="d-flex align-items-center">
+        <nav aria-label="breadcrumb" class="mr-3">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard" style="color: #0F3C5F; font-size: 0.85rem; font-weight: 600;">Home</a></li>
+                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/bookings" style="color: #0F3C5F; font-size: 0.85rem; font-weight: 600;">Bookings</a></li>
+                <li class="breadcrumb-item active" style="font-size: 0.85rem; font-weight: 600;">Details</li>
             </ol>
         </nav>
-    </div>
-    <div>
-        <a href="<?php echo BASE_URL; ?>customer/bookings" class="btn btn-secondary">
-            <i class="fas fa-arrow-left mr-1"></i> Back to Bookings
+        <a href="<?php echo BASE_URL; ?>customer/bookings" class="btn btn-sm btn-outline-primary" style="border-radius: 50px; font-weight: 600; padding: 0.4rem 1.2rem; font-size: 0.8rem;">
+            <i class="fas fa-arrow-left mr-1"></i> Back
         </a>
     </div>
 </div>
@@ -101,10 +118,10 @@
 <?php if ($booking): ?>
 <!-- Booking Details Card -->
 <div class="card booking-detail-card">
-    <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);"></div>
+    <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);"></div>
     
     <!-- Booking Header -->
-    <div class="detail-section" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
+    <div class="detail-section" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h3 class="mb-2" style="color: white;">
@@ -506,7 +523,7 @@
 <div class="modal fade" id="updateServiceOptionModal" tabindex="-1" role="dialog" aria-labelledby="updateServiceOptionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
                 <h5 class="modal-title" id="updateServiceOptionModalLabel">
                     <i class="fas fa-edit mr-2"></i>Update Service Option & Address
                 </h5>

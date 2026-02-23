@@ -194,3 +194,6 @@
 {"timestamp":"2026-01-23 09:22:21","to":"merlyn.villame2001@gmail.com","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
 {"timestamp":"2026-01-23 09:32:46","to":"merlyn.villame2001@gmail.com","subject":"Booking Confirmed - ","success":"YES","status":"SUCCESS (PHPMailer)"}
 {"timestamp":"2026-01-23 10:07:09","to":"merlyn.villame2001@gmail.com","subject":"Booking Confirmed - ","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2026-02-08 12:19:30","to":"lae.maglajos1995@gmail.com","subject":"Admin Account Registration Rejected - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2026-02-18 00:16:51","to":"jhonaldogutas@gmail.com","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}
+{"timestamp":"2026-02-20 09:21:21","to":"jhonaldogutas@gmail.com","subject":"Admin Account Approved - Verification Code - UphoCare","success":"YES","status":"SUCCESS (PHPMailer)"}

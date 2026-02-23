@@ -146,16 +146,15 @@ body.modal-open #logoutModal {
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <div>
         <h1 class="h3 mb-2 text-gray-800" style="font-weight: 700;">Services Management</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb" style="background: transparent; padding: 0;">
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>admin/dashboard">Dashboard</a></li>
-                <li class="breadcrumb-item active">Services</li>
-            </ol>
-        </nav>
     </div>
-    <button type="button" class="btn btn-primary-admin" data-toggle="modal" data-target="#serviceModal" onclick="openServiceModal()">
-        <i class="fas fa-plus mr-2"></i>Add New Service
-    </button>
+    <div>
+        <button type="button" class="btn btn-secondary mr-2" onclick="loadArchivedServices()" data-toggle="modal" data-target="#archivedModal">
+            <i class="fas fa-archive mr-2"></i>Archived Services
+        </button>
+        <button type="button" class="btn btn-primary-admin" data-toggle="modal" data-target="#serviceModal" onclick="openServiceModal()">
+            <i class="fas fa-plus mr-2"></i>Add New Service
+        </button>
+    </div>
 </div>
 
 <?php if (isset($_SESSION['success'])): ?>
@@ -199,7 +198,7 @@ body.modal-open #logoutModal {
                 <tbody>
                     <?php if (!empty($services)): ?>
                         <?php foreach ($services as $service): ?>
-                        <tr>
+                        <tr data-service-id="<?php echo $service['id']; ?>">
                             <td><?php echo $service['id']; ?></td>
                             <td><strong><?php echo htmlspecialchars($service['service_name']); ?></strong></td>
                             <td>
@@ -218,11 +217,11 @@ body.modal-open #logoutModal {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php
-                                $statusClass = $service['status'] === 'active' ? 'text-success' : 'text-secondary';
-                                $color = $service['status'] === 'active' ? 'var(--uphol-green)' : '#6c757d';
-                                ?>
-                                <span style="color: <?php echo $color; ?>; font-weight: bold;"><?php echo ucfirst($service['status']); ?></span>
+                                <?php if ($service['status'] === 'active'): ?>
+                                    <span style="color:#28a745; font-weight:600;">Active</span>
+                                <?php else: ?>
+                                    <span style="color:#6c757d; font-weight:600;"><?php echo ucfirst($service['status']); ?></span>
+                                <?php endif; ?>
                             </td>
                             <td><?php echo date('M d, Y', strtotime($service['created_at'])); ?></td>
                             <td>
@@ -230,8 +229,8 @@ body.modal-open #logoutModal {
                                     <button type="button" class="btn btn-sm btn-info" onclick="editService(<?php echo htmlspecialchars(json_encode($service)); ?>)" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>, '<?php echo htmlspecialchars($service['service_name']); ?>')" title="Delete">
-                                        <i class="fas fa-trash"></i>
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="removeService(<?php echo $service['id']; ?>, '<?php echo htmlspecialchars($service['service_name']); ?>')" title="Remove (Archive)" style="background:#e67e22;border-color:#e67e22;color:white;">
+                                        <i class="fas fa-archive"></i> Remove
                                     </button>
                                 </div>
                             </td>
@@ -326,7 +325,54 @@ body.modal-open #logoutModal {
     </div>
 </div>
 
-<!-- Success/Error Alert Container -->
+<!-- Archived Services Modal -->
+<div class="modal fade" id="archivedModal" tabindex="-1" role="dialog" aria-labelledby="archivedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #495057 0%, #6c757d 100%);">
+                <h5 class="modal-title" id="archivedModalLabel" style="color:white;">
+                    <i class="fas fa-archive mr-2"></i>Archived Services
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <!-- Info banner -->
+                <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:12px 20px; margin:0; font-size:13px; color:#856404;">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Archived Services</strong> — These services are hidden from customers. Click <strong>Restore</strong> to make a service active again.
+                </div>
+                <!-- Table -->
+                <div class="table-responsive" style="padding: 20px;">
+                    <table class="table table-bordered" id="archivedTable" width="100%">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Service Name</th>
+                                <th>Category</th>
+                                <th>Service Type</th>
+                                <th>Price</th>
+                                <th>Archived On</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archivedTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
 <script>
@@ -388,46 +434,54 @@ function fixServiceModalClickability() {
     });
 }
 
-// Fix modal when it opens
-jQuery(function($) {
-    $('#serviceModal').on('show.bs.modal', function() {
-        setTimeout(fixServiceModalClickability, 10);
-    });
+// Fix modal when it opens - wrapped in safe initialization
+(function initServiceModal() {
+    if (typeof jQuery === 'undefined') {
+        // Retry after jQuery loads
+        setTimeout(initServiceModal, 100);
+        return;
+    }
     
-    $('#serviceModal').on('shown.bs.modal', function() {
-        fixServiceModalClickability();
-        // Keep fixing every 200ms while modal is open
-        const fixInterval = setInterval(function() {
-            if ($('#serviceModal').hasClass('show')) {
-                fixServiceModalClickability();
-            } else {
-                clearInterval(fixInterval);
+    jQuery(function($) {
+        $('#serviceModal').on('show.bs.modal', function() {
+            setTimeout(fixServiceModalClickability, 10);
+        });
+        
+        $('#serviceModal').on('shown.bs.modal', function() {
+            fixServiceModalClickability();
+            // Keep fixing every 200ms while modal is open
+            const fixInterval = setInterval(function() {
+                if ($('#serviceModal').hasClass('show')) {
+                    fixServiceModalClickability();
+                } else {
+                    clearInterval(fixInterval);
+                }
+            }, 200);
+        });
+        
+        $('#serviceModal').on('hidden.bs.modal', function() {
+            // Reset styles when modal closes
+            const logoutModal = document.getElementById('logoutModal');
+            if (logoutModal) {
+                logoutModal.style.removeProperty('display');
+                logoutModal.style.removeProperty('visibility');
+                logoutModal.style.removeProperty('pointer-events');
+                logoutModal.style.removeProperty('z-index');
+                logoutModal.style.removeProperty('opacity');
             }
-        }, 200);
+            
+            const topbar = document.querySelector('.topbar, .navbar');
+            if (topbar) {
+                topbar.style.removeProperty('z-index');
+            }
+            
+            const sidebar = document.querySelector('.sidebar, #accordionSidebar');
+            if (sidebar) {
+                sidebar.style.removeProperty('z-index');
+            }
+        });
     });
-    
-    $('#serviceModal').on('hidden.bs.modal', function() {
-        // Reset styles when modal closes
-        const logoutModal = document.getElementById('logoutModal');
-        if (logoutModal) {
-            logoutModal.style.removeProperty('display');
-            logoutModal.style.removeProperty('visibility');
-            logoutModal.style.removeProperty('pointer-events');
-            logoutModal.style.removeProperty('z-index');
-            logoutModal.style.removeProperty('opacity');
-        }
-        
-        const topbar = document.querySelector('.topbar, .navbar');
-        if (topbar) {
-            topbar.style.removeProperty('z-index');
-        }
-        
-        const sidebar = document.querySelector('.sidebar, #accordionSidebar');
-        if (sidebar) {
-            sidebar.style.removeProperty('z-index');
-        }
-    });
-});
+})();
 
 // Also fix on any modal backdrop click (prevent backdrop from blocking)
 document.addEventListener('click', function(e) {
@@ -461,17 +515,24 @@ function editService(service) {
     document.getElementById('modalTitle').textContent = 'Edit Service';
     document.getElementById('submitBtnText').textContent = 'Update Service';
     
-    $('#serviceModal').modal('show');
+    // Wait for jQuery to be available before showing modal
+    (function showEditModal() {
+        if (typeof jQuery === 'undefined') {
+            setTimeout(showEditModal, 100);
+            return;
+        }
+        jQuery('#serviceModal').modal('show');
+    })();
 }
 
-function deleteService(serviceId, serviceName) {
-    if (!confirm('Are you sure you want to delete "' + serviceName + '"? This will set the service status to inactive.')) {
+function removeService(serviceId, serviceName) {
+    if (!confirm('Move "' + serviceName + '" to Archived Services?\n\nYou can restore it later from Archived Services.')) {
         return;
     }
-    
+
     const formData = new FormData();
     formData.append('service_id', serviceId);
-    
+
     fetch('<?php echo BASE_URL; ?>admin/deleteService', {
         method: 'POST',
         body: formData
@@ -479,57 +540,73 @@ function deleteService(serviceId, serviceName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Remove the row from the table immediately
+            const row = document.querySelector(`tr[data-service-id="${serviceId}"]`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            }
             showAlert('success', data.message);
+            // Open archived modal after short delay
             setTimeout(() => {
-                location.reload();
-            }, 1000);
+                loadArchivedServices();
+                jQuery('#archivedModal').modal('show');
+            }, 400);
         } else {
             showAlert('danger', data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('danger', 'An error occurred while deleting the service.');
+        showAlert('danger', 'An error occurred while archiving the service.');
     });
 }
 
-// Handle form submission
-document.getElementById('serviceForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+// Handle form submission - wrapped in safe initialization
+(function initFormHandler() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initFormHandler, 100);
+        return;
+    }
     
-    const formData = new FormData(this);
-    const url = isEditMode ? '<?php echo BASE_URL; ?>admin/updateService' : '<?php echo BASE_URL; ?>admin/createService';
-    
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalContent = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
-    
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('success', data.message);
-            $('#serviceModal').modal('hide');
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        } else {
-            showAlert('danger', data.message);
+    document.getElementById('serviceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const url = isEditMode ? '<?php echo BASE_URL; ?>admin/updateService' : '<?php echo BASE_URL; ?>admin/createService';
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalContent = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
+        
+        fetch(url, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                jQuery('#serviceModal').modal('hide');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showAlert('danger', data.message);
+                submitBtn.innerHTML = originalContent;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while saving the service.');
             submitBtn.innerHTML = originalContent;
             submitBtn.disabled = false;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', 'An error occurred while saving the service.');
-        submitBtn.innerHTML = originalContent;
-        submitBtn.disabled = false;
+        });
     });
-});
+})();
 
 function showAlert(type, message) {
     const alertContainer = document.getElementById('alertContainer');
@@ -549,6 +626,86 @@ function showAlert(type, message) {
             alert.remove();
         }
     }, 5000);
+}
+
+// ============================================
+// ARCHIVED SERVICES MODAL
+// ============================================
+
+function loadArchivedServices() {
+    const tbody = document.getElementById('archivedTableBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</td></tr>';
+
+    fetch('<?php echo BASE_URL; ?>admin/getArchivedServices', {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.services.length > 0) {
+            let rows = '';
+            data.services.forEach(s => {
+                const price = s.price ? 'PHP ' + parseFloat(s.price).toLocaleString('en-US', {minimumFractionDigits:2}) : '<span class="text-muted">Not Set</span>';
+                const category = s.category_name ? s.category_name : '<span class="text-muted">—</span>';
+                const serviceType = s.service_type ? s.service_type : '<span class="text-muted">—</span>';
+                const created = new Date(s.created_at).toLocaleDateString('en-US', {month:'short', day:'2-digit', year:'numeric'});
+                rows += `
+                <tr>
+                    <td>${s.id}</td>
+                    <td><strong>${s.service_name}</strong></td>
+                    <td>${category}</td>
+                    <td>${serviceType}</td>
+                    <td>${price}</td>
+                    <td>${created}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="restoreService(${s.id}, '${s.service_name.replace(/'/g, "\\'")}')"
+                            style="background:linear-gradient(135deg,#0F3C5F,#1a6fad);border:none;font-weight:600;">
+                            <i class="fas fa-undo mr-1"></i>Restore
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = rows;
+        } else if (data.success && data.services.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="fas fa-archive fa-3x mb-3 d-block" style="opacity:0.25;"></i>
+                    <p>No archived services yet.</p>
+                </td>
+            </tr>`;
+        } else {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Failed to load archived services.</td></tr>';
+        }
+    })
+    .catch(() => {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data.</td></tr>';
+    });
+}
+
+function restoreService(serviceId, serviceName) {
+    if (!confirm('Restore "' + serviceName + '" back to active services?')) return;
+
+    const formData = new FormData();
+    formData.append('service_id', serviceId);
+
+    fetch('<?php echo BASE_URL; ?>admin/restoreService', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            // Refresh the archived table
+            loadArchivedServices();
+            // Also refresh main table after short delay
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(() => showAlert('danger', 'Error restoring service.'));
 }
 </script>
 

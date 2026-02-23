@@ -3,10 +3,26 @@
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
 
 <style>
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.welcome-text {
     color: #0F3C5F;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
 }
 
 .form-card {
@@ -16,10 +32,10 @@
 }
 
 .form-card .card-header {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     color: white;
     border-radius: 0.75rem 0.75rem 0 0 !important;
-    padding: 1.5rem;
+    padding: 1rem 1.5rem;
 }
 
 .form-label {
@@ -298,7 +314,7 @@ select.form-control option {
 }
 
 .btn-submit {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
     border: none;
     color: white;
     padding: 0.75rem 2rem;
@@ -308,7 +324,7 @@ select.form-control option {
 }
 
 .btn-submit:hover {
-    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%);
+    background: linear-gradient(135deg, #1F4E79 0%, #0F3C5F 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     color: white;
@@ -339,7 +355,7 @@ select.form-control option {
 }
 
 .btn-outline-primary:hover {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%) !important;
     border-color: #1F4E79 !important;
     color: white !important;
 }
@@ -394,7 +410,7 @@ select#color_type option {
 }
 
 .breadcrumb-item.active {
-    color: #4CAF50;
+    color: #0F3C5F;
 }
 
 /* Responsive adjustments for mobile Android */
@@ -574,17 +590,18 @@ select#color_type option {
 </style>
 
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h1 class="page-title mb-2">Repair Reservation</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb" style="background: transparent; padding: 0;">
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard">Home</a></li>
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/bookings">Bookings</a></li>
-                <li class="breadcrumb-item active">Repair Reservation</li>
-            </ol>
-        </nav>
+<div class="welcome-container shadow-sm">
+    <div class="welcome-text">
+        <i class="fas fa-tools mr-2" style="color: #0F3C5F;"></i>
+        Repair Reservation
     </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+            <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard" style="color: #0F3C5F; font-size: 0.85rem; font-weight: 600;">Home</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/bookings" style="color: #0F3C5F; font-size: 0.85rem; font-weight: 600;">Bookings</a></li>
+            <li class="breadcrumb-item active" style="font-size: 0.85rem; font-weight: 600;">Repair</li>
+        </ol>
+    </nav>
 </div>
 
 <!-- Repair Reservation Form -->
@@ -592,9 +609,9 @@ select#color_type option {
     <div class="col-lg-12">
         <div class="card form-card">
             <div class="card-header">
-                <h3 class="mb-0"><i class="fas fa-tools mr-2"></i>Create Repair Reservation</h3>
+                <h5 class="mb-0"><i class="fas fa-tools mr-2"></i>Create Repair Reservation</h5>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3">
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
@@ -617,7 +634,7 @@ select#color_type option {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Service Category <span class="text-danger">*</span></label>
+                                <label class="form-label small">Service Category <span class="text-danger">*</span></label>
                                 <select class="form-control" id="service_category" name="service_category" required>
                                     <option value="">Select Category</option>
                                     <?php foreach ($categories as $category): ?>
@@ -630,7 +647,7 @@ select#color_type option {
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Service Type <span class="text-danger">*</span></label>
+                                <label class="form-label small">Service Type <span class="text-danger">*</span></label>
                                 <select class="form-control" id="service_type" name="service_type" required>
                                     <option value="">Select Type</option>
                                 </select>
@@ -651,8 +668,8 @@ select#color_type option {
                     </div>
 
                     <!-- Store Selection Section -->
-                    <div class="form-group">
-                        <label class="form-label">Preferred Store Location <span class="text-danger">*</span></label>
+                    <div class="form-group mb-3">
+                        <label class="form-label small">Preferred Store Location <span class="text-danger">*</span></label>
                         <div class="row">
                             <div class="col-md-9 col-lg-9">
                                 <select class="form-control" id="store_location" name="store_location_id" required>
@@ -686,8 +703,8 @@ select#color_type option {
 
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="form-group">
-                                <label class="form-label">Service Option <span class="text-danger">*</span></label>
+                            <div class="form-group mb-3">
+                                <label class="form-label small">Service Option <span class="text-danger">*</span></label>
                                 <select class="form-control service-option-select" name="service_option" id="service_option" required>
                                     <option value="">Select Option</option>
                                     <option value="pickup">Pick Up</option>
@@ -703,53 +720,7 @@ select#color_type option {
                         </div>
                     </div>
 
-                    <!-- Color Selection Section -->
-                    <div class="form-group" id="colorSelectionSection">
-                        <label class="form-label">Fabric/Color Selection <span class="text-danger">*</span></label>
-                        <small class="form-text text-muted mb-2 d-block">
-                            <i class="fas fa-info-circle"></i> 
-                            First select Standard or Premium, then choose a color from the available options. Prices are shown for each color.
-                        </small>
-                        
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label class="form-label small">Leather Type <span class="text-danger">*</span></label>
-                                <select class="form-control" id="color_type" name="color_type" disabled>
-                                    <option value="">Select Type...</option>
-                                    <option value="standard">Standard</option>
-                                    <option value="premium">Premium</option>
-                                </select>
-                            </div>
-                            <div class="col-md-8">
-                                <label class="form-label small">Select Color <span class="text-danger">*</span></label>
-                                <select class="form-control" id="selected_color" name="selected_color_id" required>
-                                    <option value="">Select Color...</option>
-                                    <option value="" disabled>Please select a store location first</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div id="colorPreview" class="mt-3" style="display: none;">
-                            <div class="card" style="border: 2px solid #e3e6f0;">
-                                <div class="card-body p-3">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-2">
-                                            <div id="colorSwatch" style="width: 60px; height: 60px; border-radius: 8px; border: 2px solid #ddd; background-color: #ccc;"></div>
-                                        </div>
-                                        <div class="col-md-10">
-                                            <h6 class="mb-1" id="colorNameDisplay">-</h6>
-                                            <p class="mb-1 text-muted small" id="colorCodeDisplay">-</p>
-                                            <p class="mb-0">
-                                                <strong>Price:</strong> 
-                                                <span class="text-primary" id="colorPriceDisplay">₱0.00</span>
-                                                <span id="colorTypeBadge" class="badge badge-secondary ml-2">Standard</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Color Selection Section Removed -->
 
                     <div class="row">
                         <div class="col-md-6">
@@ -1160,300 +1131,20 @@ function loadAvailableColors(storeId, fabricType = null) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        // Check if response is actually JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Response is not JSON');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            if (fabricType && fabricType !== '') {
-                // Filter by type
-                availableColors = data.colors || [];
-        } else {
-                // Store all colors for later filtering
-                allAvailableColors = data.colors || [];
-                availableColors = allAvailableColors;
-            }
-            populateColorDropdown(fabricType);
-        } else {
-            console.error('Error loading colors:', data.message || 'Unknown error');
-            availableColors = [];
-            allAvailableColors = [];
-            populateColorDropdown(fabricType);
-        }
-    })
-    .catch(error => {
-        console.error('Error loading colors:', error);
-        console.error('Error details:', error.message);
-        availableColors = [];
-        allAvailableColors = [];
-        populateColorDropdown(fabricType);
-        // Show user-friendly message but keep dropdown enabled
-        if (colorSelect) {
-            colorSelect.innerHTML = '<option value="">Select Color...</option><option value="" disabled>Error loading colors. Please try again.</option>';
-        }
-    });
-}
-
-// Populate color dropdown with prices based on selected type
-function populateColorDropdown(fabricType = null) {
-    const colorSelect = document.getElementById('selected_color');
-    if (!colorSelect) return;
-    
-    colorSelect.innerHTML = '<option value="">Select Color...</option>';
-    
-    // Always ensure color dropdown is enabled
-    colorSelect.disabled = false;
-    colorSelect.removeAttribute('disabled');
-    colorSelect.setAttribute('required', 'required');
-    colorSelect.style.opacity = '1';
-    colorSelect.style.pointerEvents = 'auto';
-    colorSelect.style.cursor = 'pointer';
-    colorSelect.style.backgroundColor = '#fff';
-    
-    // Filter colors by fabric type if specified (backend should already filter, but double-check on frontend)
-    let filteredColors = availableColors;
-    if (fabricType && fabricType !== '') {
-        filteredColors = availableColors.filter(color => {
-            const colorType = (color.fabric_type || color.leather_type || '').toLowerCase();
-            return colorType === fabricType.toLowerCase();
-        });
-    }
-    
-    if (filteredColors.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        if (fabricType) {
-            const typeLabel = fabricType === 'premium' ? 'Premium' : 'Standard';
-            option.textContent = `No ${typeLabel} colors available for this store`;
-        } else {
-        option.textContent = 'No colors available for this store';
-        }
-        option.disabled = true;
-        colorSelect.appendChild(option);
-        // Hide preview if no colors
-        const colorPreview = document.getElementById('colorPreview');
-        if (colorPreview) colorPreview.style.display = 'none';
-        // Keep enabled but show message
-        return;
-    }
-    
-    filteredColors.forEach(color => {
-        const option = document.createElement('option');
-        option.value = color.id;
-        
-        // Get the color's fabric/leather type
-        const colorFabricType = (color.fabric_type || color.leather_type || 'standard').toLowerCase();
-        
-        // Determine which price to use - prioritize price_per_meter
-        let price = 0;
-        let premiumPrice = 0;
-        
-        if (color.price_per_meter) {
-            // Use price_per_meter if available (this is the most accurate)
-            price = parseFloat(color.price_per_meter);
-        } else if (color.price_per_unit) {
-            // Fallback to price_per_unit
-            price = parseFloat(color.price_per_unit);
-        } else {
-            price = 0;
-        }
-        
-        // Get premium price if available
-        if (color.premium_price) {
-            premiumPrice = parseFloat(color.premium_price);
-        }
-        
-        // Format price
-        const formattedPrice = price.toFixed(2);
-        
-        // Display color name, code, and price (type is already filtered, so we don't need to show it in the text)
-        option.textContent = `${color.color_name} (${color.color_code}) - ₱${formattedPrice} per meter`;
-        option.dataset.colorName = color.color_name;
-        option.dataset.colorCode = color.color_code;
-        option.dataset.colorHex = color.color_hex || '#cccccc';
-        option.dataset.pricePerMeter = price;
-        option.dataset.premiumPrice = premiumPrice;
-        option.dataset.fabricType = colorFabricType;
-        colorSelect.appendChild(option);
-    });
-}
-
-// Handle color selection change
-const colorSelect = document.getElementById('selected_color');
-if (colorSelect) {
-    colorSelect.addEventListener('change', function() {
-        const colorId = this.value;
-        const colorPreview = document.getElementById('colorPreview');
-        const selectedOption = this.options[this.selectedIndex];
-        
-        if (colorId && selectedOption.dataset.colorName) {
-            document.getElementById('colorSwatch').style.backgroundColor = selectedOption.dataset.colorHex;
-            document.getElementById('colorNameDisplay').textContent = selectedOption.dataset.colorName;
-            document.getElementById('colorCodeDisplay').textContent = `Code: ${selectedOption.dataset.colorCode}`;
-            
-            updateColorPrice();
-            colorPreview.style.display = 'block';
-        } else {
-            colorPreview.style.display = 'none';
-        }
-    });
-}
-
-// Handle color type change (premium/standard) - Filter colors based on selected type
-const colorTypeSelect = document.getElementById('color_type');
-if (colorTypeSelect) {
-    colorTypeSelect.addEventListener('change', function() {
-        const fabricType = this.value;
-        const storeId = document.getElementById('store_location').value;
-        const colorSelect = document.getElementById('selected_color');
-        
-        // Always keep color dropdown enabled
-        if (colorSelect) {
-            colorSelect.disabled = false;
-            colorSelect.removeAttribute('disabled');
-            colorSelect.setAttribute('required', 'required');
-        }
-        
-        if (!fabricType || fabricType === '') {
-            // If no type selected, show all colors
-            if (storeId) {
-                loadAvailableColors(storeId, null); // Load all colors
-            }
-            updateColorPrice();
-            updatePremiumPriceDisplay();
-            return;
-        }
-        
-        if (!storeId) {
-            // Store must be selected first
-            if (colorSelect) {
-                colorSelect.innerHTML = '<option value="">Select Color...</option><option value="" disabled>Please select a store location first</option>';
-            }
-            return;
-        }
-        
-        // Load colors filtered by fabric type
-        loadAvailableColors(storeId, fabricType);
-        
-        // Update price displays
-        updateColorPrice();
-        updatePremiumPriceDisplay();
-    });
-}
-
-// Update color price display
-function updateColorPrice() {
-    const colorSelect = document.getElementById('selected_color');
-    const colorType = document.getElementById('color_type').value;
-    const selectedOption = colorSelect ? colorSelect.options[colorSelect.selectedIndex] : null;
-    
-    if (!colorSelect || !colorSelect.value || !selectedOption || !selectedOption.dataset.pricePerMeter) {
-        const priceDisplay = document.getElementById('colorPriceDisplay');
-        if (priceDisplay) priceDisplay.textContent = '₱0.00';
-        return;
-    }
-    
-    // Get price from pricePerMeter dataset (this comes from inventory table)
-    const basePrice = parseFloat(selectedOption.dataset.pricePerMeter || 0);
-    let totalPrice = basePrice;
-    
-    // If premium type, check if there's a premium price to add
-    if (colorType === 'premium' && selectedOption.dataset.premiumPrice) {
-        const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
-        totalPrice = basePrice + premiumPrice;
-    }
-    
-    const priceDisplay = document.getElementById('colorPriceDisplay');
-    if (priceDisplay) {
-        priceDisplay.textContent = '₱' + totalPrice.toLocaleString('en-PH', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-    
-    // Update badge
-    const badge = document.getElementById('colorTypeBadge');
-    if (badge) {
-        if (colorType === 'premium') {
-            badge.textContent = 'Premium';
-            badge.className = 'badge badge-warning ml-2';
-        } else {
-            badge.textContent = 'Standard';
-            badge.className = 'badge badge-secondary ml-2';
-        }
-    }
-    
-    // Update total amount
-    updateTotalAmount();
-}
-
-// Update premium price display
-function updatePremiumPriceDisplay() {
-    const colorSelect = document.getElementById('selected_color');
-    const selectedOption = colorSelect ? colorSelect.options[colorSelect.selectedIndex] : null;
-    
-    if (selectedOption && selectedOption.dataset.premiumPrice) {
-        const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
-        const premiumDisplay = document.getElementById('premiumPriceDisplay');
-        if (premiumDisplay) {
-            premiumDisplay.textContent = premiumPrice.toLocaleString('en-PH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-    } else {
-        const premiumDisplay = document.getElementById('premiumPriceDisplay');
-        if (premiumDisplay) premiumDisplay.textContent = '0.00';
-    }
-}
-
-// Update total amount including color price
-function updateTotalAmount() {
-    const totalAmountInput = document.getElementById('total_amount');
-    if (!totalAmountInput) return;
-    
-    const servicePrice = parseFloat(totalAmountInput.value || 0);
-    const colorSelect = document.getElementById('selected_color');
-    const colorType = document.getElementById('color_type') ? document.getElementById('color_type').value : 'standard';
-    const selectedOption = colorSelect && colorSelect.value ? colorSelect.options[colorSelect.selectedIndex] : null;
-    
-    let colorPrice = 0;
-    if (colorSelect && colorSelect.value && selectedOption && selectedOption.dataset.pricePerMeter) {
-        const basePrice = parseFloat(selectedOption.dataset.pricePerMeter || 0);
-        if (colorType === 'premium' && selectedOption.dataset.premiumPrice) {
-            const premiumPrice = parseFloat(selectedOption.dataset.premiumPrice || 0);
-            colorPrice = basePrice + premiumPrice;
-        } else {
-            colorPrice = basePrice;
-        }
-    }
-    
-    const totalAmount = servicePrice + colorPrice;
-    totalAmountInput.value = totalAmount.toFixed(2);
-}
-
-// Handle store selection change
-document.getElementById('store_location').addEventListener('change', function() {
-    const storeId = this.value;
-    const storeInfo = document.getElementById('selectedStoreInfo');
-    const colorSection = document.getElementById('colorSelectionSection');
-    const colorSelect = document.getElementById('selected_color');
-    const colorType = document.getElementById('color_type');
-    
-    if (storeId) {
-        const selectedStore = stores.find(store => store.id == storeId);
         if (selectedStore) {
             document.getElementById('selectedStoreName').textContent = selectedStore.store_name;
             document.getElementById('selectedStoreAddress').textContent = selectedStore.address + ', ' + selectedStore.city;
             document.getElementById('selectedStoreContact').textContent = `Phone: ${selectedStore.phone} | Email: ${selectedStore.email}`;
             const ratingBadge = document.getElementById('selectedStoreRating');
             ratingBadge.textContent = `★ ${selectedStore.rating}/5.0`;
+            storeInfo.style.display = 'block';
+        }
+    } else {
+        storeInfo.style.display = 'none';
+    }
+});
+
+// Removed color selection logic functions: loadAvailableColors, populateColorDropdown, updateColorPrice, etc.
             ratingBadge.className = 'badge badge-brown';
             
             storeInfo.style.display = 'block';
@@ -2034,6 +1725,47 @@ document.getElementById('repairReservationForm').addEventListener('submit', func
     sessionStorage.removeItem('selectedStoreId');
     sessionStorage.removeItem('selectedServiceData');
 });
+
+// Capacity Availability Check
+function checkAvailability() {
+    const storeId = document.getElementById('store_location').value;
+    const serviceOption = document.getElementById('service_option').value;
+    let date = null;
+    let type = null;
+
+    if (serviceOption === 'pickup' || serviceOption === 'both') {
+        date = document.getElementById('pickup_date').value;
+        type = 'pickup';
+    } else if (serviceOption === 'delivery') {
+        date = document.getElementById('delivery_date').value;
+        type = 'delivery';
+    }
+
+    if (storeId && date && type) {
+        fetch(`<?php echo BASE_URL; ?>customer/checkLogisticAvailability?store_id=${storeId}&date=${date}&type=${type}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.available) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Fully Booked',
+                        text: `Sorry, ${type} service is fully booked for ${date}. Please choose another date.`,
+                        confirmButtonColor: '#0F3C5F'
+                    });
+                    if (type === 'pickup') {
+                        document.getElementById('pickup_date').value = '';
+                    } else {
+                        document.getElementById('delivery_date').value = '';
+                    }
+                }
+            });
+    }
+}
+
+document.getElementById('pickup_date').addEventListener('change', checkAvailability);
+document.getElementById('delivery_date').addEventListener('change', checkAvailability);
+document.getElementById('service_option').addEventListener('change', checkAvailability);
+document.getElementById('store_location').addEventListener('change', checkAvailability);
 </script>
 
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>

@@ -1,12 +1,18 @@
-/**
- * Global Business Mode Handler
- * Handles sidebar visibility and business mode state across all pages
- */
-
-// Check business mode on page load (only on profile page)
+// Check business mode on page load
 document.addEventListener("DOMContentLoaded", function () {
-  // Only apply business mode on profile page
-  if (window.location.pathname.includes("/customer/profile")) {
+  // Apply business mode on relevant pages
+  const businessPages = [
+    "/customer/profile",
+    "/customer/business_bookings",
+    "/customer/newBusinessReservation",
+    "/customer/businessHistory",
+  ];
+
+  const isBusinessPage = businessPages.some((page) =>
+    window.location.pathname.includes(page)
+  );
+
+  if (isBusinessPage) {
     checkBusinessMode();
   }
 
@@ -25,16 +31,10 @@ document.addEventListener("DOMContentLoaded", function () {
 // Function to check and apply business mode
 function checkBusinessMode() {
   const isBusinessMode = sessionStorage.getItem("businessMode") === "true";
-  const isProfilePage = window.location.pathname.includes("/customer/profile");
-
-  console.log("Business mode status:", isBusinessMode);
-  console.log("Is profile page:", isProfilePage);
-
-  if (isBusinessMode && isProfilePage) {
+  
+  if (isBusinessMode) {
     hideSidebar();
-    console.log(
-      "✅ Applied business mode - sidebar hidden (profile page only)"
-    );
+    console.log("✅ Applied business mode - sidebar hidden");
   } else {
     showSidebar();
     console.log("✅ Applied local mode - sidebar shown");
@@ -45,14 +45,28 @@ function checkBusinessMode() {
 function hideSidebar() {
   const sidebar = document.querySelector(".sidebar");
   const contentWrapper = document.querySelector("#content-wrapper");
+  const topbar = document.querySelector(".topbar");
+  const footer = document.querySelector(".sticky-footer");
 
   if (sidebar) {
-    sidebar.style.display = "none";
+    sidebar.style.setProperty("display", "none", "important");
   }
 
   if (contentWrapper) {
-    contentWrapper.style.marginLeft = "0";
-    contentWrapper.style.width = "100%";
+    contentWrapper.style.setProperty("margin-left", "0", "important");
+    contentWrapper.style.setProperty("width", "100%", "important");
+  }
+  
+  if (topbar) {
+    topbar.style.setProperty("width", "100%", "important");
+    topbar.style.setProperty("margin-left", "0", "important");
+    topbar.style.setProperty("left", "0", "important");
+  }
+
+  if (footer) {
+    footer.style.setProperty("width", "100%", "important");
+    footer.style.setProperty("margin-left", "0", "important");
+    footer.style.setProperty("left", "0", "important");
   }
 
   // Add business mode class to body
@@ -65,9 +79,11 @@ function hideSidebar() {
 function showSidebar() {
   const sidebar = document.querySelector(".sidebar");
   const contentWrapper = document.querySelector("#content-wrapper");
+  const topbar = document.querySelector(".topbar");
+  const footer = document.querySelector(".sticky-footer");
 
   if (sidebar) {
-    sidebar.style.display = "block";
+    sidebar.style.setProperty("display", "block", "important");
     sidebar.style.visibility = "visible";
   }
 
@@ -75,26 +91,27 @@ function showSidebar() {
     contentWrapper.style.marginLeft = "";
     contentWrapper.style.width = "";
   }
+  
+  if (topbar) {
+    topbar.style.width = "";
+    topbar.style.marginLeft = "";
+    topbar.style.left = "";
+  }
+
+  if (footer) {
+    footer.style.width = "";
+    footer.style.marginLeft = "";
+    footer.style.left = "";
+  }
 
   // Remove business mode class from body
   if (document.body) {
     document.body.classList.remove("business-mode");
   }
-
-  // Force sidebar to be visible
-  if (sidebar) {
-    sidebar.style.setProperty("display", "block", "important");
-  }
 }
 
-// Function to set business mode (used by profile page)
+// Function to set business mode
 function setBusinessMode(enabled) {
-  // Only work on profile page
-  if (!window.location.pathname.includes("/customer/profile")) {
-    console.log("Business mode only works on profile page");
-    return;
-  }
-
   if (enabled) {
     sessionStorage.setItem("businessMode", "true");
     hideSidebar();
@@ -121,13 +138,18 @@ const businessModeCSS = `
     display: none !important;
 }
 
-.business-mode #content-wrapper {
+.business-mode #wrapper #content-wrapper,
+.business-mode .topbar,
+.business-mode .sticky-footer {
     margin-left: 0 !important;
+    padding-left: 0 !important;
     width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
 }
 
 /* Smooth transitions */
-.sidebar, #content-wrapper {
+.sidebar, #content-wrapper, .topbar, .sticky-footer {
     transition: all 0.3s ease;
 }
 

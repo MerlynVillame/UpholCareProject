@@ -67,27 +67,140 @@
     background-color: #16a085;
     color: white;
 }
+
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.welcome-text {
+    color: #0F3C5F;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
+}
+
+/* Search and Filter Section - Aligned with Catalog Design */
+.search-filter-section {
+    background: white;
+    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 550px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: #f8f9fc;
+}
+
+.search-box input:focus {
+    background: white;
+    border-color: #0F3C5F;
+    outline: none;
+    box-shadow: 0 4px 15px rgba(15, 60, 95, 0.1);
+}
+
+.search-box i {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9499ad;
+    font-size: 0.95rem;
+}
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.filter-tag {
+    padding: 0.5rem 1.25rem;
+    background: #f8f9fc;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5a5c69;
+}
+
+.filter-tag:hover {
+    background: #eaecf4;
+    transform: translateY(-2px);
+    border-color: #d1d3e2;
+    color: #0F3C5F;
+}
+
+.filter-tag.active {
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(15, 60, 95, 0.3);
+}
 </style>
 
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h1 class="h3 mb-2 text-gray-800" style="font-weight: 700;">Bookings</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb" style="background: transparent; padding: 0;">
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard">Home</a></li>
-                <li class="breadcrumb-item active">Bookings</li>
-            </ol>
-        </nav>
+<div class="welcome-container shadow-sm">
+    <div class="welcome-text">
+        <i class="fas fa-credit-card mr-2" style="color: #0F3C5F;"></i>
+        Payments & Invoices
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+            <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard" style="color: #0F3C5F; font-size: 0.85rem; font-weight: 600;">Home</a></li>
+            <li class="breadcrumb-item active" style="font-size: 0.85rem; font-weight: 600;">Payments</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="search-filter-section">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="paymentSearchInput" placeholder="Search by service name..." onkeyup="filterPayments()">
+    </div>
+    <div class="filter-tags">
+        <div class="filter-tag active" data-filter="all" onclick="updatePaymentFilter('all')">All Payments</div>
+        <div class="filter-tag" data-filter="pending" onclick="updatePaymentFilter('pending')">Pending</div>
+        <div class="filter-tag" data-filter="paid" onclick="updatePaymentFilter('paid')">Paid</div>
+        <div class="filter-tag" data-filter="completed" onclick="updatePaymentFilter('completed')">Completed</div>
+        <div class="filter-tag" data-filter="cancelled" onclick="updatePaymentFilter('cancelled')">Cancelled</div>
     </div>
 </div>
 
 <!-- Bookings List -->
 <div class="card payment-card">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background-color: white;">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center" style="background-color: white;">
         <h6 class="m-0 font-weight-bold text-primary">Booking History</h6>
     </div>
-    <div class="card-body">
+    <div class="card-body p-2">
         <div class="table-responsive">
             <table class="table table-bordered" width="100%" cellspacing="0">
                 <thead>
@@ -167,7 +280,7 @@
                             $hasGrandTotal = isset($booking['grand_total']) && floatval($booking['grand_total']) > 0;
                             $showReceiptButton = $quotationSent && $hasGrandTotal;
                     ?>
-                    <tr>
+                    <tr class="payment-item" data-status="<?php echo $status; ?>">
                         <td><strong><?php echo $serviceName; ?></strong></td>
                         <td><?php echo $serviceAddress; ?></td>
                         <td>
@@ -223,9 +336,9 @@
                 <div class="receipt-container p-4" style="background: white; border: 2px solid #e3e6f0; border-radius: 10px;">
                     <!-- Company Header -->
                     <div class="text-center mb-4 pb-3 border-bottom border-primary">
-                        <h2 class="mb-2" style="color: #4e73df; font-weight: 700; font-size: 2rem;">UphoCare</h2>
+                        <h2 class="mb-2" style="color: #4e73df; font-weight: 700; font-size: 2rem;">UpholCare</h2>
                         <p class="text-muted mb-1" style="font-size: 1.1rem; font-weight: 600;">Upholstery Services</p>
-                        <p class="mb-0" style="color: #28a745; font-weight: 600; font-size: 1rem;">Cash on Delivery Receipt</p>
+                        <p class="mb-0" style="color: #0F3C5F; font-weight: 600; font-size: 1rem;">Cash on Delivery Receipt</p>
                     </div>
 
                     <!-- Receipt Details -->
@@ -277,7 +390,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                <tfoot style="background: linear-gradient(135deg, #1cc88a 0%, #28a745 100%); color: white;">
+                                <tfoot style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
                                     <tr>
                                         <th style="font-size: 1.2rem; font-weight: 700; padding: 1rem;">GRAND TOTAL</th>
                                         <th class="text-right" style="font-size: 1.3rem; font-weight: 700; padding: 1rem;">₱<span id="receipt-final-total">0.00</span></th>
@@ -288,10 +401,10 @@
                     </div>
 
                     <!-- Payment Status Message -->
-                    <div class="alert" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; border-radius: 10px; padding: 1.25rem;">
+                    <div class="alert" style="background: linear-gradient(135deg, #f8f9fc 0%, #e9eeff 100%); border: 2px solid #0F3C5F; border-radius: 10px; padding: 1.25rem;">
                         <div class="d-flex align-items-center">
                             <div class="mr-3">
-                                <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #28a745;"></i>
+                                <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #0F3C5F;"></i>
                             </div>
                             <div>
                                 <h6 class="mb-1" style="color: #155724; font-weight: 700; font-size: 1.1rem;">Payment Received!</h6>
@@ -302,7 +415,7 @@
 
                     <!-- Footer Note -->
                     <div class="text-center mt-4 pt-3 border-top">
-                        <p class="mb-2" style="color: #5a5c69; font-weight: 600; font-size: 1rem;">Thank you for choosing UphoCare!</p>
+                        <p class="mb-2" style="color: #5a5c69; font-weight: 600; font-size: 1rem;">Thank you for choosing UpholCare!</p>
                         <p class="mb-0 text-muted" style="font-size: 0.9rem;">For inquiries, please contact our customer service.</p>
                     </div>
                 </div>
@@ -357,7 +470,7 @@
 <div class="modal fade" id="receiptRequestSuccessModal" tabindex="-1" role="dialog" aria-labelledby="receiptRequestSuccessModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1cc88a 0%, #28a745 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
                 <h5 class="modal-title" id="receiptRequestSuccessModalLabel" style="font-size: 1.5rem; font-weight: 700;">
                     <i class="fas fa-check-circle mr-2"></i>Request Submitted
                 </h5>
@@ -367,7 +480,7 @@
             </div>
             <div class="modal-body" style="padding: 2rem;">
                 <div class="text-center">
-                    <i class="fas fa-bell" style="font-size: 4rem; color: #28a745; margin-bottom: 1.5rem;"></i>
+                    <i class="fas fa-bell" style="font-size: 4rem; color: #0F3C5F; margin-bottom: 1.5rem;"></i>
                     <h4 style="color: #2c3e50; font-weight: 700; margin-bottom: 1rem;">Receipt Request Received</h4>
                     <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Your receipt request has been submitted successfully.</p>
                     <p class="text-success" style="font-size: 1.1rem; font-weight: 600;">It will be sent to your notification.</p>
@@ -421,7 +534,7 @@
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-labelledby="receiptPreviewModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
                 <h5 class="modal-title" id="receiptPreviewModalLabel" style="font-size: 1.5rem; font-weight: 700;">
                     <i class="fas fa-receipt mr-2"></i>Preview Receipt (Bayronon)
                 </h5>
@@ -433,7 +546,7 @@
                 <div class="receipt-preview-container p-4" style="background: white; border: 2px solid #e3e6f0; border-radius: 10px;">
                     <!-- Company Header -->
                     <div class="text-center mb-4 pb-3 border-bottom border-primary">
-                        <h2 class="mb-2" style="color: #1F4E79; font-weight: 700; font-size: 2rem;">UphoCare</h2>
+                        <h2 class="mb-2" style="color: #1F4E79; font-weight: 700; font-size: 2rem;">UpholCare</h2>
                         <p class="text-muted mb-1" style="font-size: 1.1rem; font-weight: 600;">Upholstery Services</p>
                         <p class="mb-0" style="color: #1F4E79; font-weight: 600; font-size: 1rem;">Preview Receipt - Bayronon</p>
                     </div>
@@ -469,7 +582,7 @@
                         </h6>
                         <div class="table-responsive">
                             <table class="table table-bordered bg-white" style="font-size: 1rem; margin-bottom: 0;">
-                                <thead style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
+                                <thead style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
                                     <tr>
                                         <th style="font-weight: 600; padding: 1rem;">Description</th>
                                         <th class="text-right" style="font-weight: 600; padding: 1rem; width: 180px;">Amount</th>
@@ -482,7 +595,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                <tfoot style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white;">
+                                <tfoot style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
                                     <tr>
                                         <th style="font-size: 1.2rem; font-weight: 700; padding: 1rem;">GRAND TOTAL (BAYRONON)</th>
                                         <th class="text-right" style="font-size: 1.3rem; font-weight: 700; padding: 1rem;">₱<span id="preview-final-total">0.00</span></th>
@@ -1194,6 +1307,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Payment Filtering Logic
+let currentPaymentStatusFilter = 'all';
+
+function updatePaymentFilter(status) {
+    currentPaymentStatusFilter = status;
+    
+    // Update active class
+    document.querySelectorAll('.filter-tag').forEach(tag => {
+        if (tag.getAttribute('data-filter') === status) {
+            tag.classList.add('active');
+        } else {
+            tag.classList.remove('active');
+        }
+    });
+    
+    filterPayments();
+}
+
+function filterPayments() {
+    const searchTerm = document.getElementById('paymentSearchInput').value.toLowerCase().trim();
+    const items = document.querySelectorAll('.payment-item');
+    
+    items.forEach(item => {
+        const itemStatus = (item.getAttribute('data-status') || '').toLowerCase();
+        const serviceName = (item.querySelector('td:first-child') || {}).textContent || '';
+        
+        const matchesStatus = (currentPaymentStatusFilter === 'all' || itemStatus === currentPaymentStatusFilter);
+        const matchesSearch = !searchTerm || serviceName.toLowerCase().includes(searchTerm);
+        
+        if (matchesStatus && matchesSearch) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
 </script>
 
 <style>

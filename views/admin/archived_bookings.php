@@ -48,6 +48,7 @@
                                     <th>Customer</th>
                                     <th>Service</th>
                                     <th>Category</th>
+                                    <th>Mode</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <!-- <th>Actions</th> -->
@@ -78,6 +79,17 @@
                                             </td>
                                             <td>
                                                 <span><!-- Category: --><?php echo htmlspecialchars($booking['category_name']); ?></span>
+                                            </td>
+                                            <td>
+                                                <?php if (($booking['booking_type'] ?? 'personal') === 'personal'): ?>
+                                                    <span class="badge badge-success px-2 py-1 shadow-sm" style="font-size: 0.7rem;">
+                                                        <i class="fas fa-user-circle mr-1"></i> LOCAL
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="badge badge-primary px-2 py-1 shadow-sm" style="font-size: 0.7rem;">
+                                                        <i class="fas fa-briefcase mr-1"></i> BUSINESS
+                                                    </span>
+                                                <?php endif; ?>
                                             </td>
                                             <td>
                                                 <span style="color: #6c757d; font-weight: bold;">
@@ -116,9 +128,9 @@
 <!-- /.container-fluid -->
 
 <!-- DataTables -->
-<link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
-<script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/jquery.dataTables.min.js"></script>
-<script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<link href="<?php echo BASE_URL; ?>assets/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+<script src="<?php echo BASE_URL; ?>assets/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo BASE_URL; ?>assets/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
 $(document).ready(function() {

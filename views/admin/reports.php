@@ -486,75 +486,49 @@ body.modal-open {
 </style>
 
 <!-- Page Heading -->
-<div class="mb-3">
-    <h1 class="h3 mb-2 text-gray-800">Sales & Revenue Report</h1>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0 text-gray-800">Sales & Revenue Report</h1>
+    <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#generateReportModal" style="background-color: #0F3C5F; border-color: #0F3C5F; font-weight: 600;">
+        <i class="fas fa-download fa-sm text-white-50 mr-2"></i> Generate & Download
+    </button>
 </div>
 
-<!-- YEAR SEARCH - PROMINENT -->
-<div class="card shadow-lg mb-4" style="border-left: 5px solid #4e73df;">
-    <div class="card-body" style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);">
+<!-- YEAR SEARCH - COMPACT & NAVY -->
+<div class="card shadow-sm mb-4" style="border-left: 5px solid #0F3C5F;">
+    <div class="card-body py-3" style="background: linear-gradient(135deg, rgba(15, 60, 95, 0.05) 0%, rgba(31, 78, 121, 0.05) 100%);">
         <div class="row align-items-center">
-            <div class="col-md-6">
-                <h5 class="mb-2" style="color: #2c3e50; font-weight: 700;">
-                    <i class="fas fa-calendar-alt mr-2" style="color: var(--uphol-blue);"></i>
+            <div class="col-md-7">
+                <h6 class="mb-1" style="color: #0F3C5F; font-weight: 700;">
+                    <i class="fas fa-calendar-alt mr-2"></i>
                     Search by Year
-                </h5>
-                <p class="text-muted mb-0 small">
+                </h6>
+                <p class="text-muted mb-0 small" style="font-size: 0.8rem;">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Enter a year (2010-2025) to view historical data
+                    View data for: 2010 - <?php echo date('Y'); ?>
                 </p>
             </div>
-            <div class="col-md-6">
-                <div class="input-group" style="max-width: 400px; margin-left: auto;">
+            <div class="col-md-5">
+                <div class="input-group" style="max-width: 320px; margin-left: auto;">
                     <input type="number" 
-                           class="form-control form-control-lg" 
+                           class="form-control" 
                            id="yearSearch" 
-                           placeholder="Enter year (e.g., 2011, 2020, 2025)" 
+                           placeholder="Year..." 
                            value="<?php echo $selectedYear ?? date('Y'); ?>"
                            min="2000" 
                            max="<?php echo date('Y') + 5; ?>"
-                           style="border: 2px solid var(--uphol-blue); font-size: 1.1rem; font-weight: 600;">
+                           style="border: 2px solid #0F3C5F; font-weight: 600; height: 38px;">
                     <div class="input-group-append">
-                        <button class="btn btn-primary-admin btn-lg" type="button" onclick="searchByYear()" style="padding: 0.5rem 2rem;">
-                            <i class="fas fa-search mr-2"></i> Search Year
+                        <button class="btn btn-primary" type="button" onclick="searchByYear()" style="background-color: #0F3C5F; border-color: #0F3C5F; padding: 0.375rem 1.25rem;">
+                            <i class="fas fa-search mr-1"></i> Search
                         </button>
                     </div>
                 </div>
-                <small class="text-muted d-block mt-2 text-right">
-                    Press Enter or click Search button
-                </small>
             </div>
         </div>
     </div>
 </div>
 
-<div class="alert alert-info mb-4" style="border-left: 5px solid var(--uphol-blue);">
-    <div class="row align-items-center">
-        <div class="col-md-6">
-            <h6 class="mb-0">
-                <i class="fas fa-calendar-check mr-2"></i>
-                <strong>Currently Viewing: Year <?php echo $selectedYear ?? date('Y'); ?></strong>
-            </h6>
-            <small class="text-muted">
-                <i class="fas fa-check-circle text-success mr-1"></i>
-                Based on <strong>completed/paid and delivered/paid bookings</strong> (status = completed & payment = paid, or status = delivered_and_paid)
-            </small>
-        </div>
-        <div class="col-md-6 text-right">
-            <small class="text-muted">
-                <i class="fas fa-database mr-1"></i><strong>Available Years:</strong> 
-                <?php 
-                $years = $availableYears ?? [date('Y')];
-                if (empty($years)) {
-                    echo '<span class="text-warning font-weight-bold">No data yet - Please seed test data</span>';
-                } else {
-                    echo implode(', ', $years); 
-                }
-                ?>
-            </small>
-        </div>
-    </div>
-</div>
+
 
 <!-- KPI Cards -->
 <div class="row mb-4">
@@ -1691,11 +1665,130 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php endif; ?>
 
-</div>
-<!-- /.container-fluid -->
+<!-- Generate Report Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" role="dialog" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header border-0 bg-primary text-white py-4" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white rounded-circle p-2 mr-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                        <i class="fas fa-file-invoice text-primary fa-lg" style="color: #0F3C5F !important;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title font-weight-bold m-0" id="generateReportModalLabel">Generate Business Report</h5>
+                        <p class="small m-0 opacity-75">Configure your professional shop report</p>
+                    </div>
+                </div>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="<?= BASE_URL ?>admin/generateReport" method="POST" id="reportGenerationForm">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row">
+                        <!-- Primary Filters -->
+                        <div class="col-md-6 mb-4">
+                            <label class="font-weight-bold text-gray-800 small text-uppercase">Report Type</label>
+                            <select name="report_type" class="form-control custom-select border-left-primary" required>
+                                <option value="sales">Sales & Revenue Report</option>
+                                <option value="bookings">Booking Activity Report</option>
+                                <option value="services">Service Performance Report</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="font-weight-bold text-gray-800 small text-uppercase">Export Format</label>
+                            <div class="d-flex mt-1">
+                                <div class="custom-control custom-radio mr-3">
+                                    <input type="radio" id="formatPDF" name="format" value="pdf" class="custom-control-input" checked>
+                                    <label class="custom-control-label font-weight-bold text-danger" for="formatPDF"><i class="fas fa-file-pdf mr-1"></i> PDF</label>
+                                </div>
+                                <div class="custom-control custom-radio mr-3">
+                                    <input type="radio" id="formatExcel" name="format" value="xlsx" class="custom-control-input">
+                                    <label class="custom-control-label font-weight-bold text-success" for="formatExcel"><i class="fas fa-file-excel mr-1"></i> Excel</label>
+                                </div>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="formatCSV" name="format" value="csv" class="custom-control-input">
+                                    <label class="custom-control-label font-weight-bold text-info" for="formatCSV"><i class="fas fa-file-csv mr-1"></i> CSV</label>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Date Range -->
+                        <div class="col-md-12 mb-4">
+                            <div class="card border-0 shadow-sm p-3">
+                                <label class="font-weight-bold text-gray-800 small text-uppercase mb-3"><i class="fas fa-calendar-alt mr-2 text-primary"></i>Select Period</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label class="small text-muted">Start Date</label>
+                                            <input type="date" name="start_date" class="form-control" value="<?= ($selectedYear ?? date('Y')) . '-01-01' ?>" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label class="small text-muted">End Date</label>
+                                            <input type="date" name="end_date" class="form-control" value="<?= ($selectedYear ?? date('Y')) . '-12-31' ?>" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="col-md-7 mb-4">
+                            <label class="font-weight-bold text-gray-800 small text-uppercase">Category Filter</label>
+                            <select name="category" class="form-control">
+                                <option value="all">All Categories</option>
+                                <option value="Vehicle Upholstery">Vehicle Upholstery</option>
+                                <option value="Residential Upholstery">Residential Upholstery</option>
+                                <option value="Commercial Upholstery">Commercial Upholstery</option>
+                                <option value="Custom Repair">Custom Repair</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-5 mb-4">
+                            <label class="font-weight-bold text-gray-800 small text-uppercase">Report Details</label>
+                            <div class="mt-2 text-xs">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="include_summary" class="custom-control-input" id="optSummary" checked>
+                                    <label class="custom-control-label" for="optSummary">Include summary</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="include_breakdown" class="custom-control-input" id="optBreakdown" checked>
+                                    <label class="custom-control-label" for="optBreakdown">Include detailed breakdown</label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="include_charts" class="custom-control-input" id="optCharts">
+                                    <label class="custom-control-label" for="optCharts">Include charts & analytics</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light-soft py-3">
+                    <button type="button" class="btn btn-link text-muted font-weight-bold text-decoration-none" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2 shadow-sm" style="background-color: #0F3C5F; border: none; border-radius: 8px;">
+                        <i class="fas fa-magic mr-2"></i> Generate & Download
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-<!-- End of Main Content -->
+
+<style>
+    .bg-light-soft { background-color: rgba(248, 249, 252, 0.8); }
+    #reportGenerationForm input[type="date"], 
+    #reportGenerationForm select {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        height: auto !important;
+        min-height: 48px;
+        font-size: 1rem;
+        line-height: 1.5;
+        background-color: #fff;
+    }
+</style>
 
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'footer.php'; ?>
 

@@ -574,9 +574,6 @@ function renderInventoryTable(data) {
                     <button class="btn btn-sm btn-info" title="Edit" onclick="editInventoryItem(${item.id})">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" title="Delete" onclick="deleteInventoryItem(${item.id}, '${escapeHtml(itemName)}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 </td>
             </tr>
             `;
@@ -786,14 +783,25 @@ function submitInventoryForm() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Adding...';
     
+    
     // Check if color code already exists
-    const existingItem = inventoryData.find(item => item.code.toLowerCase() === formData.color_code.toLowerCase());
-    if (existingItem) {
+    const existingCode = inventoryData.find(item => item.code.toLowerCase() === formData.color_code.toLowerCase());
+    if (existingCode) {
         alert('Color code already exists. Please use a different code.');
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalContent;
         return;
     }
+    
+    // Check if color name already exists
+    const existingName = inventoryData.find(item => item.name.toLowerCase() === formData.color_name.toLowerCase());
+    if (existingName) {
+        alert('This color name already exists. Please use a different color name.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+        return;
+    }
+    
     
     // Save to database via AJAX
     const formDataToSend = new FormData();
@@ -1155,6 +1163,7 @@ function updateInventoryItem(itemId) {
     });
 }
 
+/* 
 // Delete inventory item
 function deleteInventoryItem(itemId, itemName) {
     if (!confirm(`Are you sure you want to delete "${itemName}"?\n\nThis action cannot be undone.`)) {
@@ -1175,8 +1184,8 @@ function deleteInventoryItem(itemId, itemName) {
             // Reload inventory from database
             loadInventoryFromDatabase();
             
-            // Show success message
-            showSuccessMessage('Leather stock deleted successfully!');
+            // Show success message (use message from server)
+            showSuccessMessage(data.message || 'Inventory item processed successfully!');
         } else {
             alert('Error: ' + (data.message || 'Failed to delete inventory item'));
         }
@@ -1186,6 +1195,7 @@ function deleteInventoryItem(itemId, itemName) {
         alert('Error deleting inventory item. Please try again.');
     });
 }
+*/
 
 // ============================================
 // MODAL CLICKABILITY FIX - CLEAN & EFFECTIVE

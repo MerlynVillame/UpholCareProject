@@ -56,10 +56,10 @@
                             if ($imgPath && file_exists(ROOT . DS . $imgPath)) {
                                 echo BASE_URL . $imgPath . '?t=' . time();
                             } else {
-                                echo BASE_URL . 'startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg';
+                                echo BASE_URL . 'assets/images/default-avatar.svg';
                             }
                         ?>" alt="Profile Image" class="profile-image" id="profileImage" 
-                        onerror="this.src='<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg'">
+                        onerror="this.src='<?php echo BASE_URL; ?>assets/images/default-avatar.svg'">
                         <button type="button" class="btn btn-primary-admin btn-sm profile-image-btn" id="changeProfileBtn">
                             <i class="fas fa-camera"></i>
                         </button>
@@ -502,7 +502,7 @@ function showAlert(type, message) {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     display: block;
     background-color: #f8f9fa;
-    background-image: url('<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg');
+    background-image: url('<?php echo BASE_URL; ?>assets/images/default-avatar.svg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

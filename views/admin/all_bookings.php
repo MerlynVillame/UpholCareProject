@@ -7,228 +7,101 @@
 
     <!-- Enhanced Button Styles -->
     <style>
-        /* Enhanced Action Buttons Styling */
-        .btn-group-enhanced {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
+        /* Modern Table Styling */
+        .uphol-table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            width: 100%;
         }
         
-        .enhanced-btn {
-            position: relative;
-            padding: 8px 12px;
-            font-weight: 500;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border: 1px solid transparent;
-            min-width: 38px;
-            width: 38px;
-            height: 38px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-        }
-        
-        .enhanced-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            border-color: rgba(0,0,0,0.1);
-        }
-        
-        .enhanced-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .enhanced-btn i {
-            font-size: 1rem;
-        }
-        
-        /* Primary Action Buttons (Main workflow actions) */
-        .btn-primary-action {
-            font-weight: 600;
-            padding: 9px 12px;
-            min-width: 40px;
-            min-height: 40px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
-        }
-        
-        /* Buttons with text should auto-width */
-        .btn-primary-action:not(:only-child) {
-            width: auto;
-        }
-        
-        /* Mark Pick Up button - allow text to show */
-        .mark-pickup-btn {
-            width: auto !important;
-            padding: 9px 15px !important;
-            white-space: nowrap;
-        }
-        
-        .btn-primary-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-        }
-        
-        /* View Button - Special styling */
-        .view-btn {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-            color: white;
+        .uphol-table thead th {
+            background-color: #f8f9fc;
             border: none;
+            color: #4e73df;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 15px;
+            border-bottom: 2px solid #e3e6f0;
         }
         
-        .view-btn:hover {
-            background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
-            color: white;
-        }
-        
-        /* Approve Button - Special styling */
-        .approve-btn {
-            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-            color: white;
-            border: none;
-        }
-        
-        .approve-btn:hover {
-            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
-            color: white;
-        }
-        
-        /* Delete Button - Special styling */
-        .delete-btn {
-            border-color: #dc3545;
-            color: #dc3545;
-        }
-        
-        .delete-btn:hover {
-            background-color: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-        
-        /* Update Button - Special styling */
-        .update-btn {
-            border-color: var(--uphol-blue);
-            color: var(--uphol-blue);
-        }
-        
-        .update-btn:hover {
-            background-color: var(--uphol-blue);
-            color: white;
-            border-color: var(--uphol-blue);
-        }
-        
-        /* Receipt Button - Special styling */
-        .receipt-btn {
-            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-            color: white;
-            border: none;
-        }
-        
-        .receipt-btn:hover {
-            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
-            color: white;
-        }
-        
-        /* Loading State */
-        .enhanced-btn.loading {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-        
-        .enhanced-btn.loading i {
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Official Receipt Modal Footer Buttons - Small and Clean */
-        #officialReceiptModal .modal-footer {
-            padding: 10px 15px !important;
-            border-top: 1px solid #dee2e6;
-            background: #f8f9fa;
-        }
-        
-        #officialReceiptModal .modal-footer .btn {
-            min-width: 36px;
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            margin: 0 2px;
+        .uphol-table tbody tr {
+            background-color: white;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
+            border-radius: 8px;
         }
         
-        #officialReceiptModal .modal-footer .btn i {
-            font-size: 0.9rem;
+        .uphol-table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+            background-color: #f8f9fc;
         }
         
-        #officialReceiptModal .modal-footer .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        .uphol-table td {
+            padding: 15px;
+            vertical-align: middle;
+            border: none;
+            border-top: 1px solid #f1f3f9;
         }
         
-        #officialReceiptModal .modal-footer .btn-group {
-            gap: 4px;
-        }
-        
-        #officialReceiptModal .modal-footer .btn-group .btn {
-            margin: 0;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .btn-group-enhanced {
-                flex-wrap: wrap;
-            }
-            
-            .enhanced-btn {
-                width: 38px;
-                height: 38px;
-                margin-bottom: 4px;
-            }
-            
-            .btn-primary-action {
-                width: 40px;
-                height: 40px;
-            }
-        }
-        
-        /* Button group spacing */
-        .btn-group-enhanced > .btn {
-            margin-right: 4px;
-            margin-bottom: 4px;
-        }
-        
-        .btn-group-enhanced > .btn:last-child {
-            margin-right: 0;
-        }
-        
-        /* Icon alignment */
-        .enhanced-btn i {
-            display: flex;
+        /* Status Pills */
+        .status-pill {
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
         }
         
-        /* Disabled state */
-        .enhanced-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
+        .status-pill i {
+            font-size: 0.5rem;
+            margin-right: 6px;
         }
         
-        /* Focus state for accessibility */
-        .enhanced-btn:focus {
-            outline: 2px solid #007bff;
-            outline-offset: 2px;
+        .status-pill-warning { background-color: #fff9e6; color: #f6c23e; border: 1px solid #ffeeba; }
+        .status-pill-success { background-color: #e6ffed; color: #28a745; border: 1px solid #c3e6cb; }
+        .status-pill-info { background-color: #e6f7ff; color: #17a2b8; border: 1px solid #bee5eb; }
+        .status-pill-primary { background-color: #ebf0ff; color: #4e73df; border: 1px solid #c5d3f3; }
+        .status-pill-danger { background-color: #fff0f0; color: #e74a3b; border: 1px solid #fad2cf; }
+        .status-pill-secondary { background-color: #f4f6f9; color: #858796; border: 1px solid #d1d3e2; }
+
+        /* Info Containers */
+        .info-box {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-box .main-text {
+            color: #2e3b4e;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        
+        .info-box .sub-text {
+            color: #858796;
+            font-size: 0.8rem;
+        }
+        
+        .booking-number {
+            background-color: #4e73df;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        /* Action Group Styling */
+        .action-group {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
         }
     </style>
 
@@ -237,13 +110,17 @@
         <h1 class="h3 mb-0 text-gray-800">
             <i class="fas fa-calendar-check mr-2"></i>All Bookings
         </h1>
-        <div>
-            <!-- <button type="button" class="btn btn-sm btn-primary mr-2" data-toggle="modal" data-target="#bookingNumbersModal">
-                <i class="fas fa-ticket-alt mr-1"></i> Manage Booking Numbers
-            </button> -->
-            <!-- <a href="<?php echo BASE_URL; ?>admin/repairItems" class="btn btn-sm btn-success">
-                <i class="fas fa-tools mr-1"></i> Repair Items
-            </a> -->
+        <div class="d-flex align-items-center">
+            <?php 
+                $isBusiness = ($mode === 'business');
+                $toggleMode = $isBusiness ? 'local' : 'business';
+                $btnClass = $isBusiness ? 'btn-success' : 'btn-primary';
+                $btnIcon = $isBusiness ? 'fa-home' : 'fa-briefcase';
+                $btnText = $isBusiness ? 'Switch to Local Mode' : 'Switch to Business Mode';
+            ?>
+            <a href="?mode=<?php echo $toggleMode; ?>" class="btn btn-sm <?php echo $btnClass; ?> shadow-sm px-3 font-weight-bold">
+                <i class="fas <?php echo $btnIcon; ?> mr-1"></i> <?php echo $btnText; ?>
+            </a>
         </div>
     </div>
 
@@ -299,22 +176,22 @@
                     <?php endif; ?>
 
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped" id="activeBookingsTable">
-                                    <thead class="thead-light">
+                                <table class="uphol-table" id="activeBookingsTable">
+                                    <thead>
                                         <tr>
-                                            <th>Booking #</th>
-                                            <th>Customer</th>
-                                            <th>Service</th>
+                                            <th>Customer Info</th>
+                                            <th>Service Details</th>
                                             <th>Category</th>
                                             <th>Service Option</th>
                                             <th>Status</th>
-                                            <th>Date</th>
-                                            <th>Actions</th>
+                                            <th>Created At</th>
+                                            <th class="text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php 
                                         // Function to generate status-specific action buttons based on workflow (ENHANCED)
+                                        if (!function_exists('getStatusActionButtons')):
                                         function getStatusActionButtons($booking) {
                                             $bookingId = (int)$booking['id'];
                                             $rawStatus = $booking['status'] ?? '';
@@ -349,9 +226,14 @@
                                             // Status-specific buttons based on workflow - Icon Only
                                             switch ($status) {
                                                 case 'pending':
+                                                case 'pending_schedule':
+                                                case 'reschedule_requested':
                                                     // Pending: Accept → Accepted (then auto to For Pickup if Pick Up service) - Icon Only
-                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn approve-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="acceptBooking(' . $bookingId . ')" title="Accept Booking - Status will change to Accepted">
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-success action-btn approve-btn enhanced-btn btn-primary-action" data-booking-id="' . $bookingId . '" onclick="acceptLogisticBooking(' . $bookingId . ')" title="Approve & Schedule">
                                                         <i class="fas fa-check-circle"></i>
+                                                    </button>';
+                                                    $buttons[] = '<button type="button" class="btn btn-sm btn-danger action-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="rejectLogisticBooking(' . $bookingId . ')" title="Reject Request">
+                                                        <i class="fas fa-times-circle"></i>
                                                     </button>';
                                                     break;
                                                     
@@ -510,15 +392,11 @@
                                                 $buttons[] = '<button type="button" class="btn btn-sm btn-outline-secondary action-btn archive-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="handleArchive(' . $bookingId . ', event)" title="Archive Booking">
                                                     <i class="fas fa-archive"></i>
                                                 </button>';
-                                            } else {
-                                                // Active bookings can be deleted
-                                                $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger action-btn delete-btn enhanced-btn" data-booking-id="' . $bookingId . '" onclick="handleDelete(' . $bookingId . ', event)" title="Delete Booking">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>';
                                             }
                                             
-                                            return '<div class="btn-group btn-group-enhanced" role="group" aria-label="Booking Actions">' . implode('', $buttons) . '</div>';
+                                            return '<div class="action-group" role="group">' . implode('', $buttons) . '</div>';
                                         }
+                                        endif;
                                         
                                         $activeCount = 0;
                                         $completedCount = 0;
@@ -542,148 +420,86 @@
                                                     $completedCount++;
                                                     continue; // Skip completed bookings in active tab
                                                 }
+
+                                                // CUSTOM FILTER: Hide pending logistics bookings from this list
+                                                // They will be managed in the Daily Schedule (Logistics Management)
+                                                $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
+                                                $isLogisticsPending = ($status === 'pending' || $status === 'pending_schedule' || $status === 'reschedule_requested') && 
+                                                                     in_array($serviceOption, ['pickup', 'delivery', 'both', 'pickup_and_delivery']);
+                                                
+                                                if ($isLogisticsPending) {
+                                                    continue; // Don't show in All Bookings, will be in Daily Schedule
+                                                }
+
                                                 $activeCount++;
                                         ?>
-                                            <tr>
+                                             <tr>
+                                                
                                                 <td>
-                                                    <span class="text-primary font-weight-bold">Booking #<?php echo htmlspecialchars($booking['id']); ?></span>
-                                                </td>
-                                                <td>
-                                                    <div class="customer-info">
-                                                        <strong><?php echo htmlspecialchars($booking['customer_name']); ?></strong>
-                                                        <br>
-                                                        <small><?php echo htmlspecialchars($booking['email']); ?></small>
-                                                        <br>
-                                                        <small><?php echo htmlspecialchars($booking['phone']); ?></small>
+                                                    <div class="info-box">
+                                                        <span class="main-text"><?php echo htmlspecialchars($booking['customer_name']); ?></span>
+                                                        <span class="sub-text"><?php echo htmlspecialchars($booking['email']); ?></span>
+                                                        <span class="sub-text"><?php echo htmlspecialchars($booking['phone']); ?></span>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="service-info">
-                                                        <strong><?php echo htmlspecialchars($booking['service_name']); ?></strong>
-                                                        <br>
-                                                        <small><?php echo htmlspecialchars($booking['service_type']); ?></small>
+                                                    <div class="info-box">
+                                                        <span class="main-text"><?php echo htmlspecialchars($booking['service_name']); ?></span>
+                                                        <span class="sub-text"><?php echo htmlspecialchars($booking['service_type']); ?></span>
                                                     </div>
                                                 </td>
-                                                <td>
-                                                    <span class="text-secondary font-weight-bold"><!-- Category: --><?php echo htmlspecialchars($booking['category_name']); ?></span>
+                                                <td class="text-center">
+                                                    <span class="text-primary font-weight-bold"><?php echo htmlspecialchars($booking['category_name']); ?></span>
                                                 </td>
                                                 <td>
                                                     <?php
-                                                    // Service Option mapping with icons and colors
                                                     $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
                                                     $serviceOptionConfig = [
-                                                        'pickup' => ['class' => 'badge-primary', 'icon' => 'fa-truck-loading', 'text' => 'Pickup'],
-                                                        'delivery' => ['class' => 'badge-info', 'icon' => 'fa-truck', 'text' => 'Delivery'],
-                                                        'both' => ['class' => 'badge-success', 'icon' => 'fa-exchange-alt', 'text' => 'Both'],
-                                                        'walk_in' => ['class' => 'badge-warning', 'icon' => 'fa-walking', 'text' => 'Walk-in']
+                                                        'pickup' => ['color' => '#4e73df', 'icon' => 'fa-truck-loading', 'text' => 'Pickup'],
+                                                        'delivery' => ['color' => '#36b9cc', 'icon' => 'fa-truck', 'text' => 'Delivery'],
+                                                        'both' => ['color' => '#1cc88a', 'icon' => 'fa-exchange-alt', 'text' => 'Both'],
+                                                        'walk_in' => ['color' => '#f6c23e', 'icon' => 'fa-walking', 'text' => 'Walk-in']
                                                     ];
-                                                    $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['class' => 'badge-secondary', 'icon' => 'fa-question', 'text' => ucfirst($serviceOption)];
+                                                    $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['color' => '#858796', 'icon' => 'fa-question', 'text' => ucfirst($serviceOption)];
                                                     ?>
-                                                    <span class="text-dark font-weight-bold">
-                                                        <i class="fas <?php echo $optionConfig['icon']; ?> mr-1 text-secondary"></i>
-                                                        <?php echo htmlspecialchars($optionConfig['text']); ?>
-                                                    </span>
-                                                </td>
-                                                <td class="status-cell" data-booking-status="<?php echo htmlspecialchars($booking['status'] ?? 'pending'); ?>">
-                                                    <?php
-                                                    // Status mapping based on workflow
-                                                    $statusConfig = [
-                                                        // Initial stages
-                                                        'pending' => ['class' => 'badge-warning', 'text' => 'Pending'],
+                                                    <div class="d-flex align-items-center">
                                                         
-                                                        // PICKUP Workflow
+                                                        <span class="small font-weight-bold text-dark"><?php echo htmlspecialchars($optionConfig['text']); ?></span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    // Status mapping (local config for active tab)
+                                                    $statusConfig = [
+                                                        'pending' => ['class' => 'badge-warning', 'text' => 'Pending'],
+                                                        'pending_schedule' => ['class' => 'badge-warning', 'text' => 'Pending Schedule'],
+                                                        'scheduled' => ['class' => 'badge-success', 'text' => 'Scheduled'],
+                                                        'reschedule_requested' => ['class' => 'badge-danger', 'text' => 'Reschedule Requested'],
                                                         'for_pickup' => ['class' => 'badge-info', 'text' => 'For Pickup'],
                                                         'picked_up' => ['class' => 'badge-primary', 'text' => 'Picked Up'],
                                                         'to_inspect' => ['class' => 'badge-warning', 'text' => 'To Inspect'],
-                                                        'for_dropoff' => ['class' => 'badge-warning', 'text' => 'For Drop-off'],
                                                         'for_inspect' => ['class' => 'badge-warning', 'text' => 'For Inspect'],
-                                                        'for_inspection' => ['class' => 'badge-warning', 'text' => 'For Inspection'],
-                                                        'to_inspect' => ['class' => 'badge-warning', 'text' => 'To Inspect'],
                                                         'inspect_completed' => ['class' => 'badge-success', 'text' => 'Inspect Completed'],
-                                                        'inspection_completed_waiting_approval' => ['class' => 'badge-info', 'text' => 'Inspection Completed - Waiting for Approval'],
-                                                        'preview_receipt_sent' => ['class' => 'badge-info', 'text' => 'Preview Receipt Sent'],
+                                                        'preview_receipt_sent' => ['class' => 'badge-info', 'text' => 'Receipt Sent'],
                                                         'for_repair' => ['class' => 'badge-info', 'text' => 'For Repair'],
-                                                        // 'for_quotation' status removed
-                                                        
-                                                        // Work in Progress
                                                         'under_repair' => ['class' => 'badge-primary', 'text' => 'Under Repair'],
                                                         'repair_completed' => ['class' => 'badge-success', 'text' => 'Repair Completed'],
-                                                        'repair_completed_ready_to_deliver' => ['class' => 'badge-success', 'text' => 'Repair Completed - Ready to Deliver'],
-                                                        'for_quality_check' => ['class' => 'badge-info', 'text' => 'For Quality Check'],
-                                                        
-                                                        // Completion
-                                                        'ready_for_pickup' => ['class' => 'badge-success', 'text' => 'Ready for Pickup'],
+                                                        'repair_completed_ready_to_deliver' => ['class' => 'badge-success', 'text' => 'Ready to Deliver'],
                                                         'out_for_delivery' => ['class' => 'badge-warning', 'text' => 'Out for Delivery'],
-                                                        'completed' => ['class' => 'badge-success', 'text' => 'Completed'],
-                                                        'delivered_and_paid' => ['class' => 'badge-success', 'text' => 'Delivered and Paid'],
-                                                        'paid' => ['class' => 'badge-success', 'text' => 'Paid'],
-                                                        'closed' => ['class' => 'badge-dark', 'text' => 'Closed'],
-                                                        
-                                                        // Other
-                                                        'cancelled' => ['class' => 'badge-secondary', 'text' => 'Cancelled'],
-                                                        
-                                                        // Legacy statuses (for backward compatibility)
-                                                        'accepted' => ['class' => 'badge-success', 'text' => 'Approved'],
-                                                        'confirmed' => ['class' => 'badge-success', 'text' => 'Approved'],
-                                                        'ongoing' => ['class' => 'badge-primary', 'text' => 'Under Repair'],
-                                                        'declined' => ['class' => 'badge-danger', 'text' => 'Declined']
+                                                        'approved' => ['class' => 'badge-success', 'text' => 'Approved'],
                                                     ];
                                                     
-                                                    $status = strtolower(trim($booking['status'] ?? ''));
-                                                    // CRITICAL: Preserve actual status from database
-                                                    // Only default to 'pending' if status is truly NULL or empty string
-                                                    // Do NOT override valid statuses like 'to_inspect', 'for_repair', etc.
-                                                    if (empty($status) || $status === 'null' || $status === '') {
-                                                        $status = 'pending';
-                                                    }
-                                                    // Log status for debugging
-                                                    if ($status === 'to_inspect') {
-                                                        error_log("DEBUG: Booking #{$booking['id']} has status 'to_inspect' - should show Preview Receipt button");
-                                                    }
+                                                    $status = strtolower(trim($booking['status'] ?? 'pending'));
+                                                    if (empty($status) || $status === 'null') $status = 'pending';
+                                                    
                                                     $config = $statusConfig[$status] ?? ['class' => 'badge-secondary', 'text' => ucwords(str_replace('_', ' ', $status))];
-                                                    
-                                                    // Show payment status if completed
-                                                    // If status is delivered_and_paid, it's already paid
-                                                    if ($status === 'completed') {
-                                                        $paymentStatus = $booking['payment_status'] ?? 'unpaid';
-                                                        $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
-                                                        
-                                                        // Determine status text based on service option and payment
-                                                        if ($paymentStatus === 'paid_full_cash' || $paymentStatus === 'paid' || $paymentStatus === 'paid_on_delivery_cod') {
-                                                            // If service option is delivery or both, show "Delivered/Paid"
-                                                            if ($serviceOption === 'delivery' || $serviceOption === 'both') {
-                                                                $config['text'] = 'Delivered/Paid';
-                                                            } else {
-                                                                $config['text'] = 'Completed & Paid';
-                                                            }
-                                                            $config['class'] = 'badge-success';
-                                                        } else {
-                                                            $config['text'] = 'Completed (Unpaid)';
-                                                            $config['class'] = 'badge-warning';
-                                                        }
-                                                    } elseif ($status === 'delivered_and_paid') {
-                                                        // Delivered and Paid status (COD after payment received)
-                                                        $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
-                                                        // Always show "Delivered/Paid" for delivered_and_paid status
-                                                        $config['text'] = 'Delivered/Paid';
-                                                        $config['class'] = 'badge-success';
-                                                    }
-                                                    
-                                                    // Ensure "Approved" shows clearly
-                                                    if ($status === 'approved') {
-                                                        $config['text'] = 'Approved';
-                                                        $config['class'] = 'badge-success';
-                                                    }
                                                     ?>
-                                                    <span class="text-<?php echo str_replace('badge-', '', $config['class']); ?> font-weight-bold">
-                                        <i class="fas fa-circle mr-1" style="font-size: 0.6rem;"></i>
-                                        <?php echo htmlspecialchars($config['text']); ?>
-                                    </span>
+                                                    <span class="font-weight-bold text-<?php echo str_replace('badge-', '', $config['class']); ?>"><?php echo htmlspecialchars($config['text']); ?></span>
                                                 </td>
-                                                <td>
-                                                    <span class="date-info"><?php echo date('M d, Y', strtotime($booking['created_at'])); ?></span>
+                                                <td class="text-muted small font-weight-bold">
+                                                    <?php echo date('M d, Y', strtotime($booking['created_at'])); ?>
                                                 </td>
-                                                <td>
+                                                <td class="text-right">
                                                     <?php echo getStatusActionButtons($booking); ?>
                                                 </td>
                                             </tr>
@@ -691,14 +507,6 @@
                                             endforeach; 
                                         endif; 
                                         ?>
-                                        <?php if ($activeCount === 0): ?>
-                                            <tr class="empty-state">
-                                                <td colspan="8" class="text-center py-4">
-                                                    <i class="fas fa-calendar-times fa-3x text-gray-300 mb-3"></i>
-                                                    <br><span class="text-muted">No active bookings found</span>
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -707,17 +515,16 @@
                         <!-- Completed Bookings Tab -->
                         <div class="tab-pane fade" id="completedBookings" role="tabpanel" aria-labelledby="completed-tab">
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped" id="completedBookingsTable">
-                                    <thead class="thead-light">
+                                <table class="uphol-table" id="completedBookingsTable">
+                                    <thead>
                                         <tr>
-                                            <th>Booking #</th>
-                                            <th>Customer</th>
-                                            <th>Service</th>
+                                            <th>Customer Info</th>
+                                            <th>Service Details</th>
                                             <th>Category</th>
                                             <th>Service Option</th>
-                                            <th>Status</th>
-                                            <th>Completed Date</th>
-                                            <th>Actions</th>
+                                            <th>Final Status</th>
+                                            <th>Completion Date</th>
+                                            <th class="text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -742,83 +549,69 @@
                                                     continue; // Skip non-completed bookings
                                                 }
                                         ?>
-                                            <tr>
+                                             <tr>
+                                                
                                                 <td>
-                                                    <span class="text-primary font-weight-bold">Booking #<?php echo htmlspecialchars($booking['id']); ?></span>
-                                                </td>
-                                                <td>
-                                                    <div class="customer-info">
-                                                        <strong><?php echo htmlspecialchars($booking['customer_name']); ?></strong>
-                                                        <br>
-                                                        <small><?php echo htmlspecialchars($booking['email']); ?></small>
-                                                        <br>
-                                                        <small><?php echo htmlspecialchars($booking['phone']); ?></small>
+                                                    <div class="info-box">
+                                                        <span class="main-text"><?php echo htmlspecialchars($booking['customer_name']); ?></span>
+                                                        <span class="sub-text"><?php echo htmlspecialchars($booking['email']); ?></span>
+                                                        <span class="sub-text"><?php echo htmlspecialchars($booking['phone']); ?></span>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="service-info">
-                                                        <strong><?php echo htmlspecialchars($booking['service_name']); ?></strong>
-                                                        <br>
-                                                        <small><?php echo htmlspecialchars($booking['service_type']); ?></small>
+                                                    <div class="info-box">
+                                                        <span class="main-text"><?php echo htmlspecialchars($booking['service_name']); ?></span>
+                                                        <span class="sub-text"><?php echo htmlspecialchars($booking['service_type']); ?></span>
                                                     </div>
                                                 </td>
-                                                <td>
-                                                    <span class="text-secondary font-weight-bold"><!-- Category: --><?php echo htmlspecialchars($booking['category_name']); ?></span>
+                                                <td class="text-center">
+                                                    <span class="text-primary font-weight-bold"><?php echo htmlspecialchars($booking['category_name']); ?></span>
                                                 </td>
                                                 <td>
                                                     <?php
-                                                    // Service Option mapping with icons and colors
                                                     $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
                                                     $serviceOptionConfig = [
-                                                        'pickup' => ['class' => 'badge-primary', 'icon' => 'fa-truck-loading', 'text' => 'Pickup'],
-                                                        'delivery' => ['class' => 'badge-info', 'icon' => 'fa-truck', 'text' => 'Delivery'],
-                                                        'both' => ['class' => 'badge-success', 'icon' => 'fa-exchange-alt', 'text' => 'Both'],
-                                                        'walk_in' => ['class' => 'badge-warning', 'icon' => 'fa-walking', 'text' => 'Walk-in']
+                                                        'pickup' => ['color' => '#4e73df', 'icon' => 'fa-truck-loading', 'text' => 'Pickup'],
+                                                        'delivery' => ['color' => '#36b9cc', 'icon' => 'fa-truck', 'text' => 'Delivery'],
+                                                        'both' => ['color' => '#1cc88a', 'icon' => 'fa-exchange-alt', 'text' => 'Both'],
+                                                        'walk_in' => ['color' => '#f6c23e', 'icon' => 'fa-walking', 'text' => 'Walk-in']
                                                     ];
-                                                    $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['class' => 'badge-secondary', 'icon' => 'fa-question', 'text' => ucfirst($serviceOption)];
+                                                    $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['color' => '#858796', 'icon' => 'fa-question', 'text' => ucfirst($serviceOption)];
                                                     ?>
-                                                    <span class="text-dark font-weight-bold">
-                                                        <i class="fas <?php echo $optionConfig['icon']; ?> mr-1 text-secondary"></i>
-                                                        <?php echo htmlspecialchars($optionConfig['text']); ?>
-                                                    </span>
+                                                    <div class="d-flex align-items-center">
+                                                        
+                                                        <span class="small font-weight-bold text-dark"><?php echo htmlspecialchars($optionConfig['text']); ?></span>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <?php
-                                                    // Determine status text based on service option
-                                                    $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
-                                                    $statusText = 'Completed & Paid'; // Default for pickup
-                                                    
-                                                    // If service option is delivery or both, show "Delivered/Paid"
-                                                    if ($serviceOption === 'delivery' || $serviceOption === 'both') {
+                                                    $serviceOptionValue = strtolower(trim($booking['service_option'] ?? 'pickup'));
+                                                    $statusText = 'Completed & Paid';
+                                                    if ($serviceOptionValue === 'delivery' || $serviceOptionValue === 'both') {
                                                         $statusText = 'Delivered/Paid';
                                                     }
                                                     ?>
-                                                    <span class="text-success font-weight-bold">
-                                                        <i class="fas fa-check-circle mr-1"></i><?php echo htmlspecialchars($statusText); ?>
+                                                    <span class="status-pill status-pill-success">
+                                                        <i class="fas fa-check-circle"></i>
+                                                        <?php echo htmlspecialchars($statusText); ?>
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <span class="date-info">
-                                                        <?php 
-                                                        $completedDate = !empty($booking['updated_at']) ? $booking['updated_at'] : $booking['created_at'];
-                                                        echo date('M d, Y', strtotime($completedDate)); 
-                                                        ?>
-                                                    </span>
+                                                <td class="text-muted small font-weight-bold">
+                                                    <?php 
+                                                    $completedDate = !empty($booking['updated_at']) ? $booking['updated_at'] : $booking['created_at'];
+                                                    echo date('M d, Y', strtotime($completedDate)); 
+                                                    ?>
                                                 </td>
-                                                <td>
-                                                    <div class="btn-group btn-group-enhanced" role="group" aria-label="Completed Booking Actions">
+                                                <td class="text-right">
+                                                    <div class="action-group">
                                                         <button type="button" 
-                                                                class="btn btn-sm btn-success action-btn receipt-btn enhanced-btn btn-primary-action" 
-                                                                data-booking-id="<?php echo (int)$booking['id']; ?>"
-                                                                data-action="receipt"
+                                                                class="btn btn-sm btn-success" 
                                                                 onclick="handleGenerateReceipt(<?php echo (int)$booking['id']; ?>)"
                                                                 title="Generate Official Receipt">
                                                             <i class="fas fa-receipt"></i>
                                                         </button>
                                                         <button type="button" 
-                                                                class="btn btn-sm btn-outline-secondary action-btn archive-btn enhanced-btn" 
-                                                                data-booking-id="<?php echo (int)$booking['id']; ?>"
-                                                                data-action="archive"
+                                                                class="btn btn-sm btn-outline-secondary" 
                                                                 onclick="handleArchive(<?php echo (int)$booking['id']; ?>, event)"
                                                                 title="Archive Booking">
                                                             <i class="fas fa-archive"></i>
@@ -830,14 +623,6 @@
                                             endforeach; 
                                         endif; 
                                         ?>
-                                        <?php if ($completedCount === 0): ?>
-                                            <tr class="empty-state">
-                                                <td colspan="8" class="text-center py-4">
-                                                    <i class="fas fa-check-circle fa-3x text-gray-300 mb-3"></i>
-                                                    <br><span class="text-muted">No completed bookings found</span>
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -891,7 +676,7 @@
                                 <div id="serviceOptionDetails">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <strong>Service Type:</strong> <span id="serviceOptionType" class="badge badge-primary"></span>
+                                            <strong>Service Type:</strong> <span id="serviceOptionType" class="font-weight-bold text-primary"></span>
                                         </div>
                                         <div class="col-md-6">
                                             <strong>Status:</strong> <span id="serviceOptionStatus"></span>
@@ -1081,24 +866,7 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="leather_quality">Leather Quality <span class="text-danger">*</span></label>
-                                        <select class="form-control" id="leather_quality" name="leather_quality" required disabled style="background-color: #f8f9fa; cursor: not-allowed;">
-                                            <option value="">Select Quality...</option>
-                                            <option value="standard">Standard</option>
-                                            <option value="premium">Premium</option>
-                                        </select>
-                                        <small class="form-text text-muted">Customer's selected quality (pre-filled from booking)</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="leather_color_id">Leather/Color <span class="text-danger">*</span></label>
-                                        <select class="form-control" id="leather_color_id" name="leather_color_id" required disabled style="background-color: #f8f9fa; cursor: not-allowed;">
-                                            <option value="">Loading color...</option>
-                                        </select>
-                                        <small class="form-text text-muted">Customer's selected color (pre-filled from booking)</small>
-                                    </div>
+                                <!-- Leather Details Removed -->
                                 </div>
                             </div>
                             <div class="row">
@@ -1144,10 +912,7 @@
                                         <td><strong>Leather Cost:</strong></td>
                                         <td class="text-right"><span id="leather_cost_display">₱0.00</span></td>
                                     </tr>
-                                    <tr id="color_price_row" style="display: none;">
-                                        <td><strong>Color Price:</strong></td>
-                                        <td class="text-right"><span id="color_price_display">₱0.00</span></td>
-                                    </tr>
+                                    <!-- Color Price Removed -->
                                     <tr>
                                         <td><strong>Labor Fee:</strong></td>
                                         <td class="text-right"><span id="labor_fee_display">₱0.00</span></td>
@@ -1481,24 +1246,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="combined_leather_quality">Leather Quality <span class="text-danger">*</span></label>
-                                                <select class="form-control" id="combined_leather_quality" name="leather_quality" required disabled style="background-color: #f8f9fa; cursor: not-allowed;">
-                                                    <option value="">Select Quality...</option>
-                                                    <option value="standard">Standard</option>
-                                                    <option value="premium">Premium</option>
-                                                </select>
-                                                <small class="form-text text-muted">Customer's selected quality (pre-filled from booking)</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="combined_leather_color_id">Leather/Color <span class="text-danger">*</span></label>
-                                                <select class="form-control" id="combined_leather_color_id" name="leather_color_id" required disabled style="background-color: #f8f9fa; cursor: not-allowed;">
-                                                    <option value="">Loading color...</option>
-                                                </select>
-                                                <small class="form-text text-muted">Customer's selected color (pre-filled from booking)</small>
-                                            </div>
+                                                <!-- Leather Details Removed -->
                                         </div>
                                     </div>
                                     <div class="row">
@@ -1558,10 +1306,7 @@
                                                 <td><strong>Leather Cost:</strong></td>
                                                 <td class="text-right"><span id="combined_leather_cost_display">₱0.00</span></td>
                                             </tr>
-                                            <tr id="combined_color_price_row" style="display: none;">
-                                                <td><strong>Color Price:</strong></td>
-                                                <td class="text-right"><span id="combined_color_price_display">₱0.00</span></td>
-                                            </tr>
+                                            <!-- Combined Color Price Removed -->
                                             <tr>
                                                 <td><strong>Labor Fee:</strong></td>
                                                 <td class="text-right"><span id="combined_labor_fee_display">₱0.00</span></td>
@@ -1611,7 +1356,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <p class="mb-2"><strong>Booking ID:</strong> <span id="preview_booking_id" class="badge badge-info">-</span></p>
+                                <p class="mb-2"><strong>Booking ID:</strong> <span id="preview_booking_id" class="font-weight-bold text-info">-</span></p>
                                 <p class="mb-2"><strong>Customer Name:</strong> <span id="preview_customer_name">-</span></p>
                             </div>
                             <div class="col-md-6">
@@ -1664,7 +1409,7 @@
                     </div>
                     <div class="card-body">
                         <p class="mb-2"><strong>Leather Quality:</strong> <span id="preview_leather_quality">-</span></p>
-                        <p class="mb-2"><strong>Leather/Color:</strong> <span id="preview_leather_color">-</span></p>
+                        <!-- Leather/Color display removed -->
                         <p class="mb-2"><strong>Fabric Type:</strong> <span id="preview_fabric_type">-</span></p>
                         <p class="mb-2"><strong>Yards/Meters:</strong> <span id="preview_material_meters">-</span> @ <span id="preview_price_per_meter">₱0.00</span> = <span id="preview_material_cost" class="text-success">₱0.00</span></p>
                         <p class="mb-2"><strong>Foam Replacement:</strong> <span id="preview_foam_replacement">-</span> <span id="preview_foam_cost" class="text-success"></span></p>
@@ -1684,10 +1429,7 @@
                                     <td><strong>Material Subtotal:</strong></td>
                                     <td class="text-right"><span id="preview_material_subtotal">₱0.00</span></td>
                                 </tr>
-                                <tr id="preview_color_price_row" style="display: none;">
-                                    <td><strong>Color Price:</strong></td>
-                                    <td class="text-right"><span id="preview_color_price_subtotal">₱0.00</span></td>
-                                </tr>
+                                <!-- Preview Color Price Removed -->
                                 <tr id="preview_foam_row" style="display: none;">
                                     <td><strong>Foam Replacement Subtotal:</strong></td>
                                     <td class="text-right"><span id="preview_foam_subtotal">₱0.00</span></td>
@@ -2047,7 +1789,7 @@
 </div>
 
 <script>
-// UphoCare Admin Bookings JavaScript v2.1 - Enhanced Action Buttons
+// UpholCare Admin Bookings JavaScript v2.1 - Enhanced Action Buttons
 // Last Updated: December 3, 2025
 // Version: 2.1 - Separated modals for review and calculation
 
@@ -2777,7 +2519,7 @@ window.loadBookingDetailsModal = function(bookingId) {
     // Show loading modal
     const modalHtml = `
                         <div class="modal fade" id="reviewBookingModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">
                         <h5 class="modal-title">
@@ -2926,118 +2668,154 @@ window.loadCalculatePaymentModal = function(bookingId) {
 
 // Display Review Booking Details (Simple - Before Approval)
 function displayReviewBookingDetails(booking) {
+    const dateToDisplay = booking.booking_date;
+    const formattedDate = dateToDisplay ? new Date(dateToDisplay).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A';
+
     const reviewHtml = `
         <div class="row">
             <!-- Customer Information -->
             <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h6 class="m-0"><i class="fas fa-user mr-2"></i>Customer Information</h6>
+                <div class="card h-100 border-0 shadow-sm rounded-lg overflow-hidden">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-user-circle mr-2 text-info"></i> Customer Information</h6>
                     </div>
                     <div class="card-body">
-                        <p><strong>Name:</strong> ${booking.customer_name || 'N/A'}</p>
-                        <p><strong>Email:</strong> ${booking.customer_email || 'N/A'}</p>
-                        <p><strong>Phone:</strong> ${booking.customer_phone || 'N/A'}</p>
-                        <p><strong>Registration Date:</strong> ${booking.customer_reg_date ? new Date(booking.customer_reg_date).toLocaleDateString() : 'N/A'}</p>
+                        <div class="mb-3">
+                            <small class="text-muted d-block Uppercase font-weight-bold">FULL NAME</small>
+                            <div class="h5 font-weight-bold text-primary mb-0">${booking.customer_name || 'N/A'}</div>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block Uppercase font-weight-bold">EMAIL ADDRESS</small>
+                            <div class="text-dark">${booking.email || 'N/A'}</div>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block Uppercase font-weight-bold">PHONE NUMBER</small>
+                            <div class="text-dark font-weight-600">${booking.phone || 'N/A'}</div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Service Information -->
+            <!-- Service Details -->
             <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="m-0"><i class="fas fa-tools mr-2"></i>Service Details</h6>
+                <div class="card h-100 border-0 shadow-sm rounded-lg overflow-hidden">
+                    <div class="card-header bg-success text-white py-3">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-tools mr-2 text-white"></i> Service Details</h6>
                     </div>
                     <div class="card-body">
-                        <p><strong>Service:</strong> ${booking.service_name || 'N/A'}</p>
-                        <p><strong>Category:</strong> <span class="badge badge-secondary">${booking.category_name || 'N/A'}</span></p>
-                        <p><strong>Service Type:</strong> ${booking.service_type || 'N/A'}</p>
-                        <p><strong>Item Description:</strong> ${booking.item_description || 'N/A'}</p>
+                        <div class="mb-3">
+                            <small class="text-muted d-block Uppercase font-weight-bold">SERVICE NAME</small>
+                            <div class="h6 font-weight-bold text-dark mb-0">${booking.service_name || 'N/A'}</div>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block Uppercase font-weight-bold">CATEGORY</small>
+                            <span class="font-weight-bold text-info px-3 py-2 mt-1 shadow-xs">${booking.category_name || 'N/A'}</span>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block Uppercase font-weight-bold">SERVICE TYPE</small>
+                            <div class="text-dark">${booking.service_type || 'N/A'}</div>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block Uppercase font-weight-bold">ITEM DESCRIPTION</small>
+                            <div class="text-dark italic small border-left pl-2 mt-1">${booking.item_description || 'No description provided'}</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Color & Fabric (Conditional) -->
+        ${booking.selected_color_id ? `
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
+                    <div class="card-header bg-info text-white py-3">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-palette mr-2"></i> Selected Color & Fabric</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <small class="text-muted d-block Uppercase font-weight-bold">COLOR NAME</small>
+                                <div class="h6 font-weight-bold text-dark mb-0">
+                                    ${booking.color_name || 'N/A'}
+                                    ${booking.color_hex ? `<span class="ml-2 border shadow-sm" style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:${booking.color_hex}; vertical-align: middle;"></span>` : ''}
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2 mb-md-0 border-left border-right">
+                                <small class="text-muted d-block Uppercase font-weight-bold">FABRIC TYPE</small>
+                                <span class="font-weight-bold text-pill badge-primary px-3 text-uppercase">${booking.inventory_type || 'Standard'}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block Uppercase font-weight-bold">PRICE PER METER</small>
+                                <div class="h6 font-weight-bold text-primary mb-0">₱${parseFloat(booking.inventory_price_per_meter || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+
         <div class="row">
             <!-- Booking Information -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="m-0"><i class="fas fa-calendar-check mr-2"></i>Booking Information</h6>
+            <div class="col-md-12 mb-4">
+                <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
+                    <div class="card-header bg-warning py-3">
+                        <h6 class="m-0 font-weight-bold text-dark"><i class="fas fa-calendar-check mr-2"></i> Booking Information</h6>
                     </div>
                     <div class="card-body">
-                        <p><strong>Booking ID:</strong> <span class="badge badge-info">Booking #${booking.id || 'N/A'}</span></p>
-                        <p><strong>Booking Date:</strong> ${booking.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'N/A'}</p>
-                        <p><strong>Status:</strong> <span class="badge badge-${getStatusBadgeClass(booking.status)}">${booking.status || 'N/A'}</span></p>
-                        <p><strong>Payment Status:</strong> <span class="badge badge-${getPaymentBadgeClass(booking.payment_status)}" style="font-weight: 600;">${getPaymentStatusText(booking.payment_status) || 'N/A'}</span></p>
-                        <hr>
-                        <p><strong><i class="fas fa-truck mr-2"></i>Customer's Service Option:</strong></p>
-                        <p>
-                            <span class="badge badge-primary badge-lg">${getServiceOptionText(booking.service_option)}</span>
-                        </p>
-                        ${getServiceOptionDetails(booking)}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Images & Attachments -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="m-0"><i class="fas fa-images mr-2"></i>Attached Images</h6>
-                    </div>
-                    <div class="card-body">
-                        ${booking.images && booking.images.length > 0 ? 
-                            booking.images.map(img => `<img src="${img}" class="img-thumbnail m-1" style="max-width: 150px; max-height: 150px;">`).join('') 
-                            : '<p class="text-muted">No images attached</p>'}
+                        <div class="row text-center">
+                            <div class="col-md-3 mb-2 mb-md-0 border-right">
+                                <small class="text-muted d-block Uppercase font-weight-bold">BOOKING ID</small>
+                                <span class="font-weight-bold text-dark px-3 text-uppercase">#${booking.id}</span>
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0 border-right">
+                                <small class="text-muted d-block Uppercase font-weight-bold">BOOKING DATE</small>
+                                <div class="h6 font-weight-bold text-danger mb-0">${formattedDate}</div>
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0 border-right">
+                                <small class="text-muted d-block Uppercase font-weight-bold">STATUS</small>
+                                <span class="badge badge-${getStatusBadgeClass(booking.status)} text-uppercase px-2">${booking.status ? booking.status.replace('_', ' ') : 'N/A'}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block Uppercase font-weight-bold">PAYMENT</small>
+                                <span class="badge badge-${getPaymentBadgeClass(booking.payment_status)} px-2">${getPaymentStatusText(booking.payment_status) || 'N/A'}</span>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <small class="text-muted d-block Uppercase font-weight-bold"><i class="fas fa-truck mr-1 text-primary"></i> SERVICE OPTION</small>
+                                <span class="h6 font-weight-bold text-primary mb-0">${getServiceOptionText(booking.service_option)}</span>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                ${getServiceOptionDetails(booking)}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Notes (Conditional) -->
         ${booking.notes ? `
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6 class="m-0"><i class="fas fa-sticky-note mr-2"></i>Additional Notes</h6>
-            </div>
-            <div class="card-body">
-                <p>${booking.notes}</p>
-            </div>
-        </div>
-        ` : ''}
-        
-        ${booking.selected_color_id ? `
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                <h6 class="m-0"><i class="fas fa-palette mr-2"></i>Selected Color/Fabric</h6>
-            </div>
-            <div class="card-body">
-                <p><strong>Color:</strong> ${booking.color_name || 'N/A'}</p>
-                <p><strong>Color Code:</strong> ${booking.color_code || 'N/A'}</p>
-                <p><strong>Type:</strong> <span class="badge badge-${booking.color_type === 'premium' ? 'warning' : 'secondary'}">${booking.color_type === 'premium' ? 'Premium' : 'Standard'}</span></p>
-                <p><strong>Color Price:</strong> <span class="text-primary">₱${(() => {
-                    // Use inventory price if color_price is 0, null, or not set
-                    const colorPrice = parseFloat(booking.color_price) || 0;
-                    const inventoryPrice = parseFloat(booking.inventory_price_per_meter) || 0;
-                    const finalPrice = colorPrice > 0 ? colorPrice : inventoryPrice;
-                    // Debug log (can be removed later)
-                    if (finalPrice === 0) {
-                        console.log('Color Price Debug - All prices are 0:', {
-                            color_price: booking.color_price,
-                            inventory_price_per_meter: booking.inventory_price_per_meter,
-                            selected_color_id: booking.selected_color_id
-                        });
-                    }
-                    return finalPrice.toFixed(2);
-                })()}</span></p>
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card border-0 shadow-sm rounded-lg overflow-hidden border-left-warning" style="border-left: 5px solid #ffc107 !important;">
+                    <div class="card-body py-3">
+                        <small class="text-muted d-block Uppercase font-weight-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> CUSTOMER NOTES</small>
+                        <p class="text-dark mb-0 font-italic">${booking.notes}</p>
+                    </div>
+                </div>
             </div>
         </div>
         ` : ''}
         
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle mr-2"></i>
-            <strong>Purpose:</strong> Review booking details before acceptance. After acceptance, status will change based on service option (For Drop-off for Delivery, For Pick-Up for Pickup/Both).
+        <div class="alert alert-info border-0 shadow-xs mb-0">
+            <i class="fas fa-info-circle mr-2 text-info"></i>
+            <strong>Purpose:</strong> Review booking details before acceptance. After acceptance, status will change based on service option.
         </div>
     `;
     
@@ -3260,7 +3038,7 @@ function displayCalculatePayment(booking) {
                         <tfoot style="background: #28a745; color: white;">
                             <tr>
                                 <td style="font-size: 1.2rem; font-weight: bold; padding: 15px;">TOTAL AMOUNT</td>
-                                <td style="text-align: right; font-size: 1.2rem; font-weight: bold; padding: 15px;">₱${(parseFloat(booking.labor_fee || 0) + parseFloat(booking.pickup_fee || 0) + parseFloat(booking.delivery_fee || 0) + parseFloat(booking.color_price || 0)).toFixed(2)}</td>
+                                <td style="text-align: right; font-size: 1.2rem; font-weight: bold; padding: 15px;">₱${(parseFloat(booking.labor_fee || 0) + parseFloat(booking.pickup_fee || 0) + parseFloat(booking.delivery_fee || 0)).toFixed(2)}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -4077,28 +3855,54 @@ window.generateReceipt = function(bookingId) {
                     setupReceiptEventListeners();
                 }
                 
-                // Pre-populate customer's selected quality and color (read-only)
-                // Use setTimeout to ensure DOM is ready
-                setTimeout(() => {
+                // Leather quality/color pre-population removed
+                // Populate admin's measurements (meters and labor fee)
+                if (savedBookingData) {
+                    
+                    if (savedBookingData.meters !== null) {
+                        document.getElementById('number_of_meters').value = savedBookingData.meters.toFixed(2);
+                    }
+                    
+                    if (savedBookingData.laborFee !== null) {
+                        document.getElementById('labor_fee').value = savedBookingData.laborFee.toFixed(2);
+                    }
+                    
+                    // Set the quality and color from saved data (read-only)
                     const qualitySelect = document.getElementById('leather_quality');
                     const colorSelect = document.getElementById('leather_color_id');
-                    
-                    // Set quality dropdown (disabled/read-only)
+
                     if (qualitySelect && savedBookingData.quality) {
                         qualitySelect.value = savedBookingData.quality;
+                        qualitySelect.disabled = true; // Make it read-only
+                    }
+                    if (colorSelect && savedBookingData.colorId) {
+                        // This assumes the color option already exists in the select (e.g., pre-rendered or loaded elsewhere)
+                        // If not, this will just fail silently.
+                        colorSelect.value = savedBookingData.colorId;
+                        colorSelect.disabled = true; // Make it read-only
+                    }
+
+                    // Auto-fill price from inventory if available, but allow admin to edit
+                    const priceInput = document.getElementById('price_per_meter');
+                    if (priceInput) {
+                        // If a specific price was saved, use that. Otherwise, try to get from the selected color option.
+                        if (savedBookingData.pricePerMeter) {
+                            priceInput.value = savedBookingData.pricePerMeter.toFixed(2);
+                        } else if (colorSelect && colorSelect.value) {
+                            const selectedOption = colorSelect.options[colorSelect.selectedIndex];
+                            if (selectedOption && selectedOption.dataset.pricePerMeter) {
+                                priceInput.value = parseFloat(selectedOption.dataset.pricePerMeter).toFixed(2);
+                            }
+                        } else {
+                            priceInput.value = '0.00';
+                        }
                     }
                     
-                    // Load colors filtered by customer's quality, then pre-select customer's color
-                    if (savedBookingData.quality) {
-                        loadLeatherColors(booking.store_location_id || null, savedBookingData);
-                    } else {
-                        // If no quality, default to standard
-                        if (qualitySelect) {
-                            qualitySelect.value = 'standard';
-                        }
-                        loadLeatherColors(booking.store_location_id || null, savedBookingData);
-                    }
-                }, 150);
+                    // Calculate total after all values are set
+                    setTimeout(() => {
+                        calculateReceiptTotal();
+                    }, 100);
+                }
             }
         })
         .catch(error => {
@@ -4110,169 +3914,10 @@ window.generateReceipt = function(bookingId) {
 // Store inventory data globally for filtering
 let allInventoryData = [];
 
-// Load leather colors from inventory
-function loadLeatherColors(storeLocationId, savedData = null) {
-    const colorSelect = document.getElementById('leather_color_id');
-    const qualitySelect = document.getElementById('leather_quality');
-    
-    if (!qualitySelect || !qualitySelect.value) {
-        colorSelect.innerHTML = '<option value="">Select quality first...</option>';
-        colorSelect.disabled = true;
-        return;
-    }
-    
-    const selectedQuality = qualitySelect.value;
-    colorSelect.innerHTML = '<option value="">Loading colors...</option>';
-    colorSelect.disabled = true;
-    
-    const url = storeLocationId 
-        ? `<?php echo BASE_URL; ?>admin/getInventory?store_location_id=${storeLocationId}`
-        : `<?php echo BASE_URL; ?>admin/getInventory`;
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.data) {
-                // Store all inventory data
-                allInventoryData = data.data;
-                
-                // Filter colors by selected quality
-                // Check fabric_type, leather_type, or type field from inventory
-                const filteredColors = data.data.filter(item => {
-                    // Get the quality/type from the inventory item (case-insensitive)
-                    let itemQuality = (item.type || item.fabric_type || item.leather_type || 'standard').toString().toLowerCase().trim();
-                    
-                    // Normalize the quality value to handle variations
-                    if (itemQuality === 'standard' || itemQuality === 'std' || itemQuality === '') {
-                        itemQuality = 'standard';
-                    } else if (itemQuality === 'premium' || itemQuality === 'prem') {
-                        itemQuality = 'premium';
-                    }
-                    
-                    // Match with selected quality (also normalized)
-                    const normalizedSelectedQuality = selectedQuality.toLowerCase().trim();
-                    
-                    return itemQuality === normalizedSelectedQuality;
-                });
-                
-                colorSelect.innerHTML = '<option value="">Select Leather/Color</option>';
-                
-                if (filteredColors.length === 0) {
-                    colorSelect.innerHTML = '<option value="">No colors available for ' + selectedQuality + ' quality</option>';
-                } else {
-                    filteredColors.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        
-                        // Calculate price based on quality
-                        let price = 0;
-                        if (selectedQuality === 'premium') {
-                            // For premium: price_per_meter + premium_price (if available)
-                            price = parseFloat(item.price_per_meter || 0);
-                            const premiumPrice = parseFloat(item.premium_price || 0);
-                            if (premiumPrice > 0) {
-                                price = price + premiumPrice;
-                            }
-                        } else {
-                            // For standard: use price_per_meter
-                            price = parseFloat(item.price_per_meter || 0);
-                        }
-                        
-                        option.textContent = `${item.name} (${item.code || 'N/A'}) - ₱${price.toFixed(2)}/meter`;
-                        option.dataset.pricePerMeter = price;
-                        option.dataset.standardPrice = parseFloat(item.price_per_meter || 0);
-                        option.dataset.premiumPrice = parseFloat(item.premium_price || 0);
-                        colorSelect.appendChild(option);
-                    });
-                }
-                
-                // Keep color select disabled (read-only) - customer's selection
-                colorSelect.disabled = true;
-                
-                // Set up event listeners after colors are loaded
-                setupReceiptEventListeners();
-                
-                // Pre-select customer's color (read-only) and auto-fill price
-                if (savedData && savedData.colorId) {
-                    colorSelect.value = savedData.colorId;
-                    // Auto-fill price from inventory if available, but allow admin to edit
-                    const selectedOption = colorSelect.options[colorSelect.selectedIndex];
-                    if (selectedOption && selectedOption.dataset.pricePerMeter) {
-                        const priceFromInventory = parseFloat(selectedOption.dataset.pricePerMeter);
-                        // Use saved price if it exists (admin's previous input), otherwise use inventory price
-                        const priceInput = document.getElementById('price_per_meter');
-                        if (priceInput) {
-                            priceInput.value = (savedData.pricePerMeter || priceFromInventory).toFixed(2);
-                        }
-                    } else if (savedData.pricePerMeter) {
-                        const priceInput = document.getElementById('price_per_meter');
-                        if (priceInput) {
-                            priceInput.value = savedData.pricePerMeter.toFixed(2);
-                        }
-                    }
-                }
-                
-                // Populate admin's measurements (meters and labor fee)
-                if (savedData) {
-                    
-                    if (savedData.meters !== null) {
-                        document.getElementById('number_of_meters').value = savedData.meters.toFixed(2);
-                    }
-                    
-                    if (savedData.laborFee !== null) {
-                        document.getElementById('labor_fee').value = savedData.laborFee.toFixed(2);
-                    }
-                    
-                    // Calculate total after all values are set
-                    setTimeout(() => {
-                        calculateReceiptTotal();
-                    }, 100);
-                }
-            } else {
-                colorSelect.innerHTML = '<option value="">No colors available</option>';
-                colorSelect.disabled = false;
-                setupReceiptEventListeners();
-                
-                // Still populate saved data even if no colors
-                if (savedData) {
-                    if (savedData.pricePerMeter) {
-                        document.getElementById('price_per_meter').value = savedData.pricePerMeter.toFixed(2);
-                    }
-                    if (savedData.meters !== null) {
-                        document.getElementById('number_of_meters').value = savedData.meters.toFixed(2);
-                    }
-                    if (savedData.laborFee !== null) {
-                        document.getElementById('labor_fee').value = savedData.laborFee.toFixed(2);
-                    }
-                    setTimeout(() => {
-                        calculateReceiptTotal();
-                    }, 100);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error loading colors:', error);
-            colorSelect.innerHTML = '<option value="">Error loading colors</option>';
-            colorSelect.disabled = false;
-            setupReceiptEventListeners();
-            
-            // Still populate saved data even on error
-            if (savedData) {
-                if (savedData.pricePerMeter) {
-                    document.getElementById('price_per_meter').value = savedData.pricePerMeter.toFixed(2);
-                }
-                if (savedData.meters !== null) {
-                    document.getElementById('number_of_meters').value = savedData.meters.toFixed(2);
-                }
-                if (savedData.laborFee !== null) {
-                    document.getElementById('labor_fee').value = savedData.laborFee.toFixed(2);
-                }
-                setTimeout(() => {
-                    calculateReceiptTotal();
-                }, 100);
-            }
-        });
-}
+// loadLeatherColors function removed as color selection is no longer handled in receipt form
+// function loadLeatherColors(storeLocationId, savedData = null) {
+//     // Inventory-based color loading removed
+// }
 
 // Set up event listeners for receipt form
 function setupReceiptEventListeners() {
@@ -4373,17 +4018,8 @@ function calculateReceiptTotal() {
     const pricePerMeter = parseFloat(priceEl.value) || 0;
     const laborFee = parseFloat(laborEl.value) || 0;
     
-    // Get color price from booking data
-    let colorPrice = 0;
-    if (window.currentBookingData) {
-        const booking = window.currentBookingData;
-        const bookingColorPrice = parseFloat(booking.color_price) || 0;
-        const inventoryPrice = parseFloat(booking.inventory_price_per_meter) || 0;
-        colorPrice = bookingColorPrice > 0 ? bookingColorPrice : inventoryPrice;
-    }
-    
     const leatherCost = meters * pricePerMeter;
-    const grandTotal = leatherCost + colorPrice + laborFee;
+    const grandTotal = leatherCost + laborFee;
     
     const leatherCostDisplay = document.getElementById('leather_cost_display');
     const colorPriceDisplay = document.getElementById('color_price_display');
@@ -4866,7 +4502,7 @@ function sendReceiptToCustomer() {
                 }
                 
                 // Initialize only the active table initially
-                safeInitDataTable('activeBookingsTable', 7);
+                safeInitDataTable('activeBookingsTable', 6);
                 // Don't initialize completedBookingsTable here - it's in a hidden tab
                 // It will be initialized when the tab is shown
                 
@@ -4898,7 +4534,7 @@ function sendReceiptToCustomer() {
                                         originalWarn.apply(console, args);
                                     };
                                     
-                                    safeInitDataTable('completedBookingsTable', 6);
+                                    safeInitDataTable('completedBookingsTable', 5);
                                     
                                     // Restore after a delay
                                     setTimeout(() => {
@@ -4908,7 +4544,7 @@ function sendReceiptToCustomer() {
                                     // Table still not ready, try once more after delay
                                     setTimeout(function() {
                                         if (completedTable.is(':visible')) {
-                safeInitDataTable('completedBookingsTable', 7);
+                safeInitDataTable('completedBookingsTable', 5);
                                         }
                                     }, 500);
                                 }
@@ -4916,7 +4552,7 @@ function sendReceiptToCustomer() {
                                 // Table not visible yet, try again
                                 setTimeout(function() {
                                     if (completedTable.is(':visible')) {
-                                        safeInitDataTable('completedBookingsTable', 6);
+                                        safeInitDataTable('completedBookingsTable', 5);
                                     }
                                 }, 500);
                             }
@@ -5763,7 +5399,7 @@ function populateComplianceModal(data) {
         <div class="row">
             <div class="col-md-6">
                 <p><strong>Service:</strong> ${data.booking.service_name}</p>
-                <p><strong>Category:</strong> <span class="badge badge-secondary">${data.booking.category_name}</span></p>
+                <p><strong>Category:</strong> <span class="font-weight-bold text-secondary">${data.booking.category_name}</span></p>
                 <p><strong>Amount:</strong> <span class="amount">₱${parseFloat(data.booking.total_amount).toFixed(2)}</span></p>
             </div>
             <div class="col-md-6">
@@ -9240,29 +8876,14 @@ function calculateCombinedTotal() {
     // Labor subtotal
     const laborSubtotal = laborFee;
     
-    // Subtotal before VAT (include color price)
-    const subtotalBeforeVAT = materialSubtotal + foamSubtotal + accessoriesSubtotal + laborSubtotal + colorPrice;
-    
-    // VAT
-    const vat = includeVAT ? subtotalBeforeVAT * 0.12 : 0;
-    
-    // Grand Total
+    // Grand Total (color price removed)
     const grandTotal = subtotalBeforeVAT + vat;
     
     // Update displays
     document.getElementById('combined_leather_cost_display').textContent = '₱' + materialSubtotal.toFixed(2);
     
     // Show/hide color price row based on whether color price exists
-    const colorPriceDisplay = document.getElementById('combined_color_price_display');
-    const colorPriceRow = document.getElementById('combined_color_price_row');
-    if (colorPriceRow && colorPriceDisplay) {
-        if (colorPrice > 0) {
-            colorPriceRow.style.display = '';
-            colorPriceDisplay.textContent = '₱' + colorPrice.toFixed(2);
-        } else {
-            colorPriceRow.style.display = 'none';
-        }
-    }
+    // Color price display logic removed
     
     document.getElementById('combined_labor_fee_display').textContent = '₱' + laborSubtotal.toFixed(2);
     document.getElementById('combined_grand_total_display').textContent = '₱' + grandTotal.toFixed(2);
@@ -9961,13 +9582,7 @@ window.populatePreviewReceiptWithData = function(bookingData) {
         // Update display with stored values
         document.getElementById('preview_material_subtotal').textContent = '₱' + materialSubtotal.toFixed(2);
         
-        // Show/hide color price row based on whether color price exists
-        if (colorPriceSubtotal > 0) {
-            document.getElementById('preview_color_price_subtotal').textContent = '₱' + colorPriceSubtotal.toFixed(2);
-            document.getElementById('preview_color_price_row').style.display = '';
-        } else {
-            document.getElementById('preview_color_price_row').style.display = 'none';
-        }
+        // Color price preview logic removed
         
         if (foamSubtotal > 0) {
             document.getElementById('preview_foam_subtotal').textContent = '₱' + foamSubtotal.toFixed(2);
@@ -10385,6 +10000,38 @@ function handleArchive(bookingId, event) {
             showAlert('danger', 'An error occurred');
             btn.disabled = false;
             btn.innerHTML = originalContent;
+        });
+    }
+}
+
+// Accept Logistic Booking
+function acceptLogisticBooking(id) {
+    if (confirm('Approve and schedule this logistic request?')) {
+        fetch('<?php echo BASE_URL; ?>admin/approveLogisticRequest/' + id)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        });
+    }
+}
+
+// Reject Logistic Booking
+function rejectLogisticBooking(id) {
+    if (confirm('Are you sure you want to reject this request? It will be cancelled.')) {
+        fetch('<?php echo BASE_URL; ?>admin/rejectLogisticRequest/' + id)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
         });
     }
 }

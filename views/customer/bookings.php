@@ -3,828 +3,446 @@
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
 
 <style>
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #2c3e50;
+.dashboard-container {
+    background-color: #f8fafc;
+    /* Removed min-height to fix forced scrolling */
+    padding: 1.5rem;
+    padding-top: 1.5rem !important; /* Ensure content isn't cut off */
+    margin-top: -1rem !important; /* Reduce gap from navbar safely */
 }
-
-.breadcrumb-custom {
-    background: transparent;
-    padding: 0;
-    margin-bottom: 1.5rem;
-}
-
-.breadcrumb-custom .breadcrumb-item a {
-    color: #1F4E79;
-    text-decoration: none;
-}
-
 .btn-new-booking {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
+    background: #0F3C5F;
     border: none;
     color: white;
     padding: 0.65rem 1.5rem;
-    border-radius: 0.35rem;
+    border-radius: var(--br-modern);
     font-weight: 600;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(15, 60, 95, 0.3);
 }
 
 .btn-new-booking:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.filter-dropdown {
-    min-width: 200px;
-    border-radius: 0.35rem;
-    border-color: #d1d3e2;
-}
-
-.btn-business-mode {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);
-    border: none;
+    background: #1F4E79;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 60, 95, 0.4);
     color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.35rem;
-    font-weight: 500;
 }
 
-.btn-client-mode {
-    background-color: #9b59b6;
-    border: none;
-    color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.35rem;
-    font-weight: 500;
+.breadcrumb-modern {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 0.5rem;
 }
 
-.booking-card {
-    border-radius: 0.75rem;
-    border: 1px solid #e3e6f0;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+/* ... existing CSS ... */
+
+.empty-state-modern {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px dashed #e2e8f0;
+    /* Removed min-height and fixed height as requested */
 }
 
-.booking-card .card-header {
-    background-color: white;
-    border-bottom: 1px solid #e3e6f0;
-    padding: 1.5rem;
+/* ... other CSS ... */
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.table-bookings {
+.welcome-text {
+    color: #0F3C5F;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 0;
 }
 
-.table-bookings thead th {
-    border-top: none;
-    border-bottom: 2px solid #e3e6f0;
-    font-weight: 700;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #858796;
-    letter-spacing: 0.5px;
-    padding: 1rem;
+/* Search and Filter Section - Aligned with Catalog Design */
+.search-filter-section {
+    background: white;
+    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
 }
 
-.table-bookings tbody td {
-    padding: 1rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #e3e6f0;
-}
-
-.badge-status {
-    padding: 0.5rem 0.875rem;
-    border-radius: 0.35rem;
-    font-weight: 600;
-    font-size: 0.85rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    white-space: nowrap;
-    min-width: 100px;
-    justify-content: center;
-}
-
-/* Booking Status Badges - Enhanced Visibility with Clear Text */
-.badge-pending, .badge-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-    border: 1px solid #ff9800 !important;
-}
-
-.badge-approved, .badge-accepted, .badge-confirmed, .badge-success {
-    background-color: #28a745 !important;
-    color: #fff !important;
-    border: 1px solid #1e7e34 !important;
-}
-
-.badge-in-progress, .badge-ongoing, .badge-primary {
-    background-color: #007bff !important;
-    color: #fff !important;
-    border: 1px solid #0056b3 !important;
-}
-
-.badge-in-queue, .badge-info {
-    background-color: #17a2b8 !important;
-    color: #fff !important;
-    border: 1px solid #117a8b !important;
-}
-
-.badge-under-repair {
-    background-color: #6f42c1 !important;
-    color: #fff !important;
-    border: 1px solid #5a32a3 !important;
-}
-
-.badge-for-quality-check {
-    background-color: #20c997 !important;
-    color: #fff !important;
-    border: 1px solid #1aa179 !important;
-}
-
-.badge-ready-for-pickup, .badge-for-pickup {
-    background-color: #17a2b8 !important;
-    color: #fff !important;
-    border: 1px solid #117a8b !important;
-}
-
-.badge-out-for-delivery {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-    border: 1px solid #ff9800 !important;
-}
-
-.badge-completed {
-    background-color: #28a745 !important;
-    color: #fff !important;
-    border: 1px solid #1e7e34 !important;
-}
-
-.badge-rejected, .badge-declined, .badge-danger {
-    background-color: #dc3545 !important;
-    color: #fff !important;
-    border: 1px solid #c82333 !important;
-}
-
-.badge-cancelled, .badge-secondary {
-    background-color: #6c757d !important;
-    color: #fff !important;
-    border: 1px solid #545b62 !important;
-}
-
-.btn-action {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.75rem !important;
-    line-height: 1.2 !important;
-    min-width: 28px !important;
-    height: 28px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.btn-action i {
-    font-size: 0.75rem !important;
-    margin: 0 !important;
-}
-    padding: 0.375rem 0.75rem;
-    font-size: 0.85rem;
-    border-radius: 0.25rem;
-}
-
-.no-bookings {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #858796;
-}
-
-.no-bookings i {
-    font-size: 3rem;
+.search-box {
+    position: relative;
     margin-bottom: 1rem;
-    color: #d1d3e2;
+    width: 100%;
+    max-width: 550px;
 }
 
-/* Fix Modal Visibility and Brightness - Ensure modal is bright and visible */
-.modal-backdrop {
-    background-color: transparent !important; /* Fully transparent - no dark overlay */
-    opacity: 0 !important; /* Fully transparent - bright modal */
-    z-index: 1040 !important;
-    pointer-events: none !important; /* Allow clicks through transparent backdrop */
+.search-box input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: #f8f9fc;
 }
 
-.modal-backdrop.show {
-    background-color: transparent !important; /* Fully transparent - no dark overlay */
-    opacity: 0 !important; /* Fully transparent - bright modal like Official Receipt */
-    z-index: 1040 !important;
-    pointer-events: none !important; /* Allow clicks through transparent backdrop */
+.search-box input:focus {
+    background: white;
+    border-color: #0F3C5F;
+    outline: none;
+    box-shadow: 0 4px 15px rgba(15, 60, 95, 0.1);
 }
 
-.modal {
-    z-index: 1050 !important;
-    opacity: 1 !important; /* ensure modal is not transparent */
+.search-box i {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #0F3C5F;
+    font-size: 0.95rem;
 }
 
-.modal.show {
-    z-index: 1050 !important;
-    opacity: 1 !important; /* ensure modal is not transparent */
+.custom-select-modern {
+    padding: 0.75rem 2.5rem 0.75rem 1.25rem;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #5a5c69;
+    background: #f8f9fc url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") no-repeat right 1rem center/10px 10px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    min-width: 200px;
 }
 
-.modal-content {
-    background-color: #ffffff !important; /* bright white */
-    opacity: 1 !important; /* ensure not transparent */
-    backdrop-filter: none !important; /* remove any backdrop filter */
+.custom-select-modern:focus {
+    background-color: white;
+    border-color: #0F3C5F;
+    outline: none;
+    box-shadow: 0 4px 15px rgba(15, 60, 95, 0.1);
 }
 
-.modal-dialog {
-    z-index: 1055 !important;
+.filter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
 }
 
-/* Preview Receipt Modal - Smaller size to avoid sidebar overlay */
-#previewReceiptModal .modal-dialog {
-    max-width: 800px !important;
-    margin-left: 250px !important;
-}
-
-@media (max-width: 1200px) {
-    #previewReceiptModal .modal-dialog {
-        margin-left: 0 !important;
-        max-width: 90% !important;
+@media (max-width: 768px) {
+    .filter-wrapper {
+        flex-direction: column;
+        align-items: stretch;
     }
-}
-
-/* Ensure modal body is also bright */
-.modal-body {
-    background-color: #ffffff !important;
-    opacity: 1 !important;
+    .search-box {
+        max-width: none;
+    }
 }
 </style>
 
-<!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h1 class="page-title mb-2">Reservations</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb breadcrumb-custom">
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Reservations</li>
-            </ol>
-        </nav>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-primary" onclick="window.location.href='<?php echo BASE_URL; ?>customer/newBooking'">
-            <i class="fas fa-arrow-left mr-1"></i>
-        </button>
-        <button class="btn btn-primary" onclick="location.reload()">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-    </div>
-</div>
-
-<!-- Reservations Card -->
-<div class="card booking-card">
-    <!-- Colored top bar -->
-    <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);"></div>
-    
-    <div class="card-header">
-        <div class="row align-items-center mb-3">
-            <div class="col-md-6">
-                <h3 class="mb-0" style="font-size: 1.5rem; font-weight: 700; color: #2c3e50;">
-                    <i class="fas fa-calendar-check mr-2" style="color: #1F4E79;"></i>My Reservations
-                </h3>
-            </div>
-            <!-- <div class="col-md-6 text-md-right">
-                <button class="btn btn-new-booking" onclick="window.location.href='<?php echo BASE_URL; ?>customer/newBooking'" style="margin-right: 0.5rem;">
-                    <i class="fas fa-plus mr-2"></i>New Reservation
-                </button> -->
-                <button class="btn btn-new-booking" onclick="openReservationModal()" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);">
-                    <i class="fas fa-tools mr-2"></i>Repair Reservation
-                </button>
-            </div>
+<div class="container-fluid dashboard-container">
+    <!-- Page Header -->
+    <div class="welcome-container shadow-sm">
+        <div class="welcome-text">
+            <i class="fas fa-calendar-check mr-2" style="color: #0F3C5F;"></i>
+            My Bookings
         </div>
-        <div class="row align-items-center">
-            <div class="col-md-6 mb-2 mb-md-0">
-                <div class="d-flex align-items-center">
-                    <label for="statusFilterDropdown" style="margin-right: 12px; font-weight: 600; color: #5a5c69; white-space: nowrap;">
-                        Filter by Status:
-                    </label>
-                    <select id="statusFilterDropdown" class="form-control filter-dropdown" onchange="filterBookings(this.value)">
-                        <option value="all" <?php echo ($currentStatus === 'all') ? 'selected' : ''; ?>>All</option>
+        <div class="d-flex align-items-center">
+            <button class="action-btn-dashboard mr-3" onclick="location.reload()" title="Refresh List" style="background: rgba(15, 60, 95, 0.05); border: none; border-radius: 50%; width: 35px; height: 35px; color: #0F3C5F; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button type="button" class="btn btn-new-booking shadow-sm" onclick="openReservationModal()" 
+                    style="font-size: 0.85rem; padding: 0.6rem 1.5rem; border-radius: 50px; font-weight: 700;">
+                <i class="fas fa-tools mr-2"></i>Repair Reservation
+            </button>
+        </div>
+    </div>
+
+    <?php
+    $hasServices = !empty($bookings);
+    $hasRepairs = !empty($repairReservations);
+    $hasAnyBookings = $hasServices || $hasRepairs;
+    ?>
+
+    <?php if ($hasAnyBookings): ?>
+        <!-- Filter Section -->
+        <div class="search-filter-section shadow-sm border-0">
+            <div class="filter-wrapper">
+                <div class="search-box mb-0">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="bookingSearchInput" placeholder="Search by service name or reference #..." onkeyup="performBookingsFilter()">
+                </div>
+                
+                <div class="dropdown-container">
+                    <select id="statusFilterSelect" class="custom-select-modern" onchange="updateStatusFilter(this.value)">
+                        <option value="all">All Reservations</option>
                         <?php
-                        // Get unique statuses from bookings
+                        // Combine statuses from both arrays for unique filter list
                         $uniqueStatuses = [];
-                        if (!empty($bookings)) {
+                        
+                        if ($hasServices) {
                             foreach ($bookings as $booking) {
-                                $status = $booking['status'] ?? 'pending';
-                                if (!in_array($status, $uniqueStatuses)) {
-                                    $uniqueStatuses[] = $status;
-                                }
-                            }
-                            sort($uniqueStatuses);
-                            
-                            // Status display names
-                            $statusDisplayNames = [
-                                'pending' => 'Pending',
-                                'for_pickup' => 'For Pickup',
-                                'picked_up' => 'Picked Up',
-                                'to_inspect' => 'To Inspect',
-                                'for_inspection' => 'For Inspection',
-                                'for_repair' => 'For Repair',
-                                'under_repair' => 'Under Repair',
-                                'for_quality_check' => 'For Quality Check',
-                                'ready_for_pickup' => 'Ready for Pickup',
-                                'out_for_delivery' => 'Out for Delivery',
-                                'completed' => 'Completed',
-                                'paid' => 'Paid',
-                                'closed' => 'Closed',
-                                'cancelled' => 'Cancelled'
-                            ];
-                            
-                            foreach ($uniqueStatuses as $status) {
-                                $displayName = $statusDisplayNames[$status] ?? ucfirst(str_replace('_', ' ', $status));
-                                $selected = ($currentStatus === $status) ? 'selected' : '';
-                                echo "<option value=\"{$status}\" {$selected}>{$displayName}</option>";
+                                $status = strtolower(trim($booking['status'] ?? 'pending'));
+                                if (!in_array($status, $uniqueStatuses)) $uniqueStatuses[] = $status;
                             }
                         }
+                        
+                        if ($hasRepairs) {
+                            foreach ($repairReservations as $reservation) {
+                                $status = strtolower(trim($reservation['status'] ?? 'pending'));
+                                if (!in_array($status, $uniqueStatuses)) $uniqueStatuses[] = $status;
+                            }
+                        }
+                        
+                        sort($uniqueStatuses);
+                        $statusDisplayNames = [
+                            'pending' => 'Pending',
+                            'pending_schedule' => 'Pending Schedule Request',
+                            'scheduled' => 'Scheduled',
+                            'reschedule_requested' => 'Reschedule Requested',
+                            'for_pickup' => 'For Pickup',
+                            'picked_up' => 'Picked Up',
+                            'to_inspect' => 'To Inspect',
+                            'for_inspection' => 'For Inspection',
+                            'for_repair' => 'For Repair',
+                            'under_repair' => 'Under Repair',
+                            'for_quality_check' => 'For Quality Check',
+                            'ready_for_pickup' => 'Ready for Pickup',
+                            'out_for_delivery' => 'Out for Delivery',
+                            'completed' => 'Completed',
+                            'paid' => 'Paid',
+                            'closed' => 'Closed',
+                            'cancelled' => 'Cancelled',
+                            'approved' => 'Approved',
+                            'confirmed' => 'Confirmed',
+                            'accepted' => 'Accepted',
+                            'in_progress' => 'In Progress',
+                            'ongoing' => 'Ongoing'
+                        ];
+                        foreach ($uniqueStatuses as $status): 
+                            $val = strtolower($status);
+                            $displayName = $statusDisplayNames[$val] ?? ucfirst(str_replace('_', ' ', $val));
                         ?>
+                            <option value="<?php echo $val; ?>"><?php echo $displayName; ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>
-            <div class="col-md-6 text-md-right">
-                <!-- Action dropdown removed as requested -->
-            </div>
         </div>
-    </div>
-    <div class="card-body p-0">
-        <?php if (!empty($bookings)): ?>
-        <div class="table-responsive">
-            <table class="table table-bookings" id="bookingsDataTable">
-                <thead>
-                    <tr>
-                        <th style="width: 40px;"></th>
-                        <th>SERVICE</th>
-                        <th>SERVICE OPTION</th>
-                        <th>DATE</th>
-                        <th>STATUS</th>
-                        <th>ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($bookings as $index => $booking): ?>
-                    <tr class="booking-row" data-booking-id="<?php echo $booking['id']; ?>">
-                        <td>
-                            <?php 
-                            // Priority flag based on status
-                            $flagColors = [
-                                'pending' => '#4CAF50',
-                                'under_repair' => '#0F3C5F',
-                                'for_quality_check' => '#17a2b8',
-                                'ready_for_pickup' => '#74b9ff',
-                                'out_for_delivery' => '#f39c12',
-                                'completed' => '#00b894',
-                                'cancelled' => '#95a5a6',
-                                // Legacy statuses (for backward compatibility)
-                                'accepted' => '#1F4E79',
-                                'confirmed' => '#1F4E79',
-                                'ongoing' => '#0F3C5F',
-                                'for_pickup' => '#74b9ff',
-                                'declined' => '#e74c3c'
-                            ];
-                            $flagColor = $flagColors[$booking['status']] ?? '#1F4E79';
-                            ?>
-                            <i class="fas fa-flag" style="color: <?php echo $flagColor; ?>;" title="Priority: <?php echo ucfirst($booking['status']); ?>"></i>
-                        </td>
-                        <td>
-                            <div>
-                                <strong style="color: #2c3e50;"><?php echo htmlspecialchars($booking['service_name']); ?></strong>
+
+        <!-- Services Section -->
+        <?php if ($hasServices): ?>
+            <div class="services-table-wrapper">
+                <div class="table-responsive bg-white rounded-lg shadow-sm border mb-5">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-dark">
+                            <tr>
+                                <th class="py-3 pl-4 border-bottom-0" style="width: 5%; color: #e9eeffff;">ID</th>
+                                <th class="py-3 border-bottom-0" style="width: 25%; color: #e9eeffff;">Service Info</th>
+                                <th class="py-3 border-bottom-0" style="width: 20%; color: #e9eeffff;">Service Type</th>
+                                <th class="py-3 border-bottom-0" style="width: 20%; color: #e9eeffff;">Date & Time</th>
+                                <th class="py-3 border-bottom-0" style="width: 15%; color: #e9eeffff;">Status</th>
+                                <th class="py-3 text-right pr-4 border-bottom-0" style="width: 15%; color: #e9eeffff;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesContainer">
+                        <?php foreach ($bookings as $booking): 
+                            $status = strtolower(trim($booking['status'] ?? 'pending'));
+                            $bookingId = $booking['id'];
+                            
+                            // Map status to pill classes
+                            $pillClass = 'pending';
+                            if (in_array($status, ['approved', 'confirmed', 'accepted', 'scheduled'])) $pillClass = 'approved';
+                            if (in_array($status, ['under_repair', 'ongoing', 'for_repair'])) $pillClass = 'in_progress';
+                            if (in_array($status, ['completed', 'paid', 'delivered_and_paid'])) $pillClass = 'completed';
+                            if (in_array($status, ['cancelled', 'rejected', 'declined', 'reschedule_requested'])) $pillClass = 'cancelled';
+                            
+                            // Icon for service option
+                            $opt = strtolower($booking['service_option'] ?? 'pickup');
+                            $optIcon = ['pickup' => 'truck-loading', 'delivery' => 'truck', 'both' => 'exchange-alt', 'walk_in' => 'walking'][$opt] ?? 'info-circle';
+                        ?>
+                        <tr class="booking-row booking-card-item" data-id="<?php echo $bookingId; ?>" data-booking-id="<?php echo $bookingId; ?>" data-status="<?php echo $status; ?>">
+                            <td class="pl-4 align-middle">
+                                <span class="text-muted font-weight-bold">#<?php echo $bookingId; ?></span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="font-weight-bold text-dark" style="font-size: 1rem;"><?php echo htmlspecialchars($booking['service_name']); ?></div>
                                 <div class="small text-muted">
-                                    <i class="fas fa-tag fa-sm mr-1"></i>
+                                    <i class="fas fa-layer-group mr-1"></i>
                                     <?php echo htmlspecialchars($booking['category_name'] ?? 'General'); ?>
-                                    <?php if (!empty($booking['service_type'])): ?>
-                                    <span class="text-info font-weight-bold ml-1" style="font-size: 0.75rem;">
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center text-secondary">
+                                    <i class="fas fa-<?php echo $optIcon; ?> mr-2"></i>
+                                    <?php echo ucfirst(str_replace('_', ' ', $opt)); ?>
+                                </div>
+                                <?php if (!empty($booking['service_type'])): ?>
+                                    <div class="small text-info font-weight-bold mt-1">
                                         <?php echo htmlspecialchars($booking['service_type']); ?>
-                                    </span>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <td class="align-middle">
+                                <div class="text-dark">
+                                    <i class="far fa-calendar-alt mr-1 text-muted"></i>
+                                    <?php echo date('M d, Y', strtotime($booking['created_at'])); ?>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <i class="far fa-clock mr-1"></i>
+                                    <?php echo date('h:i A', strtotime($booking['created_at'])); ?>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="status-pill <?php echo $pillClass; ?>">
+                                    <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>
+                                    <?php echo ucfirst(str_replace('_', ' ', $status)); ?>
+                                </span>
+                            </td>
+                            <td class="text-right pr-4 align-middle">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="action-btn-dashboard action-btn-view" onclick="viewReservationDetails(<?php echo $bookingId; ?>)" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <?php if (in_array($status, ['pending', 'ready_for_pickup', 'for_pickup'])): ?>
+                                        <button class="action-btn-dashboard action-btn-edit" onclick="openUpdateBookingModal(<?php echo $bookingId; ?>)" title="Update Booking">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if ($status === 'pending'): ?>
+                                        <button class="action-btn-dashboard action-btn-cancel" onclick="confirmCancelReservation(<?php echo $bookingId; ?>)" title="Cancel Request">
+                                            <i class="fas fa-times"></i>
+                                        </button>
                                     <?php endif; ?>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <?php
-                            // Service Option mapping with icons and colors
-                            $serviceOption = strtolower(trim($booking['service_option'] ?? 'pickup'));
-                            $serviceOptionConfig = [
-                                'pickup' => ['class' => 'badge-primary', 'icon' => 'truck-loading', 'text' => 'Pick Up'],
-                                'delivery' => ['class' => 'badge-info', 'icon' => 'truck', 'text' => 'Delivery'],
-                                'both' => ['class' => 'badge-success', 'icon' => 'exchange-alt', 'text' => 'Both'],
-                                'walk_in' => ['class' => 'badge-warning', 'icon' => 'walking', 'text' => 'Walk In']
-                            ];
-                            $optionConfig = $serviceOptionConfig[$serviceOption] ?? ['class' => 'badge-secondary', 'icon' => 'question', 'text' => ucfirst($serviceOption)];
-                            ?>
-                            <span class="text-dark font-weight-bold" style="font-size: 0.85rem;">
-                                <i class="fas fa-<?php echo $optionConfig['icon']; ?> mr-1 text-secondary"></i>
-                                <?php echo htmlspecialchars($optionConfig['text']); ?>
-                            </span>
-                        </td>
-                        <td>
-                            <div style="font-weight: 600;"><?php echo date('M d, Y', strtotime($booking['created_at'])); ?></div>
-                            <div class="small text-muted">
-                                <i class="far fa-clock fa-sm mr-1"></i>
-                                <?php echo date('h:i A', strtotime($booking['created_at'])); ?>
-                            </div>
-                        </td>
-                        <td class="status-cell" data-booking-status="<?php echo htmlspecialchars($booking['status'] ?? 'pending'); ?>">
-                            <?php
-                            // Status mapping based on new booking status flow including PICKUP workflow
-                            $statusConfig = [
-                                'pending' => ['class' => 'badge-warning', 'icon' => 'clock', 'text' => 'Pending'],
-                                // PICKUP workflow statuses
-                                'for_pickup' => ['class' => 'badge-info', 'icon' => 'truck-loading', 'text' => 'For Pickup'],
-                                'picked_up' => ['class' => 'badge-info', 'icon' => 'box-open', 'text' => 'Picked Up'],
-                                'for_inspection' => ['class' => 'badge-info', 'icon' => 'search', 'text' => 'For Inspection'],
-                                'to_inspect' => ['class' => 'badge-warning', 'icon' => 'clipboard-check', 'text' => 'To Inspect'],
-                                'inspect_completed' => ['class' => 'badge-success', 'icon' => 'check-circle', 'text' => 'Inspect Completed'],
-                                'inspection_completed_waiting_approval' => ['class' => 'badge-warning', 'icon' => 'hourglass-half', 'text' => 'Inspection Completed Waiting Approval'],
-                                'preview_receipt_sent' => ['class' => 'badge-info', 'icon' => 'envelope-open-text', 'text' => 'Preview Receipt Sent'],
-                                // 'for_quotation' status removed
-                                // Work in progress statuses
-                                'under_repair' => ['class' => 'badge-primary', 'icon' => 'tools', 'text' => 'Under Repair'],
-                                'for_quality_check' => ['class' => 'badge-info', 'icon' => 'search', 'text' => 'For Quality Check'],
-                                // Completion statuses
-                                'ready_for_pickup' => ['class' => 'badge-success', 'icon' => 'box', 'text' => 'Ready for Pickup'],
-                                'out_for_delivery' => ['class' => 'badge-warning', 'icon' => 'truck', 'text' => 'Out for Delivery'],
-                                'completed' => ['class' => 'badge-success', 'icon' => 'check-double', 'text' => 'Completed'],
-                                'delivered_and_paid' => ['class' => 'badge-success', 'icon' => 'check-double', 'text' => 'Delivered and Paid'],
-                                'paid' => ['class' => 'badge-success', 'icon' => 'money-bill-wave', 'text' => 'Paid'],
-                                'closed' => ['class' => 'badge-dark', 'icon' => 'archive', 'text' => 'Closed'],
-                                'cancelled' => ['class' => 'badge-secondary', 'icon' => 'ban', 'text' => 'Cancelled'],
-                                // Legacy statuses (for backward compatibility)
-                                'accepted' => ['class' => 'badge-success', 'icon' => 'check-circle', 'text' => 'Approved'],
-                                'confirmed' => ['class' => 'badge-success', 'icon' => 'check-circle', 'text' => 'Approved'],
-                                'ongoing' => ['class' => 'badge-primary', 'icon' => 'spinner', 'text' => 'Under Repair'],
-                                'for_pickup' => ['class' => 'badge-success', 'icon' => 'box', 'text' => 'Ready for Pickup'],
-                                'declined' => ['class' => 'badge-danger', 'icon' => 'times-circle', 'text' => 'Declined'],
-                                'admin_review' => ['class' => 'badge-warning', 'icon' => 'eye', 'text' => 'Admin Review']
-                            ];
-                            
-                            // Get status and handle NULL/empty values
-                            $status = trim(strtolower($booking['status'] ?? ''));
-                            
-                            // If status is empty, NULL, or whitespace, default to 'pending'
-                            if (empty($status) || $status === '' || $status === null) {
-                                $status = 'pending';
-                            }
-                            
-                            // Normalize status (handle case variations)
-                            $status = strtolower(trim($status));
-                            
-                            // Get config or use default
-                            $config = $statusConfig[$status] ?? null;
-                            
-                            // If status not found in config, try to create a readable label
-                            if (!$config) {
-                                // Try to format unknown status
-                                $formattedStatus = ucwords(str_replace(['_', '-'], ' ', $status));
-                                $config = [
-                                    'class' => 'badge-secondary',
-                                    'icon' => 'circle',
-                                    'text' => $formattedStatus ?: 'Pending'
-                                ];
-                            }
-                            
-                            // Show payment status if completed
-                            if ($status === 'completed') {
-                                $paymentStatus = strtolower(trim($booking['payment_status'] ?? 'unpaid'));
-                                if (in_array($paymentStatus, ['paid', 'paid_full_cash'])) {
-                                    // Full cash paid before repair
-                                    $config['text'] = 'Completed (Paid)';
-                                    $config['class'] = 'badge-success';
-                                } else {
-                                    // COD - unpaid until payment received
-                                    $config['text'] = 'Completed (Unpaid)';
-                                    $config['class'] = 'badge-warning';
-                                }
-                            } elseif ($status === 'delivered_and_paid') {
-                                // Delivered and Paid status (COD after payment received)
-                                $config['text'] = 'Delivered and Paid';
-                                $config['class'] = 'badge-success';
-                            }
-                            
-                            // Ensure text is never empty
-                            if (empty($config['text'])) {
-                                $config['text'] = 'Pending';
-                                $config['class'] = 'badge-warning';
-                                $config['icon'] = 'clock';
-                            }
-                            ?>
-                            <span class="text-dark font-weight-bold d-inline-flex align-items-center" style="font-size: 0.85rem;">
-                                <i class="fas fa-<?php echo htmlspecialchars($config['icon']); ?> mr-2 text-<?php echo str_replace('badge-', '', $config['class']); ?>"></i>
-                                <?php echo htmlspecialchars($config['text']); ?>
-                            </span>
-                        </td>
-                        <td>
-                                <?php
-                                $status = strtolower($booking['status'] ?? 'pending');
-                                $bookingId = $booking['id'];
-                                $paymentStatus = strtolower($booking['payment_status'] ?? 'unpaid');
-                                
-                            // No actions when status is under_repair - customer must wait for repair completion
-                            if ($status === 'under_repair'): ?>
-                                <span class="text-muted" style="font-size: 0.85rem;">
-                                    <i class="fas fa-info-circle mr-1"></i>Waiting for repair completion
-                                </span>
-                            <?php else: ?>
-                            <div class="btn-group" role="group" style="flex-wrap: wrap; gap: 3px;">
-                                <?php
-                                // Show View Details button (except for under_repair)
-                                ?>
-                                <button type="button" 
-                                        class="btn btn-sm btn-info btn-action" 
-                                        onclick="viewReservationDetails(<?php echo $bookingId; ?>)" 
-                                        title="View Details">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                
-                                <?php
-                                // Show Approve Receipt button when receipt is sent
-                                // Show Approve button for inspection_completed_waiting_approval, inspect_completed or preview_receipt_sent status
-                                // inspection_completed_waiting_approval is set when admin sends preview receipt (delivery workflow)
-                                $quotationSent = isset($booking['quotation_sent']) && $booking['quotation_sent'] == 1;
-                                $showApproveButton = false;
-                                
-                                if ($status === 'inspection_completed_waiting_approval') {
-                                    // Show approve button for inspection_completed_waiting_approval status (delivery workflow)
-                                    $showApproveButton = true;
-                                } elseif ($status === 'inspect_completed') {
-                                    // Always show approve button for inspect_completed status (new workflow)
-                                    $showApproveButton = true;
-                                } elseif ($status === 'preview_receipt_sent') {
-                                    // Show for preview_receipt_sent status (backward compatibility)
-                                    $showApproveButton = true;
-                                } elseif ($quotationSent && in_array($status, ['to_inspect', 'for_inspection'])) {
-                                    // Show for backward compatibility (legacy)
-                                    $showApproveButton = true;
-                                }
-                                
-                                if ($showApproveButton): ?>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-success btn-action" 
-                                            onclick="viewPreviewReceipt(<?php echo $bookingId; ?>)" 
-                                            title="Approve Receipt - Review preview receipt and approve">
-                                        <i class="fas fa-check-circle"></i> Approve
-                                    </button>
-                                <?php endif; ?>
-                                
-                                <?php
-                                // Show Update button for pending, ready_for_pickup, and for_pickup (removed under_repair)
-                                if (in_array($status, ['pending', 'ready_for_pickup', 'for_pickup'])): ?>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-warning btn-action" 
-                                            onclick="openUpdateBookingModal(<?php echo $bookingId; ?>)" 
-                                            title="Update Booking">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                <?php endif; ?>
-                                
-                                <?php
-                                // Show Cancel button for pending, approved, ready_for_pickup, and for_pickup
-                                if (in_array($status, ['pending', 'approved', 'ready_for_pickup', 'for_pickup'])): ?>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-danger btn-action" 
-                                            onclick="confirmCancelReservation(<?php echo $bookingId; ?>)" 
-                                            title="Cancel Request">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <?php else: ?>
-        <div class="no-bookings">
-            <i class="fas fa-calendar-times"></i>
-            <h5>No reservations yet</h5>
-            <p class="text-muted">Start by creating your first reservation</p>
-            <a href="<?php echo BASE_URL; ?>customer/newBooking" class="btn btn-new-booking">
-                <i class="fas fa-plus mr-2"></i>Create New Reservation
-            </a>
+<?php endif; ?>
+        
+        <!-- Repairs Section -->
+        <?php if ($hasRepairs): ?>
+            <h5 class="repairs-heading mb-3 font-weight-bold text-dark <?php echo $hasServices ? 'mt-5' : ''; ?>">Repair Requests</h5>
+            <div class="repairs-table-wrapper">
+                <div class="table-responsive bg-white rounded-lg shadow-sm border">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3 pl-4 border-bottom-0" style="width: 5%; color: #4e73df;">ID</th>
+                            <th class="py-3 border-bottom-0" style="width: 25%; color: #4e73df;">Item Name</th>
+                            <th class="py-3 border-bottom-0" style="width: 15%; color: #4e73df;">Urgency</th>
+                            <th class="py-3 border-bottom-0" style="width: 25%; color: #4e73df;">Date & Time</th>
+                            <th class="py-3 border-bottom-0" style="width: 15%; color: #4e73df;">Status</th>
+                            <th class="py-3 text-right pr-4 border-bottom-0" style="width: 15%; color: #4e73df;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="repairsContainer">
+                        <?php foreach ($repairReservations as $reservation): 
+                            $rStatus = strtolower(trim($reservation['status'] ?? 'pending'));
+                            $repairId = $reservation['id'];
+                            $rPaymentStatus = strtolower($reservation['payment_status'] ?? 'unpaid');
+                            
+                            // Map status to pill classes
+                            $pillClass = 'pending';
+                            if (in_array($rStatus, ['approved', 'confirmed', 'accepted'])) $pillClass = 'approved';
+                            if (in_array($rStatus, ['in_progress', 'ongoing', 'under_repair'])) $pillClass = 'in_progress';
+                            if (in_array($rStatus, ['completed'])) $pillClass = 'completed';
+                            if (in_array($rStatus, ['cancelled', 'rejected', 'declined'])) $pillClass = 'cancelled';
+            
+                            $urgencyCfg = [
+                                'low' => ['class' => 'secondary', 'icon' => 'arrow-down'],
+                                'normal' => ['class' => 'info', 'icon' => 'minus'],
+                                'high' => ['class' => 'warning', 'icon' => 'arrow-up'],
+                                'urgent' => ['class' => 'danger', 'icon' => 'exclamation-circle']
+                            ][$reservation['urgency']] ?? ['class' => 'secondary', 'icon' => 'question-circle'];
+                        ?>
+                        <tr class="booking-row booking-card-item" data-id="<?php echo $repairId; ?>" data-booking-id="<?php echo $repairId; ?>" data-status="<?php echo $rStatus; ?>">
+                            <td class="pl-4 align-middle">
+                                <span class="text-muted font-weight-bold">#<?php echo $repairId; ?></span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="font-weight-bold text-dark" style="font-size: 1rem;"><?php echo htmlspecialchars($reservation['item_name']); ?></div>
+                                <div class="small text-muted">
+                                    <i class="fas fa-wrench mr-1"></i> Repair Request
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="booking-meta-item">
+                                    <i class="fas fa-<?php echo $urgencyCfg['icon']; ?> text-<?php echo $urgencyCfg['class']; ?> mr-2"></i>
+                                    <?php echo ucfirst($reservation['urgency']); ?>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="text-dark">
+                                    <i class="far fa-calendar-alt mr-1 text-muted"></i>
+                                    <?php echo date('M d, Y', strtotime($reservation['created_at'])); ?>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <i class="far fa-clock mr-1"></i>
+                                    <?php echo date('h:i A', strtotime($reservation['created_at'])); ?>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="status-pill <?php echo $pillClass; ?>">
+                                    <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>
+                                    <?php echo ucfirst(str_replace('_', ' ', $rStatus)); ?>
+                                </span>
+                            </td>
+                            <td class="text-right pr-4 align-middle">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="<?php echo BASE_URL; ?>customer/viewRepairReservation/<?php echo $repairId; ?>" class="action-btn-dashboard action-btn-view" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <?php if ($rStatus === 'pending'): ?>
+                                        <a href="<?php echo BASE_URL; ?>customer/editRepairReservation/<?php echo $repairId; ?>" class="action-btn-dashboard action-btn-edit" title="Edit Reservation">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="action-btn-dashboard action-btn-cancel" onclick="confirmCancelRepair(<?php echo $repairId; ?>)" title="Cancel">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if (in_array($rStatus, ['approved', 'accepted', 'confirmed']) && $rPaymentStatus !== 'paid'): ?>
+                                        <button class="action-btn-dashboard" onclick="payNow(<?php echo $repairId; ?>)" title="Pay Now" style="background-color: #dcfce7; color: #16a34a;">
+                                            <i class="fas fa-credit-card"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <?php endif; ?>
         
-        <!-- Repair Reservations Section -->
-        <?php if (!empty($repairReservations)): ?>
-        <div class="card booking-card mt-4">
-            <div style="height: 4px; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%);"></div>
-            <div class="card-header">
-                <h3 class="mb-0" style="font-size: 1.5rem; font-weight: 700; color: #2c3e50;">
-                    <i class="fas fa-tools mr-2" style="color: #1F4E79;"></i>Repair Reservations
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-bookings">
-                        <thead>
-                            <tr>
-                                <th>ITEM NAME</th>
-                                <th>URGENCY</th>
-                                <th>STATUS</th>
-                                <th>DATE</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($repairReservations as $reservation): ?>
-                            <tr>
-                                <td><strong><?php echo htmlspecialchars($reservation['item_name']); ?></strong></td>
-                                <td>
-                                    <?php
-                                    $urgencyClass = [
-                                        'low' => 'badge-secondary',
-                                        'normal' => 'badge-info',
-                                        'high' => 'badge-warning',
-                                        'urgent' => 'badge-danger'
-                                    ][$reservation['urgency']] ?? 'badge-secondary';
-                                    ?>
-                                    <span class="badge <?php echo $urgencyClass; ?>"><?php echo ucfirst($reservation['urgency']); ?></span>
-                                </td>
-                                <td>
-                                    <?php
-                                    $statusClass = [
-                                        'pending' => 'badge-warning',
-                                        'approved' => 'badge-success',
-                                        'in_progress' => 'badge-primary',
-                                        'completed' => 'badge-success',
-                                        'cancelled' => 'badge-danger'
-                                    ][$reservation['status']] ?? 'badge-secondary';
-                                    ?>
-                                    <span class="badge <?php echo $statusClass; ?>"><?php echo ucfirst($reservation['status']); ?></span>
-                                </td>
-                                <td><?php echo date('M d, Y', strtotime($reservation['created_at'])); ?></td>
-                                <td>
-                                    <div class="btn-group" role="group" style="flex-wrap: wrap; gap: 3px;">
-                                        <?php
-                                        $repairStatus = strtolower($reservation['status'] ?? 'pending');
-                                        $repairId = $reservation['id'];
-                                        $repairPaymentStatus = strtolower($reservation['payment_status'] ?? 'unpaid');
-                                        ?>
-                                        
-                                        <!-- Always show View Details -->
-                                        <a href="<?php echo BASE_URL; ?>customer/viewRepairReservation/<?php echo $repairId; ?>" 
-                                           class="btn btn-sm btn-info btn-action" 
-                                           title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        
-                                        <?php
-                                        // 1️⃣ Pending / Submitted Repair Reservations
-                                        if (in_array($repairStatus, ['pending', 'submitted'])): ?>
-                                            <a href="<?php echo BASE_URL; ?>customer/editRepairReservation/<?php echo $repairId; ?>" 
-                                               class="btn btn-sm btn-primary btn-action" 
-                                               title="Edit Reservation">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="<?php echo BASE_URL; ?>customer/rescheduleRepair/<?php echo $repairId; ?>" 
-                                               class="btn btn-sm btn-warning btn-action" 
-                                               title="Reschedule">
-                                                <i class="fas fa-calendar-alt"></i>
-                                            </a>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-secondary btn-action" 
-                                                    onclick="uploadPhotos(<?php echo $repairId; ?>)" 
-                                                    title="Upload Photos">
-                                                <i class="fas fa-camera"></i>
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-danger btn-action" 
-                                                    onclick="confirmCancelRepair(<?php echo $repairId; ?>)" 
-                                                    title="Cancel">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        
-                                        <?php
-                                        // 2️⃣ Approved / Accepted Repair Reservations
-                                        elseif (in_array($repairStatus, ['approved', 'accepted', 'confirmed'])): ?>
-                                            <?php if ($repairPaymentStatus !== 'paid'): ?>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-success btn-action" 
-                                                    onclick="payNow(<?php echo $repairId; ?>)" 
-                                                    title="Pay Now">
-                                                <i class="fas fa-credit-card"></i>
-                                            </button>
-                                            <?php endif; ?>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-warning btn-action" 
-                                                    onclick="requestReschedule(<?php echo $repairId; ?>)" 
-                                                    title="Request Reschedule">
-                                                <i class="fas fa-calendar-check"></i>
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-secondary btn-action" 
-                                                    onclick="uploadPhotos(<?php echo $repairId; ?>)" 
-                                                    title="Upload Photos">
-                                                <i class="fas fa-camera"></i>
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-danger btn-action" 
-                                                    onclick="requestCancel(<?php echo $repairId; ?>)" 
-                                                    title="Request Cancel">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        
-                                        <?php
-                                        // 3️⃣ Ongoing / In Progress Repair
-                                        elseif (in_array($repairStatus, ['ongoing'])): ?>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-primary btn-action" 
-                                                    onclick="trackProgress(<?php echo $repairId; ?>)" 
-                                                    title="Track Progress">
-                                                <i class="fas fa-tasks"></i>
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-info btn-action" 
-                                                    onclick="messageStore(<?php echo $repairId; ?>)" 
-                                                    title="Message Store">
-                                                <i class="fas fa-comments"></i>
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-secondary btn-action" 
-                                                    onclick="uploadPhotos(<?php echo $repairId; ?>)" 
-                                                    title="Upload Photos">
-                                                <i class="fas fa-camera"></i>
-                                            </button>
-                                        
-                                        <?php
-                                        // 4️⃣ & 5️⃣ Completed Repair
-                                        elseif ($repairStatus === 'completed'): ?>
-                                            <?php if ($repairPaymentStatus === 'paid'): ?>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-success btn-action" 
-                                                        onclick="viewRepairReceipt(<?php echo $repairId; ?>)" 
-                                                        title="View Receipt">
-                                                    <i class="fas fa-receipt"></i>
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-primary btn-action" 
-                                                        onclick="bookAgain(<?php echo $repairId; ?>)" 
-                                                        title="Book Again">
-                                                    <i class="fas fa-redo"></i>
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-warning btn-action" 
-                                                        onclick="rateService(<?php echo $repairId; ?>)" 
-                                                        title="Rate & Feedback">
-                                                    <i class="fas fa-star"></i>
-                                                </button>
-                                            <?php else: ?>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-success btn-action" 
-                                                        onclick="payNow(<?php echo $repairId; ?>)" 
-                                                        title="Pay Now">
-                                                    <i class="fas fa-credit-card"></i>
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-primary btn-action" 
-                                                        onclick="viewRepairReceipt(<?php echo $repairId; ?>)" 
-                                                        title="View Receipt">
-                                                    <i class="fas fa-receipt"></i>
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-info btn-action" 
-                                                        onclick="bookAgain(<?php echo $repairId; ?>)" 
-                                                        title="Book Again">
-                                                    <i class="fas fa-redo"></i>
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-warning btn-action" 
-                                                        onclick="rateService(<?php echo $repairId; ?>)" 
-                                                        title="Rate Service">
-                                                    <i class="fas fa-star"></i>
-                                                </button>
-                                            <?php endif; ?>
-                                        
-                                        <?php
-                                        // 6️⃣ Cancelled Repair
-                                        elseif ($repairStatus === 'cancelled'): ?>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-primary btn-action" 
-                                                    onclick="bookAgain(<?php echo $repairId; ?>)" 
-                                                    title="Book Again">
-                                                <i class="fas fa-redo"></i>
-                                            </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+    <?php else: ?>
+        <!-- Global Empty State (Only shows if NO bookings at all) -->
+        <div class="empty-state-modern mt-4">
+            <div class="empty-state-icon"><i class="fas fa-calendar-times"></i></div>
+            <h3 class="empty-state-title">No reservations found</h3>
+            <p class="text-muted mb-4">You haven't made any service or repair reservations yet. Create one to get started! 🚀</p>
+            <div class="d-flex justify-content-center gap-3">
+                <button type="button" class="btn btn-primary px-4" onclick="openReservationModal()">
+                    <i class="fas fa-plus mr-2"></i>New Reservation
+                </button>
             </div>
         </div>
-        <?php endif; ?>
-    </div>
+    <?php endif; ?>
 </div>
 
 </div>
@@ -832,6 +450,9 @@
 
 </div>
 <!-- End of Main Content -->
+
+<!-- Repair Reservation Modal -->
+<?php require_once ROOT . DS . 'views' . DS . 'customer' . DS . 'repair_reservation_modal_wrapper.php'; ?>
 
 <!-- Cancel Reservation Confirmation Modal -->
 <div class="modal fade" id="cancelReservationModal" tabindex="-1" aria-labelledby="cancelReservationModalLabel" aria-hidden="true">
@@ -970,9 +591,6 @@
                         <h6 class="mb-0"><i class="fas fa-cut mr-2"></i><strong>Materials Used</strong></h6>
                     </div>
                     <div class="card-body">
-                        <p class="mb-2"><strong>Leather Quality:</strong> <span id="preview_receipt_leather_quality">-</span></p>
-                        <p class="mb-2"><strong>Leather/Color:</strong> <span id="preview_receipt_leather_color">-</span></p>
-                        <p class="mb-2"><strong>Fabric Type:</strong> <span id="preview_receipt_fabric_type">-</span></p>
                         <p class="mb-2"><strong>Yards/Meters:</strong> <span id="preview_receipt_material_meters">-</span> @ <span id="preview_receipt_price_per_meter">₱0.00</span> = <span id="preview_receipt_material_cost" class="text-success">₱0.00</span></p>
                         <p class="mb-2"><strong>Foam Replacement:</strong> <span id="preview_receipt_foam_replacement">-</span> <span id="preview_receipt_foam_cost" class="text-success"></span></p>
                         <p class="mb-2"><strong>Accessories:</strong> <span id="preview_receipt_accessories">-</span> <span id="preview_receipt_accessories_cost" class="text-success"></span></p>
@@ -986,14 +604,6 @@
                     <div class="card-body">
                         <table class="table table-sm table-bordered mb-0">
                             <tbody>
-                                <tr>
-                                    <td><strong>Material Subtotal:</strong></td>
-                                    <td class="text-right"><span id="preview_receipt_material_subtotal">₱0.00</span></td>
-                                </tr>
-                                <tr id="preview_receipt_color_price_row" style="display: none;">
-                                    <td><strong>Color Price:</strong></td>
-                                    <td class="text-right"><span id="preview_receipt_color_price">₱0.00</span></td>
-                                </tr>
                                 <tr>
                                     <td><strong>Labor Fee Subtotal:</strong></td>
                                     <td class="text-right"><span id="preview_receipt_labor">₱0.00</span></td>
@@ -1050,7 +660,7 @@
 <div class="modal fade" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="bulkActionModalLabel">
                     <i class="fas fa-tasks mr-2"></i>Confirm Bulk Action
                 </h5>
@@ -1070,7 +680,7 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px; padding: 0.5rem 1.5rem;">
                     Cancel
                 </button>
-                <button type="button" class="btn btn-primary" id="confirmBulkActionBtn" style="border-radius: 8px; padding: 0.5rem 1.5rem; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); border: none;">
+                <button type="button" class="btn btn-primary" id="confirmBulkActionBtn" style="border-radius: 8px; padding: 0.5rem 1.5rem; background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); border: none;">
                     <i class="fas fa-check mr-1"></i>Confirm
                 </button>
             </div>
@@ -1101,10 +711,6 @@
     opacity: 1;
 }
 
-/* Fallback styles if Bootstrap JS isn't present */
-.modal { z-index: 1055; }
-.modal.show { display: block; }
-    .modal-backdrop { position: fixed; inset: 0; background: transparent; opacity: 0; pointer-events: none; }
 
 /* Print styles for booking details modal */
 @media print {
@@ -1130,26 +736,26 @@
 
 /* Override Bootstrap primary colors with brown */
 .btn-primary {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
-    border-color: #1F4E79 !important;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%) !important;
+    border-color: #0F3C5F !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
-    border-color: #4CAF50 !important;
-    color: white !important;
-}
-
-.btn-info {
-    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%) !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #0F3C5F 100%) !important;
     border-color: #1F4E79 !important;
     color: white !important;
 }
 
+.btn-info {
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%) !important;
+    border-color: #0F3C5F !important;
+    color: white !important;
+}
+
 .btn-info:hover {
-    background: linear-gradient(135deg, #1F4E79 0%, #4CAF50 50%, #0F3C5F 100%) !important;
-    border-color: #4CAF50 !important;
+    background: linear-gradient(135deg, #1F4E79 0%, #0F3C5F 100%) !important;
+    border-color: #1F4E79 !important;
     color: white !important;
 }
 
@@ -1280,28 +886,7 @@ function viewPreviewReceipt(bookingId) {
             // Use exact stored values from admin (these are what admin calculated and saved)
             const laborFee = parseFloat(payment.laborFee || 0);
             const fabricCost = parseFloat(payment.fabricCost || 0);
-            const colorPrice = parseFloat(payment.colorPrice || 0);
-            const materialSubtotal = parseFloat(payment.materialSubtotal || fabricCost); // Material subtotal (fabric cost only)
-            
-            // Display Material Subtotal (fabric cost)
-            document.getElementById('preview_receipt_material_subtotal').textContent = '₱' + materialSubtotal.toFixed(2);
-            
-            // Display Color Price (separate line item, matching admin format)
-            const colorPriceRow = document.getElementById('preview_receipt_color_price_row');
-            const colorPriceElement = document.getElementById('preview_receipt_color_price');
-            if (colorPrice > 0) {
-                if (colorPriceRow) colorPriceRow.style.display = '';
-                if (colorPriceElement) colorPriceElement.textContent = '₱' + colorPrice.toFixed(2);
-            } else {
-                if (colorPriceRow) colorPriceRow.style.display = 'none';
-            }
-            
-            // Display Labor Fee Subtotal
-            document.getElementById('preview_receipt_labor').textContent = '₱' + laborFee.toFixed(2);
-            
-            // Use stored subtotal from admin (Material Subtotal + Color Price + Labor Fee)
-            // Do NOT recalculate - use admin's exact calculation
-            const subtotal = parseFloat(payment.subtotal || (materialSubtotal + colorPrice + laborFee));
+            const subtotal = parseFloat(payment.subtotal || (materialSubtotal + laborFee));
             document.getElementById('preview_receipt_subtotal').textContent = '₱' + subtotal.toFixed(2);
             
             // Use the EXACT totalAmount/grandTotal from admin's calculation (stored grand_total)
@@ -1616,28 +1201,28 @@ function viewReservationDetails(reservationId) {
                                     populateOfficialReceiptModal(receiptData.receipt);
                                 } else {
                                     // Fallback to booking details if receipt fails
-                    modalBody.innerHTML = originalContent;
+                                    if (modalBody) modalBody.innerHTML = originalContent;
                                     populateBookingDetailsModal(booking);
                                 }
                             })
                             .catch(error => {
                                 console.error('Error loading official receipt:', error);
                                 // Fallback to booking details
-                                modalBody.innerHTML = originalContent;
+                                if (modalBody) modalBody.innerHTML = originalContent;
                                 populateBookingDetailsModal(booking);
                             });
                     } else {
                         // Regular booking details for non-completed bookings
-                        modalBody.innerHTML = originalContent;
+                        if (modalBody) modalBody.innerHTML = originalContent;
                         populateBookingDetailsModal(booking);
                     }
                 } else {
-                    modalBody.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Failed to load reservation details.') + '</div>';
+                    if (modalBody) modalBody.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Failed to load reservation details.') + '</div>';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<div class="alert alert-danger">An error occurred while loading reservation details.</div>';
+                if (modalBody) modalBody.innerHTML = '<div class="alert alert-danger">An error occurred while loading reservation details.</div>';
             });
     } else {
         // Fallback if modal body not found
@@ -1923,9 +1508,10 @@ function populateBookingDetailsModal(b) {
     
     // Format dates
     function formatDate(dateString) {
-        if (!dateString) return '—';
+        if (!dateString || dateString === '0000-00-00' || dateString === '0000-00-00 00:00:00') return '—';
         try {
             var date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
             return date.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
@@ -1977,7 +1563,7 @@ function printBookingReceipt() {
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; }
                 .modal-content { background: white; }
-                .modal-header { background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; padding: 1.5rem; border-radius: 8px 8px 0 0; }
+                .modal-header { background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; padding: 1.5rem; border-radius: 8px 8px 0 0; }
                 .modal-body { padding: 2rem; }
                 .modal-footer { display: none; }
                 .close { display: none; }
@@ -2012,7 +1598,7 @@ function printBookingReceipt() {
 <div class="modal fade" id="repairReceiptModal" tabindex="-1" aria-labelledby="repairReceiptModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="repairReceiptModalLabel">
                     <i class="fas fa-receipt mr-2"></i>Repair Reservation Receipt
                 </h5>
@@ -2023,7 +1609,7 @@ function printBookingReceipt() {
             <div class="modal-body" style="padding: 2rem;">
                 <!-- Receipt Header -->
                 <div class="text-center mb-4">
-                    <h4 style="color: #2c3e50; font-weight: 700; margin-bottom: 0.5rem;">UphoCare</h4>
+                    <h4 style="color: #2c3e50; font-weight: 700; margin-bottom: 0.5rem;">UpholCare</h4>
                     <p class="text-muted mb-0">Repair & Restoration Services</p>
                 </div>
                 
@@ -2104,32 +1690,12 @@ function printBookingReceipt() {
     </div>
 </div>
 
-<!-- Reservation Modal -->
-<div class="modal fade" id="reservationModal" tabindex="-1" role="dialog" aria-labelledby="reservationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content overflow-hidden border-0" style="border-radius: 1rem; box-shadow: 0 1rem 3rem rgba(0,0,0,0.2);">
-            <div class="modal-header border-0 p-4" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white;">
-                <h5 class="modal-title font-weight-bold" id="reservationModalLabel">
-                    <i class="fas fa-tools mr-2"></i>Create Repair Reservation
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-0" id="reservationModalBody">
-                <div class="text-center py-5">
-                    <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
-                    <p class="text-muted">Loading reservation form...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 <!-- Booking Details Modal -->
 <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 50%, #4CAF50 100%); color: white; border-radius: 15px 15px 0 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title" id="bookingDetailsModalLabel">
                     <i class="fas fa-receipt mr-2"></i>Reservation Details
                 </h5>
@@ -2139,7 +1705,7 @@ function printBookingReceipt() {
             </div>
             <div class="modal-body" style="padding: 2rem;">
                 <div class="text-center mb-4">
-                    <h4 style="color: #2c3e50; font-weight: 700; margin-bottom: 0.25rem;">UphoCare</h4>
+                    <h4 style="color: #2c3e50; font-weight: 700; margin-bottom: 0.25rem;">UpholCare</h4>
                     <p class="text-muted mb-0">Reservation Receipt</p>
                 </div>
 
@@ -2315,58 +1881,7 @@ function contactRider(bookingId) {
     window.location.href = '<?php echo BASE_URL; ?>customer/contactRider/' + bookingId;
 }
 
-// 8️⃣ Completed Actions
-// Open Reservation Modal
-function openReservationModal() {
-    // Show modal
-    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal === 'function') {
-        jQuery('#reservationModal').modal('show');
-    } else {
-        const modalEl = document.getElementById('reservationModal');
-        if (modalEl) new bootstrap.Modal(modalEl).show();
-    }
-    
-    // Reset body with spinner
-    document.getElementById('reservationModalBody').innerHTML = `
-        <div class="text-center py-5">
-            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3" style="color: #1F4E79 !important;"></i>
-            <p class="text-muted">Loading reservation form...</p>
-        </div>
-    `;
-    
-    // Fetch partial content
-    fetch('<?php echo BASE_URL; ?>customer/newRepairReservationPartial')
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.text();
-        })
-        .then(html => {
-            document.getElementById('reservationModalBody').innerHTML = html;
-            
-            // Re-execute scripts in the loaded HTML
-            const doc = document.getElementById('reservationModalBody');
-            const scripts = doc.getElementsByTagName('script');
-            for (let i = 0; i < scripts.length; i++) {
-                try {
-                    const scriptVar = scripts[i].innerText || scripts[i].textContent;
-                    const newScript = document.createElement('script');
-                    newScript.text = scriptVar;
-                    document.body.appendChild(newScript).parentNode.removeChild(newScript);
-                } catch (e) {
-                    console.error('Error executing script:', e);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('reservationModalBody').innerHTML = `
-                <div class="alert alert-danger m-4">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    Error loading form. Please try again.
-                </div>
-            `;
-        });
-}
+
 
 function downloadReceipt(bookingId) {
     window.open('<?php echo BASE_URL; ?>customer/downloadReceipt/' + bookingId, '_blank');
@@ -2606,10 +2121,10 @@ function refreshBookingStatuses() {
                     
                     // Ensure status cell has the correct class and attributes for future detection
                     statusCell.classList.add('status-cell');
-                    // Store normalized status in data attribute for reliable comparison
-                    statusCell.setAttribute('data-booking-status', normalizedStatus);
-                    
                     // Update status badge with visible text
+                    statusCell.setAttribute('data-booking-status', normalizedStatus);
+                    row.setAttribute('data-status', normalizedStatus); // Keep filter in sync
+                    
                     statusCell.innerHTML = `
                         <span class="badge badge-status ${config.class}" style="font-size: 0.85rem !important; font-weight: 600 !important; padding: 0.5rem 0.875rem !important; display: inline-flex !important; align-items: center !important; white-space: nowrap !important;">
                             <i class="fas fa-${config.icon} mr-1"></i>
@@ -2708,26 +2223,40 @@ function openUpdateBookingModal(bookingId) {
 }
 
 function populateUpdateModal(booking) {
+    if (!booking) return;
+
+    // Helper to safely set value
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+    };
+
     // Populate service option
     const serviceOption = booking.service_option || 'pickup';
-    document.getElementById('update_service_option').value = serviceOption;
+    setVal('update_service_option', serviceOption);
     
-    // Populate dates
-    if (booking.pickup_date) {
-        const pickupDate = new Date(booking.pickup_date);
-        document.getElementById('update_pickup_date').value = pickupDate.toISOString().split('T')[0];
-    }
-    if (booking.delivery_date) {
-        const deliveryDate = new Date(booking.delivery_date);
-        document.getElementById('update_delivery_date').value = deliveryDate.toISOString().split('T')[0];
-    }
+    // Populate dates safely
+    const formatDateForInput = (dateString) => {
+        if (!dateString || dateString === '0000-00-00' || dateString === '0000-00-00 00:00:00') return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            return date.toISOString().split('T')[0];
+        } catch (e) {
+            console.error('Date parsing error:', e);
+            return '';
+        }
+    };
+
+    setVal('update_pickup_date', formatDateForInput(booking.pickup_date));
+    setVal('update_delivery_date', formatDateForInput(booking.delivery_date));
     
     // Populate addresses
-    document.getElementById('update_pickup_address').value = booking.pickup_address || '';
-    document.getElementById('update_delivery_address').value = booking.delivery_address || '';
+    setVal('update_pickup_address', booking.pickup_address);
+    setVal('update_delivery_address', booking.delivery_address);
     
     // Store booking ID
-    document.getElementById('update_booking_id').value = booking.id;
+    setVal('update_booking_id', booking.id);
     
     // Show/hide address fields based on service option
     toggleAddressFields(serviceOption);
@@ -2834,6 +2363,86 @@ function submitUpdateBooking() {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     });
+}
+
+// Filter Bookings by Status and Search
+let currentStatusFilter = 'all';
+
+function updateStatusFilter(status) {
+    currentStatusFilter = status;
+    
+    // Synchronize select if called from elsewhere
+    const select = document.getElementById('statusFilterSelect');
+    if (select && select.value !== status) {
+        select.value = status;
+    }
+    
+    performBookingsFilter();
+}
+
+function performBookingsFilter() {
+    const searchTerm = document.getElementById('bookingSearchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.booking-card-item');
+    const servicesTable = document.querySelector('.services-table-wrapper');
+    const repairsTable = document.querySelector('.repairs-table-wrapper');
+    const repairsHeading = document.querySelector('.repairs-heading');
+    
+    let visibleServices = 0;
+    let visibleRepairs = 0;
+    
+    cards.forEach(card => {
+        const cardStatus = (card.getAttribute('data-status') || '').toLowerCase().trim();
+        const serviceName = (card.querySelector('.font-weight-bold.text-dark') || {}).textContent || '';
+        const bookingId = (card.querySelector('.text-muted.font-weight-bold') || {}).textContent || '';
+        
+        const normalizedFilter = (currentStatusFilter || 'all').toLowerCase().trim();
+        const matchesStatus = (normalizedFilter === 'all' || cardStatus === normalizedFilter);
+        const matchesSearch = !searchTerm || 
+                             serviceName.toLowerCase().includes(searchTerm) || 
+                             bookingId.toLowerCase().includes(searchTerm);
+        
+        if (matchesStatus && matchesSearch) {
+            card.style.display = ''; 
+            if (card.closest('#servicesContainer')) visibleServices++;
+            else if (card.closest('#repairsContainer')) visibleRepairs++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Toggle visibility of tables/headings based on results
+    if (servicesTable) servicesTable.style.display = visibleServices > 0 ? '' : 'none';
+    if (repairsTable) {
+        repairsTable.style.display = visibleRepairs > 0 ? '' : 'none';
+        if (repairsHeading) repairsHeading.style.display = visibleRepairs > 0 ? '' : 'none';
+    }
+
+    // Handle overall empty state for filtered results
+    let dynamicEmptyState = document.getElementById('filteredEmptyState');
+    if (!dynamicEmptyState && (servicesTable || repairsTable)) {
+        const container = document.querySelector('.dashboard-container');
+        dynamicEmptyState = document.createElement('div');
+        dynamicEmptyState.id = 'filteredEmptyState';
+        dynamicEmptyState.className = 'empty-state-modern mt-4';
+        dynamicEmptyState.innerHTML = `
+            <div class="empty-state-icon"><i class="fas fa-search" style="color: #0F3C5F;"></i></div>
+            <h3 class="empty-state-title">No matching reservations</h3>
+            <p class="text-muted mb-4">We couldn't find any reservations matching your active filters. Try adjusting your search or status selection. 🔍</p>
+            <button class="btn btn-primary px-4" onclick="resetFilters()" style="background: #0F3C5F; border: none; border-radius: 8px;">
+                <i class="fas fa-undo mr-2"></i>Reset All Filters
+            </button>
+        `;
+        container.appendChild(dynamicEmptyState);
+    }
+    
+    if (dynamicEmptyState) {
+        dynamicEmptyState.style.display = (visibleServices + visibleRepairs === 0) ? 'block' : 'none';
+    }
+}
+
+function resetFilters() {
+    document.getElementById('bookingSearchInput').value = '';
+    updateStatusFilter('all');
 }
 </script>
 

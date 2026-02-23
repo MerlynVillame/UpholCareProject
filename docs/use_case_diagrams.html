@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>UphoCare – Use Case Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --navy:#0F3C5F;--blue:#1565C0;--teal:#00BCD4;
+  --customer:#1565C0;--cust-bg:#E3F2FD;--cust-light:#BBDEFB;
+  --admin:#2E7D32;--adm-bg:#E8F5E9;--adm-light:#C8E6C9;
+  --super:#6A1B9A;--sup-bg:#F3E5F5;--sup-light:#E1BEE7;
+  --white:#fff;--gray:#F4F6F9;--text:#1A2A3A;--border:#CFD8DC;
+  --muted:#607D8B;--shadow:0 6px 32px rgba(15,60,95,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--gray);color:var(--text);line-height:1.6}
+
+/* HERO */
+.hero{
+  background:linear-gradient(135deg,#0F3C5F 0%,#1565C0 55%,#00BCD4 100%);
+  padding:56px 40px 44px;text-align:center;color:#fff;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-badge{
+  display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  border-radius:50px;padding:5px 18px;font-size:.75rem;font-weight:600;letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:16px;position:relative;
+}
+.hero h1{font-size:2.6rem;font-weight:800;margin-bottom:10px;position:relative}
+.hero p{font-size:1rem;opacity:.85;max-width:600px;margin:0 auto 20px;position:relative}
+.actor-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;position:relative}
+.actor-pill{
+  padding:7px 20px;border-radius:30px;font-size:.82rem;font-weight:600;
+  border:2px solid rgba(255,255,255,.5);
+}
+.pill-c{background:rgba(21,101,192,.5);color:#fff}
+.pill-a{background:rgba(46,125,50,.5);color:#fff}
+.pill-s{background:rgba(106,27,154,.5);color:#fff}
+
+/* TABLE OF CONTENTS */
+.toc{
+  max-width:900px;margin:36px auto 0;background:var(--white);
+  border-radius:16px;box-shadow:var(--shadow);overflow:hidden;
+}
+.toc-title{
+  background:var(--navy);color:#fff;padding:16px 28px;
+  font-size:.95rem;font-weight:700;letter-spacing:.5px;
+}
+.toc-links{display:flex;flex-wrap:wrap;gap:0}
+.toc-link{
+  flex:1 1 200px;display:flex;align-items:center;gap:12px;
+  padding:18px 24px;text-decoration:none;color:var(--text);
+  border-right:1px solid var(--border);border-bottom:1px solid var(--border);
+  transition:background .2s;font-weight:600;font-size:.9rem;
+}
+.toc-link:hover{background:var(--gray)}
+.toc-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.toc-icon.c{background:var(--cust-bg)}
+.toc-icon.a{background:var(--adm-bg)}
+.toc-icon.s{background:var(--sup-bg)}
+
+/* MAIN LAYOUT */
+.main{max-width:1200px;margin:0 auto;padding:40px 20px 80px}
+
+/* DIAGRAM CARD */
+.diag-card{
+  background:var(--white);border-radius:20px;
+  box-shadow:var(--shadow);margin-bottom:56px;overflow:hidden;
+}
+.diag-header{
+  display:flex;align-items:center;gap:16px;
+  padding:26px 32px;
+}
+.diag-header.customer{background:linear-gradient(135deg,#0D47A1,#1565C0)}
+.diag-header.admin   {background:linear-gradient(135deg,#1B5E20,#2E7D32)}
+.diag-header.super   {background:linear-gradient(135deg,#4A148C,#6A1B9A)}
+.diag-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:rgba(255,255,255,.18);display:flex;
+  align-items:center;justify-content:center;font-size:1.7rem;
+}
+.diag-meta{color:#fff}
+.diag-meta h2{font-size:1.35rem;font-weight:800}
+.diag-meta p{font-size:.83rem;opacity:.82;margin-top:3px}
+.diag-body{padding:32px}
+
+/* ACTOR BADGE */
+.actor-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:30px;
+  font-size:.82rem;font-weight:700;margin-bottom:24px;
+}
+.actor-badge.c{background:var(--cust-bg);color:#0D47A1;border:1px solid var(--cust-light)}
+.actor-badge.a{background:var(--adm-bg);color:#1B5E20;border:1px solid var(--adm-light)}
+.actor-badge.s{background:var(--sup-bg);color:#4A148C;border:1px solid var(--sup-light)}
+
+/* DB TAGS */
+.db-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px}
+.db-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#F8F9FA;border:1px solid var(--border);
+  border-radius:6px;padding:4px 10px;font-family:'Fira Mono',monospace;
+  font-size:.72rem;color:var(--navy);font-weight:500;
+}
+
+/* DIAGRAM WRAP */
+.diagram-wrap{
+  background:#FAFBFC;border:1.5px solid var(--border);
+  border-radius:14px;padding:28px;overflow-x:auto;margin-bottom:24px;
+}
+.mermaid{min-width:560px;text-align:center}
+
+/* USE CASE TABLE */
+.uc-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.875rem}
+.uc-table th{
+  padding:10px 14px;text-align:left;font-weight:700;font-size:.78rem;
+  letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border);
+}
+.uc-table th.c{background:var(--cust-bg);color:#0D47A1}
+.uc-table th.a{background:var(--adm-bg);color:#1B5E20}
+.uc-table th.s{background:var(--sup-bg);color:#4A148C}
+.uc-table td{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+.uc-table tr:last-child td{border-bottom:none}
+.uc-table tr:hover td{background:var(--gray)}
+.uc-num{
+  width:28px;height:28px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.uc-num.c{background:#1565C0}
+.uc-num.a{background:#2E7D32}
+.uc-num.s{background:#6A1B9A}
+.uc-name{font-weight:600;color:var(--text)}
+.uc-desc{color:var(--muted);font-size:.82rem;margin-top:3px}
+.uc-db{font-family:'Fira Mono',monospace;font-size:.7rem;color:#0D47A1;background:var(--cust-bg);padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block}
+.uc-db.a{color:#1B5E20;background:var(--adm-bg)}
+.uc-db.s{color:#4A148C;background:var(--sup-bg)}
+
+footer{
+  text-align:center;padding:28px;
+  background:var(--navy);color:rgba(255,255,255,.6);font-size:.8rem;
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">📐 UML Documentation – UphoCare System</div>
+  <h1>Use Case Diagrams</h1>
+  <p>Separate use case diagrams for every user role, based on the current <code style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:4px">db_upholcare</code> database schema.</p>
+  <div class="actor-pills">
+    <span class="actor-pill pill-c">👤 Customer</span>
+    <span class="actor-pill pill-a">🛠️ Admin (Store Manager)</span>
+    <span class="actor-pill pill-s">👑 Super Admin (Control Panel)</span>
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div style="max-width:1200px;margin:0 auto;padding:0 20px">
+  <div class="toc" style="margin-top:36px">
+    <div class="toc-title">📋 Jump to a Diagram</div>
+    <div class="toc-links">
+      <a class="toc-link" href="#customer"><div class="toc-icon c">👤</div><div><div>Customer</div><div style="font-size:.75rem;font-weight:400;color:var(--muted)">17 use cases</div></div></a>
+      <a class="toc-link" href="#admin"><div class="toc-icon a">🛠️</div><div><div>Admin (Store Manager)</div><div style="font-size:.75rem;font-weight:400;color:var(--muted)">22 use cases</div></div></a>
+      <a class="toc-link" href="#super"><div class="toc-icon s">👑</div><div><div>Super Admin</div><div style="font-size:.75rem;font-weight:400;color:var(--muted)">18 use cases</div></div></a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════
+     DIAGRAM 1 — CUSTOMER
+═══════════════════════════════════════ -->
+<div class="diag-card" id="customer">
+  <div class="diag-header customer">
+    <div class="diag-icon">👤</div>
+    <div class="diag-meta">
+      <h2>Customer Use Case Diagram</h2>
+      <p>All processes a registered customer can perform in the UphoCare system</p>
+    </div>
+  </div>
+  <div class="diag-body">
+
+    <div class="actor-badge c">👤 Actor: Customer &nbsp;|&nbsp; Table: <code>users</code> (role = 'customer')</div>
+
+    <div class="db-tags">
+      <span class="db-tag">📋 users</span>
+      <span class="db-tag">📋 bookings</span>
+      <span class="db-tag">📋 services</span>
+      <span class="db-tag">📋 store_locations</span>
+      <span class="db-tag">📋 inventory</span>
+      <span class="db-tag">📋 quotations</span>
+      <span class="db-tag">📋 payments</span>
+      <span class="db-tag">📋 notifications</span>
+      <span class="db-tag">📋 store_ratings</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+graph TD
+  C((fa:fa-user\nCustomer))
+
+  subgraph AUTH["🔐 Authentication"]
+    UC1[Register Account]
+    UC2[Login]
+    UC3[Logout]
+    UC4[Edit Profile]
+  end
+
+  subgraph BROWSE["🔍 Browse &amp; Explore"]
+    UC5[View Landing Page]
+    UC6[Browse Available Services]
+    UC7[View Fabric Catalog]
+    UC8[View Store Locations on Map]
+  end
+
+  subgraph BOOK["📋 Booking &amp; Reservation"]
+    UC9[Submit Service Booking]
+    UC10[Submit Repair Reservation]
+    UC11[Track Booking Status]
+    UC12[View Booking History]
+    UC13[Archive Completed Booking]
+  end
+
+  subgraph QUOTPAY["💰 Quotation &amp; Payment"]
+    UC14[View Quotation]
+    UC15[Accept Quotation]
+    UC16[Reject Quotation]
+    UC17[Make Payment]
+    UC18[View Receipt]
+  end
+
+  subgraph SOCIAL["⭐ Feedback"]
+    UC19[Rate Store]
+    UC20[Receive Notifications]
+  end
+
+  C --> UC1 & UC2 & UC3 & UC4
+  C --> UC5 & UC6 & UC7 & UC8
+  C --> UC9 & UC10 & UC11 & UC12 & UC13
+  C --> UC14 & UC15 & UC16 & UC17 & UC18
+  C --> UC19 & UC20
+
+  UC9 -. "«include»" .-> UC2
+  UC10 -. "«include»" .-> UC2
+  UC15 -. "«extend»" .-> UC14
+  UC16 -. "«extend»" .-> UC14
+  UC17 -. "«extend»" .-> UC15
+
+style AUTH fill:#E3F2FD,stroke:#1565C0,color:#0D1B2A
+style BROWSE fill:#E8F5E9,stroke:#2E7D32,color:#0D1B2A
+style BOOK fill:#FFF3E0,stroke:#E65100,color:#0D1B2A
+style QUOTPAY fill:#F3E5F5,stroke:#6A1B9A,color:#0D1B2A
+style SOCIAL fill:#E0F2F1,stroke:#00695C,color:#0D1B2A
+style C fill:#1565C0,color:#fff,stroke:#0D47A1
+      </div>
+    </div>
+
+    <table class="uc-table">
+      <thead><tr>
+        <th class="c">#</th>
+        <th class="c">Use Case</th>
+        <th class="c">Description</th>
+        <th class="c">Database Table(s)</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="uc-num c">1</span></td><td><div class="uc-name">Register Account</div></td><td><div class="uc-desc">Customer fills username, email, password, phone. Account created with role='customer', status='active'.</div></td><td><span class="uc-db">users</span></td></tr>
+        <tr><td><span class="uc-num c">2</span></td><td><div class="uc-name">Login</div></td><td><div class="uc-desc">Enter email & password. Session created on success. Failed attempts logged.</div></td><td><span class="uc-db">users</span> <span class="uc-db">login_logs</span></td></tr>
+        <tr><td><span class="uc-num c">3</span></td><td><div class="uc-name">Logout</div></td><td><div class="uc-desc">Destroys session and redirects to landing page with login modal.</div></td><td><span class="uc-db">—</span></td></tr>
+        <tr><td><span class="uc-num c">4</span></td><td><div class="uc-name">Edit Profile</div></td><td><div class="uc-desc">Update fullname, phone, password. Saved to users table.</div></td><td><span class="uc-db">users</span></td></tr>
+        <tr><td><span class="uc-num c">5</span></td><td><div class="uc-name">View Landing Page</div></td><td><div class="uc-desc">Browse the public homepage with service overview, store info, and login/register buttons.</div></td><td><span class="uc-db">—</span></td></tr>
+        <tr><td><span class="uc-num c">6</span></td><td><div class="uc-name">Browse Available Services</div></td><td><div class="uc-desc">View all active services grouped by category (Vehicle, Furniture, Bedding).</div></td><td><span class="uc-db">services</span> <span class="uc-db">service_categories</span></td></tr>
+        <tr><td><span class="uc-num c">7</span></td><td><div class="uc-name">View Fabric Catalog</div></td><td><div class="uc-desc">Browse in-stock fabric/color inventory. Items with status='out-of-stock' are hidden. Includes premium/standard types.</div></td><td><span class="uc-db">inventory</span> <span class="uc-db">store_locations</span></td></tr>
+        <tr><td><span class="uc-num c">8</span></td><td><div class="uc-name">View Store Locations on Map</div></td><td><div class="uc-desc">View active partner stores on an interactive map using lat/lng coordinates.</div></td><td><span class="uc-db">store_locations</span> <span class="uc-db">store_ratings</span></td></tr>
+        <tr><td><span class="uc-num c">9</span></td><td><div class="uc-name">Submit Service Booking</div></td><td><div class="uc-desc">Select service, store, date, and service_option (pickup/dropoff/walkin). Booking inserted with status='pending'.</div></td><td><span class="uc-db">bookings</span> <span class="uc-db">services</span> <span class="uc-db">store_locations</span></td></tr>
+        <tr><td><span class="uc-num c">10</span></td><td><div class="uc-name">Submit Repair Reservation</div></td><td><div class="uc-desc">Fill repair modal with damage description, pickup address. Saved as a booking with service type 'repair'.</div></td><td><span class="uc-db">bookings</span></td></tr>
+        <tr><td><span class="uc-num c">11</span></td><td><div class="uc-name">Track Booking Status</div></td><td><div class="uc-desc">View the current status of all active bookings from pending through completed.</div></td><td><span class="uc-db">bookings</span></td></tr>
+        <tr><td><span class="uc-num c">12</span></td><td><div class="uc-name">View Booking History</div></td><td><div class="uc-desc">See all past (completed/cancelled) bookings with dates, services, and amounts.</div></td><td><span class="uc-db">bookings</span> <span class="uc-db">services</span></td></tr>
+        <tr><td><span class="uc-num c">13</span></td><td><div class="uc-name">Archive Completed Booking</div></td><td><div class="uc-desc">Move a completed booking to archive (status='closed', is_archived=1).</div></td><td><span class="uc-db">bookings</span></td></tr>
+        <tr><td><span class="uc-num c">14</span></td><td><div class="uc-name">View Quotation</div></td><td><div class="uc-desc">View quotation details sent by admin: total amount, fabric cost, labor fee, notes, valid_until.</div></td><td><span class="uc-db">quotations</span> <span class="uc-db">bookings</span></td></tr>
+        <tr><td><span class="uc-num c">15</span></td><td><div class="uc-name">Accept Quotation</div></td><td><div class="uc-desc">Set quotation_accepted=1, quotation_accepted_at=NOW(). Booking status moves to 'approved'.</div></td><td><span class="uc-db">bookings</span> <span class="uc-db">quotations</span></td></tr>
+        <tr><td><span class="uc-num c">16</span></td><td><div class="uc-name">Reject Quotation</div></td><td><div class="uc-desc">Set quotation_accepted=0. Admin is notified to revise or cancel.</div></td><td><span class="uc-db">bookings</span> <span class="uc-db">quotations</span></td></tr>
+        <tr><td><span class="uc-num c">17</span></td><td><div class="uc-name">Make Payment</div></td><td><div class="uc-desc">Record payment (cash/COD/partial). Updates payment_status in bookings table.</div></td><td><span class="uc-db">payments</span> <span class="uc-db">bookings</span></td></tr>
+        <tr><td><span class="uc-num c">18</span></td><td><div class="uc-name">View Receipt</div></td><td><div class="uc-desc">View issued receipt once receipt_issued=1 by admin. Shows receipt_number, total, date.</div></td><td><span class="uc-db">bookings</span></td></tr>
+        <tr><td><span class="uc-num c">19</span></td><td><div class="uc-name">Rate Store</div></td><td><div class="uc-desc">Submit a rating (1.0–5.0) and review text after service completion. One rating per store per customer.</div></td><td><span class="uc-db">store_ratings</span> <span class="uc-db">store_locations</span></td></tr>
+        <tr><td><span class="uc-num c">20</span></td><td><div class="uc-name">Receive Notifications</div></td><td><div class="uc-desc">In-app alerts for booking confirmations, quotations, status changes, and receipts.</div></td><td><span class="uc-db">notifications</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     DIAGRAM 2 — ADMIN
+═══════════════════════════════════════ -->
+<div class="diag-card" id="admin">
+  <div class="diag-header admin">
+    <div class="diag-icon">🛠️</div>
+    <div class="diag-meta">
+      <h2>Admin (Store Manager) Use Case Diagram</h2>
+      <p>All processes an approved store admin can perform in the Admin Panel</p>
+    </div>
+  </div>
+  <div class="diag-body">
+
+    <div class="actor-badge a">🛠️ Actor: Admin &nbsp;|&nbsp; Table: <code>control_panel_admins</code> (role = 'admin')</div>
+
+    <div class="db-tags">
+      <span class="db-tag">📋 admin_registrations</span>
+      <span class="db-tag">📋 control_panel_admins</span>
+      <span class="db-tag">📋 bookings</span>
+      <span class="db-tag">📋 services</span>
+      <span class="db-tag">📋 service_categories</span>
+      <span class="db-tag">📋 inventory</span>
+      <span class="db-tag">📋 quotations</span>
+      <span class="db-tag">📋 payments</span>
+      <span class="db-tag">📋 notifications</span>
+      <span class="db-tag">📋 store_locations</span>
+      <span class="db-tag">📋 store_ratings</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+graph TD
+  A((fa:fa-tools\nAdmin))
+
+  subgraph REGAUTH["📝 Registration &amp; Access"]
+    A1[Self-Register as Admin]
+    A2[Verify Email with Code]
+    A3[Login to Admin Panel]
+    A4[Logout]
+    A5[Edit Admin Profile]
+    A6[Forgot / Reset Password]
+  end
+
+  subgraph DASH["📊 Dashboard"]
+    A7[View Dashboard Analytics]
+    A8[View Pending Bookings Count]
+  end
+
+  subgraph BKMGMT["📋 Booking Management"]
+    A9[View All Bookings]
+    A10[Confirm / Accept Booking]
+    A11[Reject Booking]
+    A12[Assign for Pickup]
+    A13[Confirm Item Picked Up]
+    A14[Record Inspection Results]
+    A15[Send Preview Receipt / Photo]
+    A16[Generate &amp; Send Quotation]
+    A17[Start Repair]
+    A18[Update Repair Progress]
+    A19[Mark Repair Completed]
+    A20[Quality Check Pass]
+    A21[Mark Ready for Delivery / Pickup]
+    A22[Confirm Payment Received]
+    A23[Issue Final Receipt]
+    A24[Close / Archive Booking]
+  end
+
+  subgraph INVSVC["📦 Inventory &amp; Services"]
+    A25[Add Fabric to Inventory]
+    A26[Edit / Update Inventory Item]
+    A27[Manage Stock Levels]
+    A28[Add / Edit Service]
+    A29[Manage Service Categories]
+  end
+
+  subgraph REPORT["📈 Reports"]
+    A30[Generate Booking Reports]
+    A31[Export PDF / CSV Report]
+    A32[View Store Ratings]
+    A33[Manage Email Notifications]
+  end
+
+  A --> A1 & A2 & A3 & A4 & A5 & A6
+  A --> A7 & A8
+  A --> A9 & A10 & A11 & A12 & A13 & A14
+  A --> A15 & A16 & A17 & A18 & A19
+  A --> A20 & A21 & A22 & A23 & A24
+  A --> A25 & A26 & A27 & A28 & A29
+  A --> A30 & A31 & A32 & A33
+
+  A1 -. "«include»" .-> A2
+  A2 -. "«include»" .-> A3
+  A16 -. "«extend»" .-> A14
+  A23 -. "«include»" .-> A22
+  A31 -. "«extend»" .-> A30
+
+style REGAUTH fill:#E8F5E9,stroke:#2E7D32,color:#0D1B2A
+style DASH fill:#E0F2F1,stroke:#00695C,color:#0D1B2A
+style BKMGMT fill:#E3F2FD,stroke:#1565C0,color:#0D1B2A
+style INVSVC fill:#FFF3E0,stroke:#E65100,color:#0D1B2A
+style REPORT fill:#FCE4EC,stroke:#880E4F,color:#0D1B2A
+style A fill:#2E7D32,color:#fff,stroke:#1B5E20
+      </div>
+    </div>
+
+    <table class="uc-table">
+      <thead><tr>
+        <th class="a">#</th>
+        <th class="a">Use Case</th>
+        <th class="a">Description</th>
+        <th class="a">Database Table(s)</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="uc-num a">1</span></td><td><div class="uc-name">Self-Register as Admin</div></td><td><div class="uc-desc">Fill registration form (fullname, email, username, password, phone, business info). Record inserted with registration_status='pending'.</div></td><td><span class="uc-db a">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num a">2</span></td><td><div class="uc-name">Verify Email with Code</div></td><td><div class="uc-desc">Enter the 6-digit verification code emailed after Super Admin approval. Checks admin_registrations.verification_code, expires after limited attempts.</div></td><td><span class="uc-db a">admin_registrations</span> <span class="uc-db a">admin_verification_codes</span></td></tr>
+        <tr><td><span class="uc-num a">3</span></td><td><div class="uc-name">Login to Admin Panel</div></td><td><div class="uc-desc">Authenticate using email & password against control_panel_admins. Failed attempts logged.</div></td><td><span class="uc-db a">control_panel_admins</span> <span class="uc-db a">login_logs</span></td></tr>
+        <tr><td><span class="uc-num a">4</span></td><td><div class="uc-name">Logout</div></td><td><div class="uc-desc">Destroy session and redirect to admin login page.</div></td><td><span class="uc-db a">control_panel_sessions</span></td></tr>
+        <tr><td><span class="uc-num a">5</span></td><td><div class="uc-name">Edit Admin Profile</div></td><td><div class="uc-desc">Update fullname, email, phone, password in control_panel_admins.</div></td><td><span class="uc-db a">control_panel_admins</span></td></tr>
+        <tr><td><span class="uc-num a">6</span></td><td><div class="uc-name">Forgot / Reset Password</div></td><td><div class="uc-desc">Request password reset via email. Set new password after verification.</div></td><td><span class="uc-db a">control_panel_admins</span></td></tr>
+        <tr><td><span class="uc-num a">7</span></td><td><div class="uc-name">View Dashboard Analytics</div></td><td><div class="uc-desc">See KPIs: total bookings, pending count, revenue, completed repairs.</div></td><td><span class="uc-db a">bookings</span> <span class="uc-db a">payments</span></td></tr>
+        <tr><td><span class="uc-num a">8</span></td><td><div class="uc-name">View All Bookings</div></td><td><div class="uc-desc">List all bookings with filter by status, date, store. Full table view of bookings.</div></td><td><span class="uc-db a">bookings</span> <span class="uc-db a">users</span> <span class="uc-db a">services</span></td></tr>
+        <tr><td><span class="uc-num a">9</span></td><td><div class="uc-name">Confirm / Accept Booking</div></td><td><div class="uc-desc">Set bookings.status='confirmed'. Notify customer via notifications table.</div></td><td><span class="uc-db a">bookings</span> <span class="uc-db a">notifications</span></td></tr>
+        <tr><td><span class="uc-num a">10</span></td><td><div class="uc-name">Reject Booking</div></td><td><div class="uc-desc">Set status='rejected'. Customer notified with reason.</div></td><td><span class="uc-db a">bookings</span> <span class="uc-db a">notifications</span></td></tr>
+        <tr><td><span class="uc-num a">11</span></td><td><div class="uc-name">Assign for Pickup</div></td><td><div class="uc-desc">Set status='for_pickup'. Pickup date and address logged in bookings.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">12</span></td><td><div class="uc-name">Confirm Item Picked Up</div></td><td><div class="uc-desc">Set status='picked_up'. Item is now at the shop.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">13</span></td><td><div class="uc-name">Record Inspection Results</div></td><td><div class="uc-desc">Save damage_description, damage_severity, damage_types, measurement fields. Set status='inspect_completed'.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">14</span></td><td><div class="uc-name">Send Preview Receipt / Photo</div></td><td><div class="uc-desc">Upload preview_image. Set preview_sent_at, status='preview_receipt_sent'.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">15</span></td><td><div class="uc-name">Generate &amp; Send Quotation</div></td><td><div class="uc-desc">Calculate fabric_cost, labor_fee, number_of_meters, price_per_meter. Insert into quotations (status='sent'). Set quotation_sent=1 in bookings.</div></td><td><span class="uc-db a">quotations</span> <span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">16</span></td><td><div class="uc-name">Start / Update Repair</div></td><td><div class="uc-desc">Set status='in_progress', repair_start_date=NOW(). Update to 'under_repair' during work.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">17</span></td><td><div class="uc-name">Mark Repair Completed</div></td><td><div class="uc-desc">Set status='repair_completed' → 'for_quality_check' → 'repair_completed_ready_to_deliver'.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">18</span></td><td><div class="uc-name">Mark Ready for Delivery / Pickup</div></td><td><div class="uc-desc">Set status='out_for_delivery' or 'ready_for_pickup'. Delivery date saved.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">19</span></td><td><div class="uc-name">Confirm Payment Received</div></td><td><div class="uc-desc">Insert payment record. Choose cash/COD/partial. Update payment_status in bookings.</div></td><td><span class="uc-db a">payments</span> <span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">20</span></td><td><div class="uc-name">Issue Final Receipt</div></td><td><div class="uc-desc">Set receipt_issued=1, receipt_issued_at=NOW(), receipt_number assigned. Booking moves to status='completed'.</div></td><td><span class="uc-db a">bookings</span></td></tr>
+        <tr><td><span class="uc-num a">21</span></td><td><div class="uc-name">Add Fabric to Inventory</div></td><td><div class="uc-desc">Add new color/fabric: color_code (unique per store), fabric_type, price_per_unit, quantity, store_location_id.</div></td><td><span class="uc-db a">inventory</span></td></tr>
+        <tr><td><span class="uc-num a">22</span></td><td><div class="uc-name">Manage Stock Levels</div></td><td><div class="uc-desc">Update quantity. Auto-set status: 'in-stock' / 'low-stock' / 'out-of-stock'.</div></td><td><span class="uc-db a">inventory</span></td></tr>
+        <tr><td><span class="uc-num a">23</span></td><td><div class="uc-name">Add / Edit Service</div></td><td><div class="uc-desc">Create or update services with name, type, price, category, status.</div></td><td><span class="uc-db a">services</span> <span class="uc-db a">service_categories</span></td></tr>
+        <tr><td><span class="uc-num a">24</span></td><td><div class="uc-name">Generate &amp; Export Reports</div></td><td><div class="uc-desc">Filter bookings by date/status. Download as PDF (via Dompdf) or CSV.</div></td><td><span class="uc-db a">bookings</span> <span class="uc-db a">payments</span> <span class="uc-db a">services</span></td></tr>
+        <tr><td><span class="uc-num a">25</span></td><td><div class="uc-name">View Store Ratings</div></td><td><div class="uc-desc">See customer ratings and review texts submitted for the store.</div></td><td><span class="uc-db a">store_ratings</span> <span class="uc-db a">store_locations</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     DIAGRAM 3 — SUPER ADMIN
+═══════════════════════════════════════ -->
+<div class="diag-card" id="super">
+  <div class="diag-header super">
+    <div class="diag-icon">👑</div>
+    <div class="diag-meta">
+      <h2>Super Admin (Control Panel) Use Case Diagram</h2>
+      <p>All system-level governance processes available to the Super Admin</p>
+    </div>
+  </div>
+  <div class="diag-body">
+
+    <div class="actor-badge s">👑 Actor: Super Admin &nbsp;|&nbsp; Table: <code>control_panel_admins</code> (role = 'super_admin')</div>
+
+    <div class="db-tags">
+      <span class="db-tag">📋 control_panel_admins</span>
+      <span class="db-tag">📋 admin_registrations</span>
+      <span class="db-tag">📋 admin_verification_codes</span>
+      <span class="db-tag">📋 users</span>
+      <span class="db-tag">📋 login_logs</span>
+      <span class="db-tag">📋 system_activities</span>
+      <span class="db-tag">📋 system_statistics</span>
+      <span class="db-tag">📋 control_panel_sessions</span>
+      <span class="db-tag">📋 store_locations</span>
+      <span class="db-tag">📋 store_ratings</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+graph TD
+  SA((fa:fa-crown\nSuper Admin))
+
+  subgraph CPAUTH["🔐 Control Panel Access"]
+    S1[Login to Control Panel]
+    S2[Logout]
+    S3[Forgot / Reset Password]
+    S4[View Super Admin Dashboard]
+  end
+
+  subgraph ADMINMGMT["👥 Admin Account Governance"]
+    S5[View All Admin Registrations]
+    S6[Review Admin Registration Details]
+    S7[Approve Admin Registration]
+    S8[Reject Admin Registration]
+    S9[Send Verification Code to Admin]
+    S10[View Active Admin Accounts]
+    S11[Deactivate / Suspend Admin]
+    S12[Resend Verification Code]
+  end
+
+  subgraph CUSMGMT["🧑 Customer Account Management"]
+    S13[View All Customer Accounts]
+    S14[Activate Customer Account]
+    S15[Deactivate Customer Account]
+  end
+
+  subgraph BIZREG["🏢 Business Registration"]
+    S16[View Business Registrations]
+    S17[Review Business Permit Documents]
+    S18[Approve Business Registration]
+    S19[Reject Business Registration]
+  end
+
+  subgraph MONITOR["📡 System Monitoring"]
+    S20[View Login Logs]
+    S21[Filter Logs by User Type / Status]
+    S22[View System Activity Audit Trail]
+    S23[View System Statistics Dashboard]
+    S24[View Store Compliance Reports]
+    S25[View Banned Stores List]
+    S26[View Store Ratings]
+  end
+
+  SA --> S1 & S2 & S3 & S4
+  SA --> S5 & S6 & S7 & S8 & S9 & S10 & S11 & S12
+  SA --> S13 & S14 & S15
+  SA --> S16 & S17 & S18 & S19
+  SA --> S20 & S21 & S22 & S23 & S24 & S25 & S26
+
+  S7 -. "«include»" .-> S9
+  S6 -. "«include»" .-> S5
+  S7 -. "«extend»" .-> S6
+  S8 -. "«extend»" .-> S6
+  S17 -. "«include»" .-> S16
+  S21 -. "«extend»" .-> S20
+
+style CPAUTH fill:#F3E5F5,stroke:#6A1B9A,color:#0D1B2A
+style ADMINMGMT fill:#EDE7F6,stroke:#4A148C,color:#0D1B2A
+style CUSMGMT fill:#E8EAF6,stroke:#283593,color:#0D1B2A
+style BIZREG fill:#FFF8E1,stroke:#F57F17,color:#0D1B2A
+style MONITOR fill:#E0F2F1,stroke:#004D40,color:#0D1B2A
+style SA fill:#6A1B9A,color:#fff,stroke:#4A148C
+      </div>
+    </div>
+
+    <table class="uc-table">
+      <thead><tr>
+        <th class="s">#</th>
+        <th class="s">Use Case</th>
+        <th class="s">Description</th>
+        <th class="s">Database Table(s)</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="uc-num s">1</span></td><td><div class="uc-name">Login to Control Panel</div></td><td><div class="uc-desc">Authenticate via email & password. Only control_panel_admins with role='super_admin' can access all features. Login recorded.</div></td><td><span class="uc-db s">control_panel_admins</span> <span class="uc-db s">login_logs</span></td></tr>
+        <tr><td><span class="uc-num s">2</span></td><td><div class="uc-name">Logout</div></td><td><div class="uc-desc">End session, expire control_panel_sessions record.</div></td><td><span class="uc-db s">control_panel_sessions</span></td></tr>
+        <tr><td><span class="uc-num s">3</span></td><td><div class="uc-name">Forgot / Reset Password</div></td><td><div class="uc-desc">Email-based password reset. Secure token sent and verified before password update.</div></td><td><span class="uc-db s">control_panel_admins</span></td></tr>
+        <tr><td><span class="uc-num s">4</span></td><td><div class="uc-name">View Super Admin Dashboard</div></td><td><div class="uc-desc">See KPI cards: total users, new bookings, login count, active admins, system uptime.</div></td><td><span class="uc-db s">system_statistics</span> <span class="uc-db s">login_logs</span> <span class="uc-db s">users</span></td></tr>
+        <tr><td><span class="uc-num s">5</span></td><td><div class="uc-name">View All Admin Registrations</div></td><td><div class="uc-desc">List all admin applications filtered by status: pending, pending_verification, approved, rejected.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">6</span></td><td><div class="uc-name">Review Admin Registration Details</div></td><td><div class="uc-desc">Open modal showing fullname, email, username, phone, registered date, business info, uploaded documents.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">7</span></td><td><div class="uc-name">Approve Admin Registration</div></td><td><div class="uc-desc">Set registration_status='pending_verification'. Generate 6-digit code, store in admin_registrations.verification_code. Send via email.</div></td><td><span class="uc-db s">admin_registrations</span> <span class="uc-db s">admin_verification_codes</span></td></tr>
+        <tr><td><span class="uc-num s">8</span></td><td><div class="uc-name">Reject Admin Registration</div></td><td><div class="uc-desc">Set registration_status='rejected'. Save rejection_reason. Send rejection email to admin applicant.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">9</span></td><td><div class="uc-name">Send Verification Code to Admin</div></td><td><div class="uc-desc">Generate and email a 6-digit verification code. Logged with verification_code_sent_at timestamp.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">10</span></td><td><div class="uc-name">Resend Verification Code</div></td><td><div class="uc-desc">Re-generate and re-send verification code. Reset verification_attempts counter.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">11</span></td><td><div class="uc-name">View Active Admin Accounts</div></td><td><div class="uc-desc">See all approved admins in the Active Governance tab with their store assignment and last_login.</div></td><td><span class="uc-db s">control_panel_admins</span></td></tr>
+        <tr><td><span class="uc-num s">12</span></td><td><div class="uc-name">Deactivate / Suspend Admin</div></td><td><div class="uc-desc">Set control_panel_admins.status='inactive'. Admin can no longer login. Logged in system_activities.</div></td><td><span class="uc-db s">control_panel_admins</span> <span class="uc-db s">system_activities</span></td></tr>
+        <tr><td><span class="uc-num s">13</span></td><td><div class="uc-name">View All Customer Accounts</div></td><td><div class="uc-desc">List all users with role='customer', showing name, email, status, registration date.</div></td><td><span class="uc-db s">users</span></td></tr>
+        <tr><td><span class="uc-num s">14</span></td><td><div class="uc-name">Activate / Deactivate Customer</div></td><td><div class="uc-desc">Toggle users.status between 'active' and 'inactive'. Action recorded in system_activities.</div></td><td><span class="uc-db s">users</span> <span class="uc-db s">system_activities</span></td></tr>
+        <tr><td><span class="uc-num s">15</span></td><td><div class="uc-name">View Business Registrations</div></td><td><div class="uc-desc">Review business applications including business_name, business_permit_path, and contact details.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">16</span></td><td><div class="uc-name">Approve / Reject Business Registration</div></td><td><div class="uc-desc">After verifying uploaded documents (business permits/IDs), approve to activate or reject with reason.</div></td><td><span class="uc-db s">admin_registrations</span></td></tr>
+        <tr><td><span class="uc-num s">17</span></td><td><div class="uc-name">View Login Logs</div></td><td><div class="uc-desc">See all login attempts (success/failed) by user_type (customer/admin/control_panel). Filter by date, IP, email.</div></td><td><span class="uc-db s">login_logs</span></td></tr>
+        <tr><td><span class="uc-num s">18</span></td><td><div class="uc-name">View System Activity Audit Trail</div></td><td><div class="uc-desc">Full audit log: who changed what, old_value vs new_value, affected table and record ID.</div></td><td><span class="uc-db s">system_activities</span></td></tr>
+        <tr><td><span class="uc-num s">19</span></td><td><div class="uc-name">View System Statistics</div></td><td><div class="uc-desc">Daily stats: total_logins, successful_logins, new_users, new_bookings, completed_bookings.</div></td><td><span class="uc-db s">system_statistics</span></td></tr>
+        <tr><td><span class="uc-num s">20</span></td><td><div class="uc-name">View Store Compliance Reports</div></td><td><div class="uc-desc">Review submitted compliance reports per store (store_compliance_reports table). Flag non-compliant stores.</div></td><td><span class="uc-db s">store_compliance_reports</span></td></tr>
+        <tr><td><span class="uc-num s">21</span></td><td><div class="uc-name">View Banned Stores List</div></td><td><div class="uc-desc">See stores that have been banned. View ban reason, date, and tracking fields.</div></td><td><span class="uc-db s">store_locations</span></td></tr>
+        <tr><td><span class="uc-num s">22</span></td><td><div class="uc-name">View Store Ratings</div></td><td><div class="uc-desc">Monitor all customer ratings across stores. Average rating auto-updated via trigger.</div></td><td><span class="uc-db s">store_ratings</span> <span class="uc-db s">store_locations</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<footer>
+  <strong>UphoCare – Use Case Diagrams</strong> &nbsp;|&nbsp; 2026<br/>
+  Based on <code>db_upholcare</code> schema &nbsp;·&nbsp; Tables: users · bookings · services · inventory · quotations · payments · notifications · store_ratings · admin_registrations · control_panel_admins · login_logs · system_activities · system_statistics
+</footer>
+
+<script>
+mermaid.initialize({
+  startOnLoad:true,
+  theme:'default',
+  securityLevel:'loose',
+  flowchart:{curve:'basis',htmlLabels:true,padding:20}
+});
+</script>
+</body>
+</html>

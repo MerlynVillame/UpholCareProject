@@ -259,6 +259,237 @@ class AdminController extends Controller {
         
         $this->view('admin/reports', $data);
     }
+
+    /**
+     * Generate & Download Report
+     */
+    public function generateReport() {
+        $reportType = $_POST['report_type'] ?? 'sales';
+        $startDate = $_POST['start_date'] ?? date('Y-m-01');
+        $endDate = $_POST['end_date'] ?? date('Y-m-d');
+        $format = $_POST['format'] ?? 'csv';
+        $category = $_POST['category'] ?? 'all';
+        $includeSummary = isset($_POST['include_summary']);
+        $includeBreakdown = isset($_POST['include_breakdown']);
+        
+        $db = Database::getInstance()->getConnection();
+        $storeId = $this->getAdminStoreLocationId();
+        
+        // Fetch Store Info
+        $storeName = $_SESSION['store_name'] ?? 'My Shop';
+        try {
+            $storeStmt = $db->prepare("SELECT store_name FROM store_locations WHERE id = ?");
+            $storeStmt->execute([$storeId]);
+            $storeRow = $storeStmt->fetch();
+            if ($storeRow && !empty($storeRow['store_name'])) $storeName = $storeRow['store_name'];
+        } catch (Exception $e) {}
+        
+        $adminName = $_SESSION['fullname'] ?? ($_SESSION['name'] ?? 'Admin');
+
+        // Build Query
+        $sql = "SELECT b.id, u.fullname as customer, s.service_name as service, b.item_description as item, 
+                       b.item_type, b.service_type, b.total_amount as amount, b.created_at as report_date, b.status, b.payment_status
+                FROM bookings b
+                LEFT JOIN users u ON b.user_id = u.id
+                LEFT JOIN services s ON b.service_id = s.id
+                WHERE b.store_location_id = ? 
+                AND DATE(b.created_at) BETWEEN ? AND ?";
+        
+        $params = [$storeId, $startDate, $endDate];
+        
+        // Refine based on report type
+        if ($reportType === 'sales') {
+            // Sales reports focus on revenue (completed or paid)
+            $sql .= " AND (b.status IN ('completed', 'delivered_and_paid') OR b.payment_status IN ('paid', 'paid_full_cash', 'paid_on_delivery_cod'))";
+        }
+        
+        if ($category !== 'all') {
+            $sql .= " AND b.service_type = ?";
+            $params[] = $category;
+        }
+        
+        $sql .= " ORDER BY b.created_at DESC";
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $bookings = $stmt->fetchAll();
+        
+        // Calculate Statistics
+        $totalBookings = count($bookings);
+        $totalRevenue = 0;
+        $paidCount = 0;
+        $completedCount = 0;
+        $cancelledCount = 0;
+        
+        foreach ($bookings as $b) {
+            $totalRevenue += (float)$b['amount'];
+            if ($b['status'] === 'completed' || $b['status'] === 'delivered_and_paid') $completedCount++;
+            if ($b['status'] === 'cancelled') $cancelledCount++;
+            if (in_array($b['payment_status'], ['paid', 'paid_full_cash', 'paid_on_delivery_cod'])) $paidCount++;
+        }
+        
+        $unpaidCount = $totalBookings - $paidCount;
+        $filename = "UphoCare_" . ucfirst($reportType) . "_Report_" . date('Ymd_His');
+
+        if ($format === 'csv') {
+            $this->exportCSV($bookings, $storeName, $startDate, $endDate, $filename);
+        } elseif ($format === 'xlsx') {
+            $this->exportExcel($bookings, $storeName, $startDate, $endDate, $totalBookings, $totalRevenue, $filename);
+        } else {
+            $this->exportPDF($bookings, $storeName, $startDate, $endDate, $totalBookings, $totalRevenue, $completedCount, $cancelledCount, $paidCount, $unpaidCount, $adminName, $reportType, $includeSummary, $includeBreakdown, $filename);
+        }
+    }
+
+    private function exportCSV($bookings, $storeName, $start, $end, $filename) {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['UphoCare Shop Report']);
+        fputcsv($output, ['Shop Name:', $storeName]);
+        fputcsv($output, ['Period:', "$start to $end"]);
+        fputcsv($output, []);
+        fputcsv($output, ['Booking ID', 'Customer', 'Service', 'Item', 'Date', 'Status', 'Payment', 'Amount']);
+        foreach ($bookings as $b) {
+            fputcsv($output, [
+                'BK-' . $b['id'],
+                $b['customer'],
+                $b['service'],
+                $b['item'],
+                date('M d, Y', strtotime($b['report_date'])),
+                ucfirst($b['status']),
+                ucfirst($b['payment_status']),
+                number_format($b['amount'], 2)
+            ]);
+        }
+        fclose($output);
+        exit;
+    }
+
+    private function exportExcel($bookings, $storeName, $start, $end, $totalBookings, $totalRevenue, $filename) {
+        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment; filename="' . $filename . '.xls"');
+        echo "<html><body>";
+        echo "<h2>$storeName - Sales Report</h2>";
+        echo "<p>Period: $start to $end</p>";
+        echo "<p>Total Bookings: $totalBookings | Total Revenue: ₱" . number_format($totalRevenue, 2) . "</p>";
+        echo "<table border='1'><thead><tr style='background-color: #0F3C5F; color: white;'>
+                <th>Booking ID</th><th>Customer</th><th>Service</th><th>Item</th><th>Date</th><th>Status</th><th>Amount</th>
+              </tr></thead><tbody>";
+        foreach ($bookings as $b) {
+            echo "<tr><td>BK-{$b['id']}</td><td>{$b['customer']}</td><td>{$b['service']}</td><td>{$b['item']}</td>
+                    <td>".date('M d, Y', strtotime($b['report_date']))."</td><td>".ucfirst($b['status'])."</td>
+                    <td>" . number_format($b['amount'], 2) . "</td></tr>";
+        }
+        echo "</tbody></table></body></html>";
+        exit;
+    }
+
+    private function exportPDF($bookings, $storeName, $start, $end, $totalBookings, $totalRevenue, $completed, $cancelled, $paid, $unpaid, $admin, $type, $showSummary, $showBreakdown, $filename) {
+        // Use Dompdf for direct download
+        if (!class_exists('Dompdf\Dompdf')) {
+            die("PDF Library (Dompdf) not found. Please run 'composer install'.");
+        }
+
+        $dompdf = new \Dompdf\Dompdf();
+        
+        // Capture HTML content
+        ob_start();
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title><?= $storeName ?> - Report</title>
+            <style>
+                body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; margin: 0; padding: 20px; line-height: 1.4; }
+                .header { border-bottom: 2px solid #0F3C5F; padding-bottom: 15px; margin-bottom: 25px; }
+                .header h1 { color: #0F3C5F; margin: 0; font-size: 22px; }
+                .meta { width: 100%; margin-top: 10px; font-size: 12px; color: #555; }
+                .meta td { padding: 0; border: none; }
+                .summary-table { width: 100%; margin-bottom: 30px; border-collapse: separate; border-spacing: 10px 0; }
+                .summary-card { padding: 12px; background: #f8f9fc; border-radius: 6px; border-left: 4px solid #0F3C5F; width: 20%; }
+                .summary-card h4 { margin: 0 0 5px 0; font-size: 9px; text-transform: uppercase; color: #666; }
+                .summary-card p { margin: 0; font-size: 14px; font-weight: bold; color: #0F3C5F; }
+                table.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: auto; }
+                table.data-table th { background: #0F3C5F; color: white; text-align: left; padding: 8px; font-size: 11px; border: 1px solid #0F3C5F; }
+                table.data-table td { padding: 8px; border: 1px solid #eee; font-size: 10px; }
+                table.data-table tr { page-break-inside: avoid; page-break-after: auto; }
+                .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>UpholCare – Admin <?= ucfirst($type) ?> Report</h1>
+                <table class="meta">
+                    <tr>
+                        <td>
+                            <strong>Shop:</strong> <?= $storeName ?><br>
+                            <strong>Range:</strong> <?= date('M d, Y', strtotime($start)) ?> – <?= date('M d, Y', strtotime($end)) ?>
+                        </td>
+                        <td style="text-align: right;">
+                            <strong>Date Generated:</strong> <?= date('M d, Y H:i') ?><br>
+                            <strong>Admin:</strong> <?= $admin ?>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <?php if ($showSummary): ?>
+            <table class="summary-table">
+                <tr>
+                    <td class="summary-card"><h4>Total Bookings</h4><p><?= $totalBookings ?></p></td>
+                    <td class="summary-card"><h4>Total Revenue</h4><p>PHP <?= number_format($totalRevenue, 2) ?></p></td>
+                    <td class="summary-card"><h4>Completed</h4><p><?= $completed ?></p></td>
+                    <td class="summary-card" style="border-left-color: #1cc88a;"><h4>Paid</h4><p><?= $paid ?></p></td>
+                    <td class="summary-card" style="border-left-color: #f6c23e;"><h4>Unpaid</h4><p><?= $unpaid ?></p></td>
+                </tr>
+            </table>
+            <?php endif; ?>
+
+            <?php if ($showBreakdown): ?>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="15%">ID</th>
+                        <th width="25%">Customer</th>
+                        <th width="20%">Service</th>
+                        <th width="15%">Date</th>
+                        <th width="15%">Status</th>
+                        <th width="10%">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($bookings as $b): ?>
+                    <tr>
+                        <td>BK-<?= $b['id'] ?></td>
+                        <td><?= $b['customer'] ?></td>
+                        <td><?= $b['service'] ?></td>
+                        <td><?= date('M d, Y', strtotime($b['report_date'])) ?></td>
+                        <td><?= ucfirst(str_replace('_', ' ', $b['status'])) ?></td>
+                        <td>PHP <?= number_format($b['amount'], 2) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php endif; ?>
+
+            <div class="footer">
+                <p>This is a computer-generated document. Copyright &copy; <?= date('Y') ?> UpholCare.</p>
+            </div>
+        </body>
+        </html>
+        <?php
+        $html = ob_get_clean();
+
+        // Load HTML and Render
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        // Stream PDF to browser for download
+        $dompdf->stream($filename . ".pdf", ["Attachment" => true]);
+        exit;
+    }
     
     /**
      * Store Ratings - View all customer ratings for admin's store only
@@ -916,6 +1147,20 @@ class AdminController extends Controller {
                 exit;
             }
             
+            
+            // Check for duplicate color name (case-insensitive)
+            $existingColorName = $inventoryModel->findByColorName($colorName, $storeLocationId);
+            if ($existingColorName) {
+                http_response_code(400);
+                ob_clean();
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'This color name already exists for this item. Please use a different color name.'
+                ], JSON_UNESCAPED_UNICODE);
+                ob_end_flush();
+                exit;
+            }
+            
             // Check if color code already exists
             $existing = $inventoryModel->getAll();
             foreach ($existing as $item) {
@@ -1110,12 +1355,33 @@ class AdminController extends Controller {
                 exit;
             }
             
-            $inventoryModel->delete($id);
+            // Get the item first to check quantity
+            $item = $inventoryModel->getById($id);
             
-            echo json_encode([
-                'success' => true,
-                'message' => 'Inventory item deleted successfully'
-            ]);
+            if (!$item) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Inventory item not found']);
+                exit;
+            }
+            
+            // Check if quantity is zero
+            if (floatval($item['quantity'] ?? 0) == 0) {
+                // Don't delete - mark as out of stock instead to preserve history
+                $inventoryModel->update($id, ['status' => 'out-of-stock']);
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Item marked as out of stock (quantity is zero). Item not deleted to preserve inventory history.'
+                ]);
+            } else {
+                // Has stock - allow deletion
+                $inventoryModel->delete($id);
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Inventory item deleted successfully'
+                ]);
+            }
         } catch (Exception $e) {
             error_log("Error deleting inventory: " . $e->getMessage());
             http_response_code(500);
@@ -1272,6 +1538,15 @@ class AdminController extends Controller {
         // Get database connection
         $db = Database::getInstance()->getConnection();
         
+        // Handle Mode (Local vs Business) filtering
+        $mode = $_GET['mode'] ?? 'local'; // Default to local mode
+        $modeCondition = "AND b.booking_type = 'personal'";
+        if ($mode === 'business') {
+            $modeCondition = "AND b.booking_type IN ('business', 'business_reservation', 'corporate')"; // Use corporate as alias if ever added
+        } elseif ($mode === 'all') {
+            $modeCondition = ""; // Show everything
+        }
+
         // Get all bookings with customer and service details
         // CRITICAL: Use b.status directly (not COALESCE) to preserve actual status values
         // Only use COALESCE in WHERE clause for filtering, not in SELECT
@@ -1286,6 +1561,7 @@ class AdminController extends Controller {
                 LEFT JOIN users u ON b.user_id = u.id
                 WHERE (b.status IS NULL OR LOWER(b.status) NOT IN ('rejected', 'declined'))
                 AND b.is_archived = 0
+                {$modeCondition}
                 ORDER BY b.created_at DESC";
         
         $stmt = $db->prepare($sql);
@@ -1326,7 +1602,8 @@ class AdminController extends Controller {
         $data = [
             'title' => 'All Bookings - ' . APP_NAME,
             'user' => $this->currentUser(),
-            'bookings' => $bookings
+            'bookings' => $bookings,
+            'mode' => $mode
         ];
         
         $this->view('admin/all_bookings', $data);
@@ -7052,6 +7329,10 @@ class AdminController extends Controller {
      */
     public function services() {
         $serviceModel = $this->model('Service');
+        
+        // Auto-migrate any legacy 'inactive' services → 'archived'
+        $serviceModel->migrateInactiveToArchived();
+        
         $services = $serviceModel->getAllServices();
         $categories = $serviceModel->getAllCategories();
         
@@ -7089,6 +7370,22 @@ class AdminController extends Controller {
         }
         
         try {
+            $db = Database::getInstance()->getConnection();
+            $userId = $this->currentUser()['id'];
+            
+            // Get the admin's store_id from store_locations table
+            $storeStmt = $db->prepare("SELECT id FROM store_locations WHERE admin_id = ? AND status = 'active' LIMIT 1");
+            $storeStmt->execute([$userId]);
+            $store = $storeStmt->fetch();
+            
+            if (!$store) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'No active store found for this admin. Please contact support.']);
+                return;
+            }
+            
+            $storeId = $store['id'];
+            
             $serviceModel = $this->model('Service');
             
             $serviceData = [
@@ -7096,7 +7393,8 @@ class AdminController extends Controller {
                 'service_type' => $serviceType,
                 'description' => $description,
                 'price' => $price ? (float)$price : null,
-                'status' => $status
+                'status' => $status,
+                'store_id' => $storeId  // Automatically assign to admin's store
             ];
             
             if ($categoryId) {
@@ -7190,7 +7488,7 @@ class AdminController extends Controller {
     }
     
     /**
-     * Delete Service
+     * Archive Service (replaces Delete)
      */
     public function deleteService() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -7218,21 +7516,99 @@ class AdminController extends Controller {
                 return;
             }
             
-            // Soft delete (set status to inactive)
-            $result = $serviceModel->deleteService($serviceId);
+            // Archive the service instead of hard/soft deleting
+            $result = $serviceModel->archiveService($serviceId);
             
             if ($result) {
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Service deleted successfully'
+                    'message' => 'Service "' . htmlspecialchars($service['service_name']) . '" has been moved to Archived Services.'
                 ]);
             } else {
                 http_response_code(500);
-                echo json_encode(['success' => false, 'message' => 'Failed to delete service']);
+                echo json_encode(['success' => false, 'message' => 'Failed to archive service']);
             }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
+     * Archived Services View
+     */
+    public function archivedServices() {
+        $serviceModel = $this->model('Service');
+        $archivedServices = $serviceModel->getArchivedServices();
+        
+        $data = [
+            'title' => 'Archived Services - ' . APP_NAME,
+            'user' => $this->currentUser(),
+            'archivedServices' => $archivedServices
+        ];
+        
+        $this->view('admin/archived_services', $data);
+    }
+    
+    /**
+     * Restore Archived Service (AJAX)
+     */
+    public function restoreService() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+        
+        $serviceId = $_POST['service_id'] ?? null;
+        
+        if (!$serviceId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Service ID is required']);
+            return;
+        }
+        
+        try {
+            $serviceModel = $this->model('Service');
+            
+            $service = $serviceModel->getById($serviceId);
+            if (!$service) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Service not found']);
+                return;
+            }
+            
+            $result = $serviceModel->restoreService($serviceId);
+            
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Service "' . htmlspecialchars($service['service_name']) . '" has been restored to active services.'
+                ]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to restore service']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
+     * Get Archived Services (AJAX)
+     */
+    public function getArchivedServices() {
+        header('Content-Type: application/json');
+        try {
+            $serviceModel = $this->model('Service');
+            $services = $serviceModel->getArchivedServices();
+            echo json_encode(['success' => true, 'services' => $services]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
     }
@@ -7271,7 +7647,7 @@ class AdminController extends Controller {
         
         // Set default images
         $coverImage = BASE_URL . 'assets/images/default-cover.svg';
-        $profileImage = BASE_URL . 'startbootstrap-sb-admin-2-gh-pages/img/undraw_profile.svg';
+        $profileImage = BASE_URL . 'assets/images/default-avatar.svg';
         
         if (!empty($userDetails['cover_image'])) {
             $coverImagePath = $userDetails['cover_image'];
@@ -7541,5 +7917,350 @@ class AdminController extends Controller {
         }
         exit;
     }
+    /**
+     * Logistic Availability Manager
+     */
+    public function logisticAvailability() {
+        $db = Database::getInstance()->getConnection();
+        $storeId = $this->getAdminStoreLocationId();
+        
+        if (!$storeId) {
+            $_SESSION['error'] = 'Could not find your store link. Please contact support.';
+            $this->redirect('admin/dashboard');
+            return;
+        }
+        
+        // Get capacity for the next 30 days
+        $startDate = date('Y-m-d');
+        $endDate = date('Y-m-d', strtotime('+30 days'));
+        
+        $sql = "SELECT * FROM store_logistic_capacities WHERE store_id = ? AND date BETWEEN ? AND ? ORDER BY date ASC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$storeId, $startDate, $endDate]);
+        $capacityRecords = $stmt->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
+        
+        // Prepare 30 days of data, filling from DB or defaults
+        $availabilityData = [];
+        for ($i = 0; $i < 30; $i++) {
+            $date = date('Y-m-d', strtotime("+$i days"));
+            if (isset($capacityRecords[$date])) {
+                $availabilityData[$date] = $capacityRecords[$date];
+            } else {
+                $availabilityData[$date] = [
+                    'date' => $date,
+                    'max_pickup' => 2,
+                    'max_delivery' => 2,
+                    'max_inspection' => 3
+                ];
+            }
+        }
+        
+        $data = [
+            'title' => 'Logistic Availability Manager - ' . APP_NAME,
+            'user' => $this->currentUser(),
+            'availabilityData' => $availabilityData,
+            'storeId' => $storeId
+        ];
+        
+        $this->view('admin/logistic_availability', $data);
+    }
+    
+    /**
+     * Update Logistic Capacity (AJAX)
+     */
+    public function updateLogisticCapacity() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            exit;
+        }
+        
+        header('Content-Type: application/json');
+        
+        $storeId = $this->getAdminStoreLocationId();
+        $date = $_POST['date'] ?? null;
+        $max_pickup = isset($_POST['max_pickup']) ? (int)$_POST['max_pickup'] : 2;
+        $max_delivery = isset($_POST['max_delivery']) ? (int)$_POST['max_delivery'] : 2;
+        $max_inspection = isset($_POST['max_inspection']) ? (int)$_POST['max_inspection'] : 3;
+        
+        if (!$storeId || !$date) {
+            echo json_encode(['success' => false, 'message' => 'Missing required data']);
+            exit;
+        }
+        
+        $db = Database::getInstance()->getConnection();
+        $sql = "INSERT INTO store_logistic_capacities (store_id, date, max_pickup, max_delivery, max_inspection) 
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                max_pickup = VALUES(max_pickup),
+                max_delivery = VALUES(max_delivery),
+                max_inspection = VALUES(max_inspection)";
+        
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$storeId, $date, $max_pickup, $max_delivery, $max_inspection]);
+            echo json_encode(['success' => true, 'message' => 'Capacity updated successfully']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    /**
+     * Daily Logistic Schedule
+     */
+    public function dailySchedule($date = null) {
+        $date = $date ?: date('Y-m-d');
+        $db = Database::getInstance()->getConnection();
+        $storeId = $this->getAdminStoreLocationId();
+        
+        // Handle Mode (Local vs Business) filtering
+        $mode = $_GET['mode'] ?? 'local'; // Default to local mode
+        $modeCondition = "AND b.booking_type = 'personal'";
+        if ($mode === 'business') {
+            $modeCondition = "AND b.booking_type IN ('business', 'business_reservation', 'corporate')";
+        } elseif ($mode === 'all') {
+            $modeCondition = ""; // Show everything
+        }
+
+        // Fetch ALL ACTIVE logistics bookings for this store across all dates
+        $sql = "SELECT b.*, u.fullname as customer_name, s.service_name 
+                FROM bookings b
+                LEFT JOIN users u ON b.user_id = u.id
+                LEFT JOIN services s ON b.service_id = s.id
+                WHERE b.store_location_id = ? 
+                AND b.service_option IN ('pickup', 'delivery', 'both', 'pickup_and_delivery')
+                AND b.status IN ('pending', 'pending_schedule', 'scheduled', 'reschedule_requested', 'to_inspect', 'for_pickup', 'picked_up')
+                AND b.is_archived = 0
+                {$modeCondition}
+                ORDER BY COALESCE(b.pickup_date, b.delivery_date, b.booking_date) ASC, b.created_at ASC";
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$storeId]);
+        $bookings = $stmt->fetchAll();
+        
+        // Fetch capacity for this date
+        $stmtCap = $db->prepare("SELECT * FROM store_logistic_capacities WHERE store_id = ? AND date = ?");
+        $stmtCap->execute([$storeId, $date]);
+        $capacity = $stmtCap->fetch();
+        
+        if (!$capacity) {
+            $capacity = ['max_pickup' => 2, 'max_delivery' => 2, 'max_inspection' => 3];
+        }
+        
+        // Count current logistics for this date
+        $stmtCount = $db->prepare("
+            SELECT 
+                SUM(CASE WHEN (pickup_date = ? AND service_option IN ('pickup', 'both', 'pickup_and_delivery')) THEN 1 ELSE 0 END) as count_pickup,
+                SUM(CASE WHEN (delivery_date = ? AND service_option IN ('delivery', 'both', 'pickup_and_delivery')) THEN 1 ELSE 0 END) as count_delivery
+            FROM bookings 
+            WHERE store_location_id = ? 
+            AND status IN ('pending', 'pending_schedule', 'scheduled', 'reschedule_requested', 'to_inspect', 'for_pickup', 'picked_up')
+        ");
+        $stmtCount->execute([$date, $date, $storeId]);
+        $counts = $stmtCount->fetch();
+
+        $data = [
+            'title' => 'Daily Logistic Schedule - ' . APP_NAME,
+            'user' => $this->currentUser(),
+            'date' => $date,
+            'bookings' => $bookings,
+            'capacity' => $capacity,
+            'counts' => $counts,
+            'mode' => $mode
+        ];
+        
+        $this->view('admin/daily_schedule', $data);
+    }
+
+    public function approveLogisticRequest($id) {
+        header('Content-Type: application/json');
+        $db = Database::getInstance()->getConnection();
+        
+        try {
+            // 1. Fetch Booking Details with all necessary validation source data
+            $sql = "SELECT b.*, s.requires_transport, s.service_name, u.fullname as customer_name, u.phone as customer_phone, u.banned_at 
+                    FROM bookings b
+                    LEFT JOIN services s ON b.service_id = s.id
+                    LEFT JOIN users u ON b.user_id = u.id
+                    WHERE b.id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id]);
+            $booking = $stmt->fetch();
+
+            if (!$booking) {
+                throw new Exception("Booking not found");
+            }
+
+            // 2. VALIDATION CHECKS
+
+            // Check Blacklist / Bad History
+            if ($booking['banned_at']) {
+                throw new Exception("Approval Blocked: Customer is currently on the blacklist/banned.");
+            }
+
+            // Service Type Validation
+            if ($booking['requires_transport'] != 1) {
+                throw new Exception("Invalid Service: This service (" . ($booking['service_name'] ?: 'Custom') . ") is marked as not requiring logistics transport.");
+            }
+
+            // Address & Contact Validation
+            $address = $booking['pickup_address'] ?: $booking['delivery_address'];
+            if (empty(trim($address)) || empty(trim($booking['customer_phone']))) {
+                throw new Exception("Incomplete Info: Complete address and contact number are required before approval.");
+            }
+
+            // Capacity Validation (Most Important)
+            $logisticDate = $booking['pickup_date'] ?: $booking['delivery_date'] ?: $booking['booking_date'];
+            if (!$logisticDate) $logisticDate = date('Y-m-d'); // Fallback to avoid error
+            
+            $serviceOpt = strtolower(trim($booking['service_option']));
+            $isPickup = in_array($serviceOpt, ['pickup', 'both', 'pickup_and_delivery']);
+            $type = $isPickup ? 'pickup' : 'delivery';
+            
+            // Get Store Capacity Settings
+            $stmtCap = $db->prepare("SELECT * FROM store_logistic_capacities WHERE store_id = ? AND date = ?");
+            $stmtCap->execute([$booking['store_location_id'], $logisticDate]);
+            $capSettings = $stmtCap->fetch();
+            
+            // Default to 2 if no setting exists
+            $maxAllowed = $isPickup ? ($capSettings['max_pickup'] ?? 2) : ($capSettings['max_delivery'] ?? 2);
+            
+            // Count current confirmed schedules for this date and type
+            $sqlCount = "SELECT COUNT(*) FROM logistics_schedule WHERE logistic_date = ? AND type = ? AND status != 'cancelled'";
+            $stmtCount = $db->prepare($sqlCount);
+            $stmtCount->execute([$logisticDate, $type]);
+            $currentCount = $stmtCount->fetchColumn();
+
+            if ($currentCount >= $maxAllowed) {
+                throw new Exception("Capacity FULL! Already have $currentCount $type" . "s scheduled for " . date('M d', strtotime($logisticDate)) . ". Limit is $maxAllowed.");
+            }
+
+            // Duplicate Booking Check
+            $sqlDup = "SELECT id FROM bookings 
+                       WHERE user_id = ? AND service_id = ? AND (pickup_date = ? OR delivery_date = ?) 
+                       AND status = 'scheduled' AND id != ? AND is_archived = 0";
+            $stmtDup = $db->prepare($sqlDup);
+            $stmtDup->execute([$booking['user_id'], $booking['service_id'], $logisticDate, $logisticDate, $id]);
+            if ($stmtDup->fetch()) {
+                throw new Exception("Approval Flag: This customer already has a scheduled reservation for the same service on this date.");
+            }
+
+            // 3. TRANSACTIONAL APPROVAL
+            $db->beginTransaction();
+
+            // Update Booking Table
+            $updateSql = "UPDATE bookings SET status = 'approved', updated_at = NOW() WHERE id = ?";
+            $stmtUpdate = $db->prepare($updateSql);
+            $stmtUpdate->execute([$id]);
+
+            // Insert into Logistics Schedule Table
+            $insertSql = "INSERT INTO logistics_schedule (booking_id, logistic_date, type, status) VALUES (?, ?, ?, 'scheduled')";
+            $stmtInsert = $db->prepare($insertSql);
+            $stmtInsert->execute([$id, $logisticDate, $type]);
+
+            // Optional: Hard lock update or notification could go here
+
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => "Request Approved! $type scheduled for " . date('M d, Y', strtotime($logisticDate))]);
+
+        } catch (Exception $e) {
+            if (isset($db) && $db->inTransaction()) $db->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Approval Failed: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    /**
+     * Reject Logistic Request (AJAX)
+     */
+    public function rejectLogisticRequest($id) {
+        header('Content-Type: application/json');
+        $db = Database::getInstance()->getConnection();
+        
+        try {
+            $db->beginTransaction();
+            $sql = "UPDATE bookings SET status = 'cancelled' WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id]);
+
+            // Sync with logistics_schedule if it exists
+            $syncSql = "UPDATE logistics_schedule SET status = 'cancelled' WHERE booking_id = ? AND status = 'scheduled'";
+            $stmtSync = $db->prepare($syncSql);
+            $stmtSync->execute([$id]);
+
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => 'Request rejected/cancelled.']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    /**
+     * Mark Logistic as Completed (AJAX)
+     */
+    public function completeLogisticRequest($id) {
+        header('Content-Type: application/json');
+        $db = Database::getInstance()->getConnection();
+        
+        try {
+            // Check what type of logistic this was
+            $stmt = $db->prepare("SELECT service_option, status FROM bookings WHERE id = ?");
+            $stmt->execute([$id]);
+            $booking = $stmt->fetch();
+            
+            $nextStatus = 'completed';
+            // If it was a pickup or drop-off, it moves to 'to_inspect' for the repair workflow
+            if (in_array($booking['service_option'], ['pickup', 'both', 'delivery'])) {
+                $nextStatus = 'to_inspect';
+            }
+            
+            $db->beginTransaction();
+            $sql = "UPDATE bookings SET status = ?, completion_date = NOW() WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$nextStatus, $id]);
+
+            // Sync with logistics_schedule
+            $syncSql = "UPDATE logistics_schedule SET status = 'completed' WHERE booking_id = ? AND status = 'scheduled'";
+            $stmtSync = $db->prepare($syncSql);
+            $stmtSync->execute([$id]);
+
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => "Service marked as complete. Status updated to " . str_replace('_', ' ', $nextStatus)]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    /**
+     * Reschedule Request (AJAX)
+     */
+    public function rescheduleLogisticRequest() {
+        header('Content-Type: application/json');
+        $id = $_POST['id'] ?? null;
+        $newDate = $_POST['new_date'] ?? null;
+        $type = $_POST['type'] ?? 'pickup'; // 'pickup' or 'delivery'
+        
+        if (!$id || !$newDate) {
+            echo json_encode(['success' => false, 'message' => 'Missing data']);
+            exit;
+        }
+        
+        $db = Database::getInstance()->getConnection();
+        
+        try {
+            $dateColumn = ($type === 'delivery') ? 'delivery_date' : 'pickup_date';
+            $sql = "UPDATE bookings SET status = 'reschedule_requested', $dateColumn = ? WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$newDate, $id]);
+            echo json_encode(['success' => true, 'message' => 'Reschedule request sent.']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
 }
+
 

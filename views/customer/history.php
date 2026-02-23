@@ -2,36 +2,129 @@
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'customer_sidebar.php'; ?>
 <?php require_once ROOT . DS . 'views' . DS . 'layouts' . DS . 'topbar.php'; ?>
 
+<style>
+.welcome-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.welcome-text {
+    color: #0F3C5F;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
+}
+
+/* Search and Filter Section - Aligned with Catalog Design */
+.search-filter-section {
+    background: white;
+    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(227, 230, 240, 0.6);
+    margin-bottom: 1.5rem;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 550px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: #f8f9fc;
+}
+
+.search-box input:focus {
+    background: white;
+    border-color: #0F3C5F;
+    outline: none;
+    box-shadow: 0 4px 15px rgba(15, 60, 95, 0.1);
+}
+
+.search-box i {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9499ad;
+    font-size: 0.95rem;
+}
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.filter-tag {
+    padding: 0.5rem 1.25rem;
+    background: #f8f9fc;
+    border: 1.5px solid #e3e6f0;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5a5c69;
+}
+
+.filter-tag:hover {
+    background: #eaecf4;
+    transform: translateY(-2px);
+    border-color: #d1d3e2;
+    color: #0F3C5F;
+}
+
+.filter-tag.active {
+    background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(15, 60, 95, 0.3);
+}
+</style>
+
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h1 class="h3 mb-2 text-gray-800" style="font-weight: 700;">Booking History</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb" style="background: transparent; padding: 0;">
-                <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard">Home</a></li>
-                <li class="breadcrumb-item active">History</li>
-            </ol>
-        </nav>
+<div class="welcome-container shadow-sm">
+    <div class="welcome-text">
+        <i class="fas fa-history mr-2" style="color: #0F3C5F;"></i>
+        Booking History
     </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+            <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>customer/dashboard" style="color: #0F3C5F; font-size: 0.85rem; font-weight: 600;">Home</a></li>
+            <li class="breadcrumb-item active" style="font-size: 0.85rem; font-weight: 600;">History</li>
+        </ol>
+    </nav>
 </div>
 
 <!-- History Filter -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <select class="form-control">
-            <option>All Time</option>
-            <option>Last 7 Days</option>
-            <option>Last 30 Days</option>
-            <option>Last 3 Months</option>
-            <option>Last Year</option>
-        </select>
+<div class="search-filter-section">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="historySearchInput" placeholder="Search by service or booking number..." onkeyup="filterHistory()">
     </div>
-    <div class="col-md-3">
-        <select class="form-control">
-            <option>All Statuses</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-        </select>
+    <div class="filter-tags">
+        <div class="filter-tag active" data-filter="all" onclick="updateHistoryFilter('all')">All History</div>
+        <div class="filter-tag" data-filter="completed" onclick="updateHistoryFilter('completed')">Completed</div>
+        <div class="filter-tag" data-filter="cancelled" onclick="updateHistoryFilter('cancelled')">Cancelled</div>
     </div>
 </div>
 
@@ -42,20 +135,22 @@
     </div>
     <div class="card-body">
         <?php if (!empty($bookings)): ?>
-        <?php foreach ($bookings as $booking): ?>
-        <div class="border-left-primary shadow mb-3 p-3" style="border-left: 4px solid;">
+        <?php foreach ($bookings as $booking): 
+            $status = strtolower($booking['status'] ?? 'pending');
+        ?>
+        <div class="border-left-primary shadow mb-2 p-2 history-item" style="border-left: 4px solid;" data-status="<?php echo $status; ?>">
             <div class="row align-items-center">
                 <div class="col-md-2">
                     <div class="text-xs text-muted">
                         <?php echo date('M d, Y', strtotime($booking['created_at'])); ?>
                     </div>
-                    <div class="font-weight-bold text-primary">
+                    <div class="font-weight-bold text-primary small">
                         <?php echo htmlspecialchars($booking['booking_number'] ?? 'N/A'); ?>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="font-weight-bold"><?php echo htmlspecialchars($booking['service_name'] ?? 'Unknown Service'); ?></div>
-                    <div class="small text-muted"><?php echo htmlspecialchars($booking['item_description'] ?? 'No description'); ?></div>
+                    <div class="font-weight-bold small"><?php echo htmlspecialchars($booking['service_name'] ?? 'Unknown Service'); ?></div>
+                    <div class="x-small text-muted" style="font-size: 0.7rem;"><?php echo htmlspecialchars($booking['item_description'] ?? 'No description'); ?></div>
                 </div>
                 <div class="col-md-2">
                     <?php
@@ -67,7 +162,7 @@
                     </span>
                 </div>
                 <div class="col-md-2">
-                    <div class="font-weight-bold">₱<?php echo number_format($booking['total_amount'] ?? 0, 2); ?></div>
+                    <div class="font-weight-bold small">₱<?php echo number_format($booking['total_amount'] ?? 0, 2); ?></div>
                     <?php if (isset($booking['payment_status']) && strtolower($booking['payment_status']) !== 'unpaid'): ?>
                         <div class="small text-muted"><?php echo ucfirst($booking['payment_status']); ?></div>
                     <?php endif; ?>
@@ -145,7 +240,7 @@
 <div class="modal fade" id="officialReceiptModal" tabindex="-1" role="dialog" aria-labelledby="officialReceiptModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F3C5F 0%, #1F4E79 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
                 <h5 class="modal-title" id="officialReceiptModalLabel" style="font-size: 1.5rem; font-weight: 700;">
                     <i class="fas fa-receipt mr-2"></i>Official Receipt
                 </h5>
@@ -224,7 +319,7 @@ function populateOfficialReceiptModal(receipt) {
             <p class="text-muted mb-2" style="font-size: 0.9rem;">Email: Email</p>
             <p class="text-muted mb-2" style="font-size: 0.9rem;">TIN Number: TIN Number</p>
             <p class="text-muted mb-2" style="font-size: 0.9rem;">BIR Permit Number: BIR Permit Number</p>
-            <h3 style="color: #28a745; font-weight: 700; margin-top: 15px; text-transform: uppercase;">Official Receipt</h3>
+            <h3 style="color: #0F3C5F; font-weight: 700; margin-top: 15px; text-transform: uppercase;">Official Receipt</h3>
             <p style="font-size: 1.1rem; font-weight: 600; color: #2c3e50; margin-top: 10px;">
                 Official Receipt Number: <strong>${receipt.receiptNumber || 'N/A'}</strong>
             </p>
@@ -316,9 +411,9 @@ function populateOfficialReceiptModal(receipt) {
                             <td style="font-weight: 600; background: #f8f9fc;">Delivery Fee (if applicable)</td>
                             <td style="text-align: right;">₱${parseFloat(receipt.payment?.deliveryFee || 0).toFixed(2)}</td>
                         </tr>
-                        <tr style="background: #28a745; color: white; font-size: 1.2rem;">
-                            <td style="font-weight: 700; border-color: #28a745;"><strong>TOTAL AMOUNT DUE</strong></td>
-                            <td style="text-align: right; font-weight: 700; border-color: #28a745;"><strong>₱${parseFloat(receipt.payment?.grandTotal || receipt.payment?.totalAmount || 0).toFixed(2)}</strong></td>
+                        <tr style="background: #0F3C5F; color: white; font-size: 1.2rem;">
+                            <td style="font-weight: 700; border-color: #0F3C5F;"><strong>TOTAL AMOUNT DUE</strong></td>
+                            <td style="text-align: right; font-weight: 700; border-color: #0F3C5F;"><strong>₱${parseFloat(receipt.payment?.grandTotal || receipt.payment?.totalAmount || 0).toFixed(2)}</strong></td>
                         </tr>
                         <tr>
                             <td style="font-weight: 600; background: #f8f9fc;"><strong>TOTAL AMOUNT PAID</strong></td>
@@ -379,6 +474,46 @@ function populateOfficialReceiptModal(receipt) {
     `;
     
     modalBody.innerHTML = receiptHtml;
+}
+
+// History Filter Logic
+let currentHistoryStatusFilter = 'all';
+
+function updateHistoryFilter(status) {
+    currentHistoryStatusFilter = status;
+    
+    // Update active class
+    document.querySelectorAll('.filter-tag').forEach(tag => {
+        if (tag.getAttribute('data-filter') === status) {
+            tag.classList.add('active');
+        } else {
+            tag.classList.remove('active');
+        }
+    });
+    
+    filterHistory();
+}
+
+function filterHistory() {
+    const searchTerm = document.getElementById('historySearchInput').value.toLowerCase().trim();
+    const items = document.querySelectorAll('.history-item');
+    
+    items.forEach(item => {
+        const itemStatus = (item.getAttribute('data-status') || '').toLowerCase();
+        const serviceName = (item.querySelector('.font-weight-bold.small') || {}).textContent || '';
+        const bookingNumber = (item.querySelector('.text-primary.small') || {}).textContent || '';
+        
+        const matchesStatus = (currentHistoryStatusFilter === 'all' || itemStatus === currentHistoryStatusFilter);
+        const matchesSearch = !searchTerm || 
+                             serviceName.toLowerCase().includes(searchTerm) || 
+                             bookingNumber.toLowerCase().includes(searchTerm);
+        
+        if (matchesStatus && matchesSearch) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
 }
 
 function printOfficialReceipt() {

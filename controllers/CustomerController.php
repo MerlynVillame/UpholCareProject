@@ -11,6 +11,7 @@ class CustomerController extends Controller {
     private $bookingModel;
     private $serviceModel;
     private $storeModel;
+    private $businessModel;
     
     public function __construct() {
         // Require customer role for all methods
@@ -18,6 +19,7 @@ class CustomerController extends Controller {
         $this->bookingModel = $this->model('Booking');
         $this->serviceModel = $this->model('Service');
         $this->storeModel = $this->model('Store');
+        $this->businessModel = $this->model('CustomerBusiness');
     }
     
     /**
@@ -140,6 +142,7 @@ class CustomerController extends Controller {
         $pendingBookings = $this->bookingModel->getBookingCountByStatus($userId, 'pending');
         $inProgressBookings = $this->bookingModel->getBookingCountByStatus($userId, 'in_progress');
         $completedBookings = $this->bookingModel->getBookingCountByStatus($userId, 'completed');
+        $totalSpent = $this->bookingModel->getTotalSpent($userId);
         
         // Get recent bookings
         $recentBookings = $this->bookingModel->getRecentBookings($userId, 5);
@@ -151,6 +154,7 @@ class CustomerController extends Controller {
             'pendingBookings' => $pendingBookings,
             'inProgressBookings' => $inProgressBookings,
             'completedBookings' => $completedBookings,
+            'totalSpent' => $totalSpent,
             'recentBookings' => $recentBookings
         ];
         
@@ -238,6 +242,27 @@ class CustomerController extends Controller {
         
         // Check if this is a business mode booking
         $isBusinessMode = isset($_GET['mode']) && $_GET['mode'] === 'business';
+        $customerBusinessId = null;
+
+        if ($isBusinessMode) {
+            // Verify role from database
+            $userModel = $this->model('User');
+            $dbUser = $userModel->getById($userId);
+            
+            if ($this->currentUser()['role'] !== 'customer' || !$dbUser || $dbUser['role'] !== 'customer') {
+                $_SESSION['error'] = 'Access denied: Only customers can make business bookings.';
+                $this->redirect('customer/profile');
+                return;
+            }
+
+            $businessProfile = $this->customerBusinessModel->getBusinessProfile($userId);
+            if (!$businessProfile || $businessProfile['status'] !== 'approved') {
+                $_SESSION['error'] = 'Your business account is not yet approved. Please complete your business profile and wait for Super Admin approval.';
+                $this->redirect('customer/profile');
+                return;
+            }
+            $customerBusinessId = $businessProfile['id'];
+        }
         
         $db = Database::getInstance()->getConnection();
         
@@ -307,7 +332,7 @@ class CustomerController extends Controller {
         }
         
         // IMPORTANT: Always set status explicitly - never leave it NULL or empty
-        $defaultStatus = $isBusinessMode ? 'admin_review' : 'pending';
+        $defaultStatus = $isBusinessMode ? 'admin_review' : 'pending_schedule';
         
         // Get base service price
         $baseServicePrice = floatval($_POST['total_amount'] ?? 0.00);
@@ -428,6 +453,7 @@ class CustomerController extends Controller {
             // Delivery and Both: unpaid (will be paid on delivery COD)
             'payment_status' => 'unpaid',
             'booking_type' => $isBusinessMode ? 'business' : 'personal',
+            'customer_business_id' => $customerBusinessId,
             'status' => $defaultStatus // ALWAYS set status - never NULL or empty
         ];
         
@@ -471,6 +497,68 @@ class CustomerController extends Controller {
     /**
      * Process New Booking via AJAX
      */
+    /**
+     * Check Logistic Availability (AJAX)
+     */
+    public function checkLogisticAvailability() {
+        header('Content-Type: application/json');
+        
+        $storeId = $_GET['store_id'] ?? null;
+        $date = $_GET['date'] ?? null;
+        $type = $_GET['type'] ?? 'pickup'; // 'pickup' or 'delivery'
+        
+        if (!$storeId || !$date) {
+            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+            exit;
+        }
+        
+        $count = $this->getLogisticCount($storeId, $date, $type);
+        $max = $this->getLogisticCapacity($storeId, $date, $type);
+        
+        echo json_encode([
+            'success' => true,
+            'available' => ($count < $max),
+            'count' => $count,
+            'max' => $max,
+            'remaining' => max(0, $max - $count)
+        ]);
+        exit;
+    }
+
+    private function getLogisticCount($storeId, $date, $type) {
+        $db = Database::getInstance()->getConnection();
+        if ($type === 'pickup') {
+            $sql = "SELECT COUNT(*) FROM bookings WHERE store_location_id = ? AND pickup_date = ? AND status NOT IN ('cancelled', 'rejected', 'declined')";
+        } else if ($type === 'delivery') {
+            $sql = "SELECT COUNT(*) FROM bookings WHERE store_location_id = ? AND delivery_date = ? AND status NOT IN ('cancelled', 'rejected', 'declined')";
+        } else {
+            return 0;
+        }
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$storeId, $date]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    private function getLogisticCapacity($storeId, $date, $type) {
+        $db = Database::getInstance()->getConnection();
+        $column = 'max_' . $type;
+        if (!in_array($column, ['max_pickup', 'max_delivery', 'max_inspection'])) {
+            $column = 'max_pickup';
+        }
+        
+        $sql = "SELECT $column FROM store_logistic_capacities WHERE store_id = ? AND date = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$storeId, $date]);
+        $val = $stmt->fetchColumn();
+        
+        if ($val === false) {
+            if ($type === 'pickup') return 2;
+            if ($type === 'delivery') return 2;
+            if ($type === 'inspection') return 3;
+        }
+        return (int)$val;
+    }
+
     public function processBookingAjax() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -503,24 +591,57 @@ class CustomerController extends Controller {
             exit;
         }
         
-        // For AJAX, we'll try to process and return JSON
-        // Since processBooking is quite large and handles redirects, 
-        // I'll implement a slightly simplified version or refactor it.
-        // However, I'll aim to mimic the core logic here.
-        
+        // Check if this is a business mode booking
+        $isBusinessMode = isset($_GET['mode']) && $_GET['mode'] === 'business';
+        $customerBusinessId = null;
+
+        if ($isBusinessMode) {
+            // Verify role from database
+            $userModel = $this->model('User');
+            $dbUser = $userModel->getById($userId);
+            
+            if ($this->currentUser()['role'] !== 'customer' || !$dbUser || $dbUser['role'] !== 'customer') {
+                echo json_encode(['success' => false, 'message' => 'Access denied: Only customers can make business bookings.']);
+                exit;
+            }
+
+            $businessProfile = $this->customerBusinessModel->getBusinessProfile($userId);
+            if (!$businessProfile || $businessProfile['status'] !== 'approved') {
+                echo json_encode(['success' => false, 'message' => 'Your business account is not yet approved. Please complete your business profile and wait for Super Admin approval.']);
+                exit;
+            }
+            $customerBusinessId = $businessProfile['id'];
+        }
+
         $storeLocationId = $_POST['store_location_id'] ?? null;
         $selectedColorId = $_POST['selected_color_id'] ?? null;
         $serviceOption = strtolower(trim($_POST['service_option'] ?? 'pickup'));
         
-        // ... logic from processBooking but with JSON responses ...
-        // (I'll keep it simple for now to ensure it works, then refine if needed)
+        $pickupDate = $_POST['pickup_date'] ?? null;
+        $deliveryDate = $_POST['delivery_date'] ?? null;
+
+        // Logistic Capacity Validation
+        if ($storeLocationId) {
+            if (($serviceOption === 'pickup' || $serviceOption === 'both') && $pickupDate) {
+                $count = $this->getLogisticCount($storeLocationId, $pickupDate, 'pickup');
+                $max = $this->getLogisticCapacity($storeLocationId, $pickupDate, 'pickup');
+                if ($count >= $max) {
+                    echo json_encode(['success' => false, 'message' => "Pickup service is fully booked on " . date('M d, Y', strtotime($pickupDate)) . ". Please choose another date."]);
+                    exit;
+                }
+            }
+            if ($serviceOption === 'delivery' && $deliveryDate) {
+                // For Customer Drop-off, we check inspection capacity as owner must be at shop
+                $count = $this->getLogisticCount($storeLocationId, $deliveryDate, 'delivery');
+                $max = $this->getLogisticCapacity($storeLocationId, $deliveryDate, 'inspection');
+                if ($count >= $max) {
+                    echo json_encode(['success' => false, 'message' => "Inspection slots are fully booked for drop-offs on " . date('M d, Y', strtotime($deliveryDate)) . ". Please choose another date."]);
+                    exit;
+                }
+            }
+        }
         
         try {
-            // Reuse most of the logic but wrap in a way that doesn't redirect
-            // For now, let's assume we can just do the insert and return success
-            
-            $pickupDate = $_POST['pickup_date'] ?? null;
-            $deliveryDate = $_POST['delivery_date'] ?? null;
             $pickupAddress = $_POST['pickup_address'] ?? null;
             $deliveryAddress = $_POST['delivery_address'] ?? null;
             $notes = $_POST['notes'] ?? '';
@@ -538,7 +659,8 @@ class CustomerController extends Controller {
                 'delivery_address' => $deliveryAddress,
                 'notes' => $notes,
                 'total_amount' => $totalAmount,
-                'status' => 'pending',
+                'status' => $isBusinessMode ? 'admin_review' : 'pending_schedule',
+                'customer_business_id' => $customerBusinessId,
                 'payment_status' => 'unpaid'
             ];
             
@@ -1065,6 +1187,7 @@ class CustomerController extends Controller {
         
         $this->view('customer/payments', $data);
     }
+    
     
     /**
      * Request Receipt (AJAX)
@@ -2024,12 +2147,63 @@ class CustomerController extends Controller {
         $currentUser = $this->currentUser();
         $mergedUser = array_merge($currentUser ?? [], $userDetails ?? []);
         
+        // Fetch business types for the registration form
+        $businessTypes = $this->businessModel->getBusinessTypes();
+        
+        // Fetch current business profile if any
+        $businessProfile = $this->businessModel->getByUserId($userId);
+        
+        // Fetch Business Statistics for Dashboard
+        $businessBookings = $this->bookingModel->getBusinessBookings($userId);
+        $businessStats = [
+            'totalBookings' => count($businessBookings),
+            'totalRevenue' => 0,
+            'pendingOrders' => 0,
+            'activeProjects' => 0
+        ];
+
+        foreach ($businessBookings as $booking) {
+            if (in_array($booking['status'], ['completed', 'delivered_and_paid'])) {
+                $businessStats['totalRevenue'] += $booking['total_amount'];
+            }
+            if ($booking['status'] === 'pending') {
+                $businessStats['pendingOrders']++;
+            }
+            if (in_array($booking['status'], ['confirmed', 'in_progress', 'ready_for_pickup'])) {
+                $businessStats['activeProjects']++;
+            }
+        }
+        
+        // Formatting revenue
+        $businessStats['totalRevenueFormatted'] = '₱' . number_format($businessStats['totalRevenue'], 2);
+        
+        // Get recent business transactions (limit to 5)
+        $recentBusinessTransactions = array_slice($businessBookings, 0, 5);
+
+        // Fetch categories and stores for reservation modal
+        $categories = $this->serviceModel->getCategories();
+        $categories = array_filter($categories, function($category) {
+            $categoryName = strtolower(trim($category['name'] ?? ''));
+            return $categoryName !== 'vehicle repair' 
+                && $categoryName !== 'furniture repair' 
+                && $categoryName !== 'bedding repair';
+        });
+        $categories = array_values($categories);
+        $stores = $this->storeModel->getAllActive();
+
         $data = [
             'title' => 'My Profile - ' . APP_NAME,
             'user' => $mergedUser,
             'userDetails' => $userDetails,
             'coverImage' => $coverImage,
-            'profileImage' => $profileImage
+            'profileImage' => $profileImage,
+            'businessTypes' => $businessTypes,
+            'businessProfile' => $businessProfile,
+            'businessStats' => $businessStats,
+            'recentBusinessTransactions' => $recentBusinessTransactions,
+            'businessBookings' => $businessBookings,
+            'categories' => $categories,
+            'stores' => $stores
         ];
         
         $this->view('customer/profile', $data);
@@ -2269,6 +2443,25 @@ class CustomerController extends Controller {
             }
         
         if ($store) {
+            // Check if user is eligible to rate (has completed/paid bookings at this store)
+            $canRate = false;
+            $userId = $this->currentUser()['id'] ?? null;
+            if ($userId) {
+                // Check bookings table
+                $checkBookingStmt = $db->prepare("
+                    SELECT COUNT(*) as completed_count 
+                    FROM bookings 
+                    WHERE user_id = ? AND store_location_id = ? 
+                    AND status IN ('completed', 'delivered_and_paid')
+                ");
+                $checkBookingStmt->execute([$userId, $storeId]);
+                $bookingResult = $checkBookingStmt->fetch();
+                if ($bookingResult && $bookingResult['completed_count'] > 0) {
+                    $canRate = true;
+                }
+            }
+            $store['can_rate'] = $canRate;
+
             echo json_encode([
                 'success' => true,
                 'data' => $store
@@ -2295,85 +2488,57 @@ class CustomerController extends Controller {
      * Returns colors available at a specific store
      */
     public function getAvailableColors() {
-        // Set headers first to prevent any output issues
         header('Content-Type: application/json');
-        header('Cache-Control: no-cache, no-store, must-revalidate');
-        header('Pragma: no-cache');
-        header('Expires: 0');
         
-        // Start output buffering
-        ob_start();
+        $storeId = $_GET['store_id'] ?? null;
+        $fabricType = $_GET['fabric_type'] ?? null;
         
+        if (!$storeId) {
+            echo json_encode(['success' => false, 'message' => 'Store ID is required', 'colors' => []]);
+            exit;
+        }
+
         try {
-            // Check if user is logged in (but don't require specific role for this endpoint)
-            if (!$this->isLoggedIn()) {
-                http_response_code(401);
-                ob_clean();
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Please login to continue',
-                    'colors' => []
-                ]);
-                ob_end_flush();
-                exit;
-            }
+            $inventoryModel = $this->model('Inventory');
+            $colors = $inventoryModel->getAvailableColors($storeId, $fabricType);
             
-            $storeId = $_GET['store_id'] ?? null;
-            $fabricType = $_GET['fabric_type'] ?? null; // Get fabric type filter (standard/premium)
-            
-            if (!$storeId) {
-                ob_clean();
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Store ID is required',
-                    'colors' => []
-                ]);
-                ob_end_flush();
-                exit;
-            }
-            
-            // Try to load inventory model
-            try {
-                $inventoryModel = $this->model('Inventory');
-            } catch (Exception $modelError) {
-                error_log('Error loading Inventory model: ' . $modelError->getMessage());
-                ob_clean();
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Inventory system not available. Please contact administrator.',
-                    'colors' => []
-                ]);
-                ob_end_flush();
-                exit;
-            }
-            
-            // Get available colors - method handles missing table/columns gracefully
-            // Pass fabric_type to filter colors by standard/premium
-            try {
-                $colors = $inventoryModel->getAvailableColors($storeId, $fabricType);
-            } catch (Exception $colorError) {
-                error_log('Error getting available colors: ' . $colorError->getMessage());
-                // Return empty array instead of error - allows form to work without inventory
-                $colors = [];
-            }
-            
-            ob_clean();
             echo json_encode([
                 'success' => true,
                 'colors' => $colors ? $colors : []
             ], JSON_UNESCAPED_UNICODE);
-            ob_end_flush();
         } catch (Exception $e) {
-            error_log('Error getting available colors: ' . $e->getMessage());
-            error_log('Stack trace: ' . $e->getTraceAsString());
-            ob_clean();
-            http_response_code(500);
+            error_log('Error in getAvailableColors: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Failed to load colors', 'colors' => []]);
+        }
+        exit;
+    }
+
+    /**
+     * Get Store-Specific Services and Categories (AJAX)
+     */
+    public function getStoreServicesAjax() {
+        header('Content-Type: application/json');
+        
+        $storeId = $_GET['store_id'] ?? null;
+        
+        if (!$storeId) {
+            echo json_encode(['success' => false, 'message' => 'Store ID is required']);
+            exit;
+        }
+
+        try {
+            $serviceModel = $this->model('Service');
+            $categories = $serviceModel->getCategoriesByStore($storeId);
+            $services = $serviceModel->getServicesByStore($storeId);
+            
             echo json_encode([
-                'success' => false,
-                'message' => 'Failed to load available colors: ' . (defined('DEBUG_MODE') && DEBUG_MODE ? $e->getMessage() : 'Please try again later'),
-                'colors' => []
-            ], JSON_UNESCAPED_UNICODE);
-            ob_end_flush();
+                'success' => true,
+                'categories' => $categories,
+                'services' => $services
+            ]);
+        } catch (Exception $e) {
+            error_log('Error in getStoreServicesAjax: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Failed to load store services']);
         }
         exit;
     }
@@ -2492,62 +2657,87 @@ class CustomerController extends Controller {
     }
     
     /**
-     * Update business profile
+     * Update business profile / Registration
      */
     public function updateBusinessProfile() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('customer/profile');
         }
         
-        $userId = $this->currentUser()['id'];
+        $user = $this->currentUser();
+        $userId = $user['id'];
+        
+        // Stricter Role Verification: Only customers can register businesses
+        // Check both session and database for security
+        $userModel = $this->model('User');
+        $dbUser = $userModel->getById($userId);
+        
+        if ($user['role'] !== 'customer' || !$dbUser || $dbUser['role'] !== 'customer') {
+            $_SESSION['error'] = 'Access denied: Only customers can register businesses.';
+            $this->redirect('customer/profile');
+            return;
+        }
         
         $businessData = [
+            'user_id' => $userId,
             'business_name' => trim($_POST['business_name'] ?? ''),
-            'business_type' => trim($_POST['business_type'] ?? ''),
-            'business_phone' => trim($_POST['business_phone'] ?? ''),
-            'business_email' => trim($_POST['business_email'] ?? ''),
+            'business_type_id' => !empty($_POST['business_type_id']) ? $_POST['business_type_id'] : null,
             'business_address' => trim($_POST['business_address'] ?? ''),
-            'user_id' => $userId
+            'status' => 'pending' // Always reset to pending on update/new registration
         ];
         
         // Validate required fields
-        if (empty($businessData['business_name'])) {
-            $_SESSION['error'] = 'Business name is required';
+        if (empty($businessData['business_name']) || empty($businessData['business_address'])) {
+            $_SESSION['error'] = 'Business name and address are required.';
             $this->redirect('customer/profile');
         }
         
-        // Here you would typically save to a business_profiles table
-        // For now, we'll just show success message
-        $_SESSION['success'] = 'Business profile updated successfully!';
+        // Handle Business Permit Upload
+        if (isset($_FILES['permit_file']) && $_FILES['permit_file']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['permit_file'];
+            $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+            
+            if (in_array($file['type'], $allowedTypes)) {
+                $uploadDir = ROOT . DS . 'assets' . DS . 'uploads' . DS . 'permits' . DS;
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                $fileName = 'permit_' . $userId . '_' . time() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+                if (move_uploaded_file($file['tmp_name'], $uploadDir . $fileName)) {
+                    $businessData['permit_file'] = 'assets/uploads/permits/' . $fileName;
+                }
+            } else {
+                $_SESSION['error'] = 'Invalid permit file format. Allowed: PDF, JPG, PNG.';
+                $this->redirect('customer/profile');
+            }
+        }
+        
+        if ($this->businessModel->saveProfile($businessData)) {
+            $_SESSION['success'] = 'Business registration submitted for review. status: Pending';
+        } else {
+            $_SESSION['error'] = 'Failed to submit business registration.';
+        }
+        
         $this->redirect('customer/profile');
     }
     
     /**
-     * Get business bookings
+     * Get active business bookings
      */
     public function businessBookings() {
-        $userId = $this->currentUser()['id'];
-        
-        // Get business bookings (you would filter by business_type or add a business flag)
-        $bookings = $this->bookingModel->getCustomerBookings($userId);
-        
-        // Filter for business bookings (this is a simple example)
-        $businessBookings = array_filter($bookings, function($booking) {
-            // You could add a business_type field to bookings or use other criteria
-            return !empty($booking['item_description']) && 
-                   (strpos(strtolower($booking['item_description']), 'office') !== false ||
-                    strpos(strtolower($booking['item_description']), 'business') !== false ||
-                    strpos(strtolower($booking['item_description']), 'hotel') !== false ||
-                    strpos(strtolower($booking['item_description']), 'restaurant') !== false);
-        });
-        
-        $data = [
-            'title' => 'Business Bookings - ' . APP_NAME,
-            'user' => $this->currentUser(),
-            'bookings' => $businessBookings
-        ];
-        
-        $this->view('customer/business_bookings', $data);
+        // Redirect to profile where business bookings are integrated
+        header("Location: " . BASE_URL . "customer/profile");
+        exit();
+    }
+
+    /**
+     * Get business booking history
+     */
+    public function businessHistory() {
+        // Redirect to profile where the history modal is now integrated
+        header("Location: " . BASE_URL . "customer/profile");
+        exit();
     }
     
     /**
@@ -2558,30 +2748,32 @@ class CustomerController extends Controller {
         
         $userId = $this->currentUser()['id'];
         
-        // Get business bookings
-        $bookings = $this->bookingModel->getCustomerBookings($userId);
-        $businessBookings = array_filter($bookings, function($booking) {
-            return !empty($booking['item_description']) && 
-                   (strpos(strtolower($booking['item_description']), 'office') !== false ||
-                    strpos(strtolower($booking['item_description']), 'business') !== false ||
-                    strpos(strtolower($booking['item_description']), 'hotel') !== false ||
-                    strpos(strtolower($booking['item_description']), 'restaurant') !== false);
-        });
+        // Get reliable business bookings
+        $businessBookings = $this->bookingModel->getBusinessBookings($userId);
         
         $totalBookings = count($businessBookings);
-        $totalRevenue = array_sum(array_column($businessBookings, 'total_amount'));
+        
+        // Calculate total revenue from COMPLETED bookings
+        $totalRevenue = array_reduce($businessBookings, function($carry, $booking) {
+            if (in_array($booking['status'], ['completed', 'delivered_and_paid'])) {
+                return $carry + $booking['total_amount'];
+            }
+            return $carry;
+        }, 0);
+
         $pendingOrders = count(array_filter($businessBookings, function($booking) {
             return $booking['status'] === 'pending';
         }));
+
         $activeProjects = count(array_filter($businessBookings, function($booking) {
-            return in_array($booking['status'], ['confirmed', 'in_progress']);
+            return in_array($booking['status'], ['confirmed', 'in_progress', 'ready_for_pickup']);
         }));
         
         echo json_encode([
             'success' => true,
             'data' => [
                 'totalBookings' => $totalBookings,
-                'totalRevenue' => $totalRevenue,
+                'totalRevenue' => '₱' . number_format($totalRevenue, 2),
                 'pendingOrders' => $pendingOrders,
                 'activeProjects' => $activeProjects
             ]
@@ -2593,28 +2785,9 @@ class CustomerController extends Controller {
      * New Business Reservation Form
      */
     public function newBusinessReservation() {
-        $categories = $this->serviceModel->getCategories();
-        
-        // Filter out "Vehicle Repair", "Furniture Repair", and "Bedding Repair" categories
-        $categories = array_filter($categories, function($category) {
-            $categoryName = strtolower(trim($category['name'] ?? ''));
-            return $categoryName !== 'vehicle repair' 
-                && $categoryName !== 'furniture repair' 
-                && $categoryName !== 'bedding repair';
-        });
-        // Re-index array after filtering
-        $categories = array_values($categories);
-        
-        $stores = $this->storeModel->getAllActive();
-        
-        $data = [
-            'title' => 'New Business Reservation - ' . APP_NAME,
-            'user' => $this->currentUser(),
-            'categories' => $categories,
-            'stores' => $stores
-        ];
-        
-        $this->view('customer/new_business_reservation', $data);
+        // Redirect to profile where the reservation modal is now integrated
+        header("Location: " . BASE_URL . "customer/profile");
+        exit();
     }
     
     /**
@@ -2641,10 +2814,33 @@ class CustomerController extends Controller {
                 $this->redirect('customer/newBusinessReservation');
                 return;
             }
+
+            // Enhanced Validation: Ensure the user has an APPROVED business profile and is a CUSTOMER
+            $user = $this->currentUser();
+            $userId = $user['id'];
+            
+            // Verify role from database
+            $userModel = $this->model('User');
+            $dbUser = $userModel->getById($userId);
+            
+            if ($user['role'] !== 'customer' || !$dbUser || $dbUser['role'] !== 'customer') {
+                $_SESSION['error'] = 'Access denied: Only customers can make business reservations.';
+                $this->redirect('customer/profile');
+                return;
+            }
+            
+            $businessProfile = $this->businessModel->getByUserId($userId);
+            if (!$businessProfile || $businessProfile['status'] !== 'approved') {
+                $_SESSION['error'] = 'Your business account must be approved by the Super Admin before you can make reservations.';
+                $this->redirect('customer/profile');
+                return;
+            }
+            $customerBusinessId = $businessProfile['id'];
             
             // Prepare reservation data
             $reservationData = [
-                'user_id' => $this->currentUser()['id'],
+                'user_id' => $userId,
+                'customer_business_id' => $customerBusinessId,
                 'booking_number_id' => null, // Will be assigned by admin when accepting the reservation
                 'booking_type' => 'business_reservation',
                 'status' => 'admin_review',
@@ -2738,10 +2934,46 @@ class CustomerController extends Controller {
         $userDetails = $userModel->getById($userId);
         $userAddress = $userDetails['address'] ?? '';
         
+        // Get pre-selected service if service_id is provided
+        $preSelectedService = null;
+        $preSelectedCategoryId = null;
+        $preSelectedServiceType = null;
+        
+        if (isset($_GET['service_id']) && !empty($_GET['service_id'])) {
+            $serviceId = $_GET['service_id'];
+            
+            // Fetch service details from database
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT id, service_name, category_id, service_type FROM services WHERE id = ?");
+            $stmt->execute([$serviceId]);
+            $preSelectedService = $stmt->fetch();
+            
+            if ($preSelectedService) {
+                $preSelectedCategoryId = $preSelectedService['category_id'];
+                $preSelectedServiceType = $preSelectedService['service_type'];
+            }
+        }
+
+        // Get pre-selected color if provided
+        $preSelectedColorId = $_GET['color_id'] ?? null;
+        $preSelectedColorType = $_GET['color_type'] ?? null;
+        $preSelectedColor = null;
+
+        if ($preSelectedColorId) {
+            $inventoryModel = $this->model('Inventory');
+            $preSelectedColor = $inventoryModel->getColorById($preSelectedColorId);
+        }
+        
         $data = [
             'services' => $services,
             'categories' => $categories,
-            'userAddress' => $userAddress
+            'userAddress' => $userAddress,
+            'preSelectedCategoryId' => $preSelectedCategoryId,
+            'preSelectedServiceType' => $preSelectedServiceType,
+            'preSelectedService' => $preSelectedService,
+            'preSelectedColorId' => $preSelectedColorId,
+            'preSelectedColorType' => $preSelectedColorType,
+            'preSelectedColor' => $preSelectedColor
         ];
         
         $this->view('customer/repair_reservation_partial', $data);
@@ -3077,6 +3309,24 @@ class CustomerController extends Controller {
                 ]);
                 return;
             }
+
+            // Verify eligibility: Must have at least one completed/paid booking at this store
+            $checkEligibilityStmt = $db->prepare("
+                SELECT COUNT(*) as completed_count 
+                FROM bookings 
+                WHERE user_id = ? AND store_location_id = ? 
+                AND status IN ('completed', 'delivered_and_paid')
+            ");
+            $checkEligibilityStmt->execute([$userId, $storeId]);
+            $eligibilityResult = $checkEligibilityStmt->fetch();
+            
+            if (!$eligibilityResult || $eligibilityResult['completed_count'] == 0) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'You can only rate stores where you have completed and paid reservations.'
+                ]);
+                return;
+            }
             
             // Check if user has already rated this store
             try {
@@ -3325,6 +3575,42 @@ class CustomerController extends Controller {
             
         } catch (Exception $e) {
             error_log("Error getting store reviews: " . $e->getMessage());
+            // Return empty array instead of error to allow page to load
+            echo json_encode([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+    }
+    
+    /**
+     * Get Store Inventory/Services with real booking statistics
+     */
+    public function getStoreInventory() {
+        header('Content-Type: application/json');
+        
+        $storeId = $_GET['store_id'] ?? null;
+        
+        if (!$storeId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Store ID is required'
+            ]);
+            return;
+        }
+        
+        try {
+            // Use Inventory model to get services with real booking statistics
+            $inventoryModel = new Inventory();
+            $services = $inventoryModel->getServiceStatistics($storeId);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $services
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error getting store services: " . $e->getMessage());
             // Return empty array instead of error to allow page to load
             echo json_encode([
                 'success' => true,

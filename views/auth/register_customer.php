@@ -11,11 +11,11 @@
     <title><?php echo $title; ?></title>
 
     <!-- Custom fonts for this template-->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
 
     <style>
         .register-container {
@@ -124,7 +124,7 @@
                             </div>
                             <?php endif; ?>
 
-                            <form class="user" method="POST" action="<?php echo BASE_URL; ?>auth/processRegisterCustomer">
+                            <form class="user" method="POST" action="<?php echo BASE_URL; ?>auth/processRegisterCustomer" enctype="multipart/form-data">
                                 <input type="hidden" name="role" value="customer">
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-user" id="full_name" 
@@ -143,6 +143,25 @@
                                         title="Phone number must be exactly 11 digits">
                                     <small class="form-text text-muted">Enter exactly 11 digits (e.g., 09123456789)</small>
                                 </div>
+
+                                <!-- Customer ID Upload -->
+                                <div class="form-group">
+                                    <label for="customer_id_image" class="form-label text-gray-700 font-weight-bold">
+                                        <i class="fas fa-id-card text-success"></i> Valid Customer ID (Image) *
+                                    </label>
+                                    <input type="file" class="form-control" 
+                                        id="customer_id_image" name="customer_id_image" 
+                                        accept="image/jpeg,image/png,image/webp,image/gif" required>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        Upload a clear photo of your valid government-issued ID (UMID, PhilSys, Driver's License, Passport, etc.). Accepted formats: JPG, PNG, WEBP. Max size: 5MB.
+                                    </small>
+                                    <div id="customerIdPreview" class="mt-2" style="display: none;">
+                                        <img id="customerIdPreviewImg" src="#" alt="ID Preview" style="max-height: 120px; border-radius: 8px; border: 2px solid #27ae60;">
+                                        <div class="small text-success mt-1"><i class="fas fa-check-circle"></i> <span id="customerIdFileName"></span></div>
+                                    </div>
+                                </div>
+
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <div class="password-wrapper">
@@ -182,15 +201,11 @@
 
     </div>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery/jquery.min.js"></script>
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/jquery-easing/jquery.easing.min.js"></script>
-
-    <!-- Custom scripts for all pages-->
-    <script src="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/js/sb-admin-2.min.js"></script>
+    <!-- Core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
 
     <script>
         function togglePassword(fieldId) {
@@ -229,6 +244,44 @@
             } else {
                 phoneField.setCustomValidity('');
                 phoneField.classList.remove('is-invalid');
+            }
+        });
+        
+        // Customer ID image preview and validation
+        document.getElementById('customer_id_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('customerIdPreview');
+            const previewImg = document.getElementById('customerIdPreviewImg');
+            const fileNameSpan = document.getElementById('customerIdFileName');
+            
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only image files are allowed (JPG, PNG, WEBP, GIF). Please select a valid image.');
+                    e.target.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5MB. Please upload a smaller image.');
+                    e.target.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Show image preview
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    previewImg.src = ev.target.result;
+                    fileNameSpan.textContent = file.name;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
             }
         });
         

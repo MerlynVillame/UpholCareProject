@@ -16,7 +16,7 @@
     <title><?php echo $title; ?></title>
 
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%23103058'><path d='M466.5 83.7l-192-80c-4.9-2-10.3-2-15.2 0l-192 80C60 86.6 56 93.6 56 101.2V256c0 137.4 90.7 248 200 248s200-110.6 200-248V101.2c0-7.6-4-14.6-11.5-17.5zM256 448c-79.5 0-144-85.9-144-192V117.8l144-60 144 60V256c0 106.1-64.5 192-144 192z'/></svg>" type="image/svg+xml">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%230F3C5F'><path d='M466.5 83.7l-192-80c-4.9-2-10.3-2-15.2 0l-192 80C60 86.6 56 93.6 56 101.2V256c0 137.4 90.7 248 200 248s200-110.6 200-248V101.2c0-7.6-4-14.6-11.5-17.5zM256 448c-79.5 0-144-85.9-144-192V117.8l144-60 144 60V256c0 106.1-64.5 192-144 192z'/></svg>" type="image/svg+xml">
 
     <!-- Preconnect to Google Fonts and CDN for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -27,7 +27,7 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
     <!-- Custom fonts for this template-->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css" crossorigin="anonymous">
+    <link href="<?php echo BASE_URL; ?>assets/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
     
     <!-- Disable service workers and clear caches to prevent caching issues -->
@@ -96,54 +96,83 @@
     </script>
 
     <!-- Custom styles for this template-->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo BASE_URL; ?>assets/css/sb-admin-2.min.css" rel="stylesheet">
 
     <!-- DataTables -->
-    <link href="<?php echo BASE_URL; ?>startbootstrap-sb-admin-2-gh-pages/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="<?php echo BASE_URL; ?>assets/css/dataTables.bootstrap4.min.css" rel="stylesheet">
 
-    <!-- UphoCare Custom Styles -->
-    <link href="<?php echo BASE_URL; ?>assets/css/uphocare.css?v=<?php echo time(); ?>" rel="stylesheet">
+    <!-- UpholCare Custom Styles -->
+    <link href="<?php echo BASE_URL; ?>assets/css/UpholCare.css?v=<?php echo time(); ?>" rel="stylesheet">
     
-    <!-- Inline Modal Fix Styles (Fallback if CSS fails to load) -->
+    <!-- Inline Modal Fix Styles -->
     <style>
-    /* Fix Modal Visibility and Brightness - Applied inline to ensure it works */
     .modal-backdrop {
-        background-color: transparent !important; /* Fully transparent - no dark overlay */
-        opacity: 0 !important; /* Fully transparent - bright modal */
+        background-color: rgba(0, 0, 0, 0.4) !important;
         z-index: 1040 !important;
-        pointer-events: none !important; /* Allow clicks through */
-    }
-    
-    .modal-backdrop.show {
-        background-color: transparent !important; /* Fully transparent - no dark overlay */
-        opacity: 0 !important; /* Fully transparent - bright modal like Official Receipt */
-        z-index: 1040 !important;
-        pointer-events: none !important; /* Allow clicks through */
     }
     
     .modal {
         z-index: 1050 !important;
-        opacity: 1 !important; /* ensure modal is not transparent */
     }
-    
+
     .modal.show {
-        z-index: 1050 !important;
-        opacity: 1 !important; /* ensure modal is not transparent */
+        opacity: 1 !important;
     }
     
     .modal-content {
-        background-color: #ffffff !important; /* bright white */
-        opacity: 1 !important; /* ensure not transparent */
-        backdrop-filter: none !important; /* remove any backdrop filter */
+        background-color: #ffffff !important;
+        z-index: 1051 !important;
     }
     
-    .modal-dialog {
-        z-index: 1055 !important;
+    /* Premium Design System Overrides */
+    :root {
+        --brand-navy: #2C3E50;
+        --brand-azure: #3498DB;
+        --brand-emerald: #2ECC71;
+        --brand-ruby: #E74C3C;
+        --brand-amber: #F1C40F;
     }
+
+    .modal-content {
+        background-color: #ffffff !important;
+        border-radius: 12px !important;
+        border: none !important;
+        box-shadow: 0 10px 30px rgba(44, 62, 80, 0.15) !important;
+    }
+    
+    .bg-primary { background-color: var(--brand-navy) !important; }
+    .btn-primary { background-color: var(--brand-navy) !important; border-color: var(--brand-navy) !important; }
+    .btn-primary:hover { background-color: #1A252F !important; border-color: #1A252F !important; }
+    .text-primary { color: var(--brand-navy) !important; }
+    .border-left-primary { border-left: .25rem solid var(--brand-navy) !important; }
+
+    /* Dashboard Utility Classes */
+    .tracking-wider { letter-spacing: 0.05em; }
+    .smaller { font-size: 0.75rem; }
+    .bg-light-blue { background-color: rgba(52, 152, 219, 0.1); }
+    .bg-light-success { background-color: rgba(46, 204, 113, 0.1); }
+    .bg-light-danger { background-color: rgba(231, 76, 60, 0.1); }
+    .bg-light-warning { background-color: rgba(241, 196, 15, 0.1); }
+    .bg-primary-soft { background-color: rgba(44, 62, 80, 0.05); }
+    .table-hover tbody tr:hover { background-color: rgba(44, 62, 80, 0.02); }
+    .stats-icon i { font-size: 1.25rem; }
+
+    /* Premium Scaling & Spacing System */
+    .dashboard-main { padding: 32px 24px !important; }
+    .module-card { 
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08) !important; 
+        border: 1px solid rgba(44, 62, 80, 0.05) !important;
+        border-radius: 12px !important;
+        background: white !important;
+    }
+    
+    /* Content Layering (Solution 4) */
+    #content-wrapper { background-color: #f4f7f6 !important; }
+    .topbar { border-bottom: 1px solid rgba(0,0,0,0.05) !important; box-shadow: none !important; }
     </style>
     
     <!-- Business Mode Handler -->
-    <script src="<?php echo BASE_URL; ?>assets/js/business-mode.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/business-mode.js?v=<?php echo time(); ?>"></script>
 </head>
 
 <body id="page-top">
